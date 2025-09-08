@@ -1,0 +1,85 @@
+2025-09-03 10:51:58,146 - INFO - CSV file read successfully.
+2025-09-03 11:34:11,222 - INFO - CSV file read successfully.
+2025-09-03 11:36:09,587 - INFO - CSV file read successfully.
+2025-09-03 11:46:10,264 - INFO - CSV file read successfully.
+2025-09-03 13:22:07,133 - INFO - CSV file read successfully.
+2025-09-03 14:56:19,598 - WARNING - RuntimeWarning: invalid value encountered in subtract (File: C:\Users\glislazaju2\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\pandas\core\nanops.py, Line: 1016)
+2025-09-03 14:56:19,606 - WARNING - RuntimeWarning: invalid value encountered in subtract (File: C:\Users\glislazaju2\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\numpy\lib\function_base.py, Line: 4655)
+2025-09-03 14:56:19,611 - WARNING - RuntimeWarning: invalid value encountered in subtract (File: C:\Users\glislazaju2\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\pandas\core\nanops.py, Line: 1344)
+2025-09-03 14:56:19,615 - WARNING - RuntimeWarning: invalid value encountered in subtract (File: C:\Users\glislazaju2\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\pandas\core\nanops.py, Line: 1256)
+2025-09-03 14:56:19,623 - WARNING - UserWarning: cannot convert float infinity to integer (File: C:\Users\glislazaju2\AppData\Local\Temp\ipykernel_36496\1817312141.py, Line: 409)
+2025-09-03 19:51:25,576 - INFO - CSV file read successfully.
+2025-09-03 20:45:11,936 - INFO - CSV file read successfully.
+2025-09-03 21:01:02,828 - INFO - CSV file read successfully.
+2025-09-03 21:21:10,310 - INFO - CSV file read successfully.
+2025-09-03 21:28:23,377 - INFO - CSV file read successfully.
+2025-09-03 21:29:47,937 - INFO - CSV file read successfully.
+2025-09-03 21:31:02,145 - INFO - CSV file read successfully.
+2025-09-04 09:50:52,700 - INFO - CSV file read successfully.
+2025-09-04 09:57:29,438 - INFO - CSV file read successfully.
+2025-09-04 10:25:00,517 - INFO - CSV file read successfully.
+2025-09-04 10:31:32,693 - INFO - CSV file read successfully.
+2025-09-04 10:37:33,204 - INFO - CSV file read successfully.
+2025-09-04 10:40:18,113 - INFO - CSV file read successfully.
+2025-09-04 10:44:55,801 - INFO - CSV file read successfully.
+2025-09-04 10:49:15,059 - INFO - CSV file read successfully.
+2025-09-04 11:13:51,172 - INFO - CSV file read successfully.
+2025-09-04 13:16:38,007 - INFO - CSV file read successfully.
+2025-09-04 13:41:04,583 - INFO - CSV file read successfully.
+2025-09-04 13:57:37,918 - INFO - CSV file read successfully.
+2025-09-04 14:10:31,596 - INFO - CSV file read successfully.
+2025-09-04 14:14:38,838 - INFO - CSV file read successfully.
+2025-09-04 14:15:57,293 - INFO - CSV file read successfully.
+2025-09-04 14:19:05,545 - INFO - CSV file read successfully.
+2025-09-04 14:56:03,448 - WARNING - TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\tqdm\auto.py, Line: 21)
+2025-09-04 15:58:58,831 - INFO - CSV file read successfully.
+2025-09-04 16:13:43,420 - INFO - Loading checkpoint from C:\Users\glislazaju2\.cache\huggingface\hub\models--google--timesfm-2.0-500m-pytorch\snapshots\dc2443792ce5516872b89b37cf1bc058c3bf0c10\torch_model.ckpt
+2025-09-04 16:14:17,132 - INFO - Sending checkpoint to device cpu
+2025-09-05 11:01:32,882 - WARNING - TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\tqdm\auto.py, Line: 21)
+2025-09-05 11:19:51,654 - INFO - CSV file read successfully.
+2025-09-05 11:20:53,120 - INFO - Loading checkpoint from C:\Users\glislazaju2\.cache\huggingface\hub\models--google--timesfm-2.0-500m-pytorch\snapshots\dc2443792ce5516872b89b37cf1bc058c3bf0c10\torch_model.ckpt
+2025-09-05 11:21:03,673 - INFO - Sending checkpoint to device cpu
+2025-09-05 11:21:03,974 - INFO - Preprocessing dataframe.
+2025-09-05 11:27:45,091 - INFO - Finished creating output dataframe.
+2025-09-05 11:27:45,096 - INFO - Preprocessing dataframe.
+2025-09-05 11:34:10,018 - INFO - Finished creating output dataframe.
+2025-09-05 11:34:10,024 - INFO - Preprocessing dataframe.
+2025-09-05 11:40:16,461 - INFO - Finished creating output dataframe.
+2025-09-05 11:40:16,469 - INFO - Preprocessing dataframe.
+2025-09-05 11:49:09,242 - INFO - Finished creating output dataframe.
+2025-09-05 11:49:09,245 - INFO - Preprocessing dataframe.
+2025-09-05 11:57:48,392 - INFO - Finished creating output dataframe.
+2025-09-05 11:57:48,399 - INFO - Preprocessing dataframe.
+2025-09-05 12:05:05,050 - INFO - Finished creating output dataframe.
+2025-09-05 13:15:25,934 - INFO - CSV file read successfully.
+2025-09-05 13:17:14,373 - INFO - Loading checkpoint from C:\Users\glislazaju2\.cache\huggingface\hub\models--google--timesfm-2.0-500m-pytorch\snapshots\dc2443792ce5516872b89b37cf1bc058c3bf0c10\torch_model.ckpt
+2025-09-05 13:17:30,295 - INFO - Sending checkpoint to device cpu
+2025-09-05 13:17:31,012 - INFO - Preprocessing dataframe.
+2025-09-05 13:18:07,061 - INFO - Finished creating output dataframe.
+2025-09-05 13:18:07,066 - INFO - Preprocessing dataframe.
+2025-09-05 13:18:39,602 - INFO - Finished creating output dataframe.
+2025-09-05 13:18:39,604 - INFO - Preprocessing dataframe.
+2025-09-05 13:19:04,226 - INFO - Finished creating output dataframe.
+2025-09-05 13:19:04,228 - INFO - Preprocessing dataframe.
+2025-09-05 13:19:28,523 - INFO - Finished creating output dataframe.
+2025-09-05 13:19:28,525 - INFO - Preprocessing dataframe.
+2025-09-05 13:19:53,801 - INFO - Finished creating output dataframe.
+2025-09-05 13:19:53,804 - INFO - Preprocessing dataframe.
+2025-09-05 13:20:16,679 - INFO - Finished creating output dataframe.
+2025-09-08 09:48:14,359 - WARNING - TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\tqdm\auto.py, Line: 21)
+2025-09-08 09:50:51,882 - INFO - CSV file read successfully.
+2025-09-08 10:22:37,479 - INFO - CSV file read successfully.
+2025-09-08 10:23:25,270 - INFO - Loading checkpoint from C:\Users\glislazaju2\.cache\huggingface\hub\models--google--timesfm-2.0-500m-pytorch\snapshots\dc2443792ce5516872b89b37cf1bc058c3bf0c10\torch_model.ckpt
+2025-09-08 10:23:39,058 - INFO - Sending checkpoint to device cpu
+2025-09-08 10:23:40,610 - INFO - Preprocessing dataframe.
+2025-09-08 10:24:20,815 - INFO - Finished creating output dataframe.
+2025-09-08 10:24:20,820 - INFO - Preprocessing dataframe.
+2025-09-08 10:24:54,661 - INFO - Finished creating output dataframe.
+2025-09-08 10:24:54,661 - INFO - Preprocessing dataframe.
+2025-09-08 10:25:32,464 - INFO - Finished creating output dataframe.
+2025-09-08 10:25:32,468 - INFO - Preprocessing dataframe.
+2025-09-08 10:26:09,149 - INFO - Finished creating output dataframe.
+2025-09-08 10:26:09,149 - INFO - Preprocessing dataframe.
+2025-09-08 10:27:02,069 - INFO - Finished creating output dataframe.
+2025-09-08 10:27:02,089 - INFO - Preprocessing dataframe.
+2025-09-08 10:27:51,466 - INFO - Finished creating output dataframe.

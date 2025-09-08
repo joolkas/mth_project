@@ -1,0 +1,9 @@
+2025-09-02 17:45:42,213 - INFO - CSV file read successfully.
+2025-09-02 18:22:18,047 - INFO - CSV file read successfully.
+2025-09-02 18:42:32,398 - WARNING - FutureWarning: last is deprecated and will be removed in a future version. Please create a mask and filter using `.loc` instead (File: C:\Users\glislazaju2\AppData\Local\Temp\ipykernel_39716\269177032.py, Line: 5)
+2025-09-02 18:44:21,549 - WARNING - FutureWarning: last is deprecated and will be removed in a future version. Please create a mask and filter using `.loc` instead (File: C:\Users\glislazaju2\AppData\Local\Temp\ipykernel_39716\563720124.py, Line: 5)
+2025-09-02 18:48:09,123 - INFO - CSV file read successfully.
+2025-09-03 08:45:05,540 - INFO - CSV file read successfully.
+2025-09-03 09:25:28,235 - INFO - CSV file read successfully.
+2025-09-03 09:28:07,314 - INFO - CSV file read successfully.
+2025-09-03 09:52:46,382 - INFO - CSV file read successfully.

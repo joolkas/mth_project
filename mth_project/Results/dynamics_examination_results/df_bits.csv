@@ -1,0 +1,21 @@
+name,calculate changes:,calculate percentage
+1( Chain connection): Bits received,31489,96.82368858003812
+1( Chain connection): Bits sent,32339,99.4373039788451
+10( access): Bits received,32469,99.83703339278027
+10( access): Bits sent,32449,99.77553655986716
+2( Chain connection): Bits received,31319,96.30096550027673
+2( Chain connection): Bits sent,32149,98.8530840661706
+3( access): Bits received,32489,99.89853022569338
+3( access): Bits sent,32479,99.86778180923682
+4( access): Bits received,32479,99.86778180923682
+4( access): Bits sent,32439,99.74478814341062
+5( access): Bits received,32484,99.8831560174651
+5( access): Bits sent,32484,99.8831560174651
+6( access): Bits received,32479,99.86778180923682
+6( access): Bits sent,32469,99.83703339278027
+7( access): Bits received,32464,99.82165918455199
+7( access): Bits sent,32469,99.83703339278027
+8( access): Bits received,31364,96.43933337433123
+8( access): Bits sent,32469,99.83703339278027
+9( access): Bits received,13759,42.306746202570565
+9( access): Bits sent,31939,98.20736732058299
