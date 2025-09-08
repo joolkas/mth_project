@@ -1,0 +1,32 @@
+# Large data files
+*.csv
+Data082025/
+
+# Python library files
+*.dll
+*.lib
+*.pyd
+Lib/
+Scripts/
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environment
+venv/
+.venv/
+
+# Large model files
+*.bin
+*.safetensors
+*.pt
+*.pth
+
+# Log files
+*.log
+warnings.log
