@@ -359,3 +359,200 @@
 2025-09-09 08:49:46,688 - INFO - Finished creating output dataframe.
 2025-09-09 08:49:46,695 - INFO - Preprocessing dataframe.
 2025-09-09 08:50:16,486 - INFO - Finished creating output dataframe.
+2025-09-09 09:06:26,218 - INFO - CSV file read successfully.
+2025-09-09 09:08:40,313 - INFO - Loading checkpoint from C:\Users\glislazaju2\.cache\huggingface\hub\models--google--timesfm-2.0-500m-pytorch\snapshots\dc2443792ce5516872b89b37cf1bc058c3bf0c10\torch_model.ckpt
+2025-09-09 09:08:48,497 - INFO - Sending checkpoint to device cpu
+2025-09-09 09:08:48,824 - INFO - Preprocessing dataframe.
+2025-09-09 09:09:28,397 - INFO - Finished creating output dataframe.
+2025-09-09 09:09:28,407 - INFO - Preprocessing dataframe.
+2025-09-09 09:09:59,968 - INFO - Finished creating output dataframe.
+2025-09-09 09:09:59,972 - INFO - Preprocessing dataframe.
+2025-09-09 09:10:23,009 - INFO - Finished creating output dataframe.
+2025-09-09 09:10:23,015 - INFO - Preprocessing dataframe.
+2025-09-09 09:10:42,851 - INFO - Finished creating output dataframe.
+2025-09-09 09:10:42,855 - INFO - Preprocessing dataframe.
+2025-09-09 09:11:00,999 - INFO - Finished creating output dataframe.
+2025-09-09 09:11:01,001 - INFO - Preprocessing dataframe.
+2025-09-09 09:11:22,625 - INFO - Finished creating output dataframe.
+2025-09-09 12:17:37,609 - WARNING - TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\tqdm\auto.py, Line: 21)
+2025-09-09 12:17:48,085 - INFO - CSV file read successfully.
+2025-09-09 12:18:06,943 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:06,991 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:07,038 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:07,101 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:07,165 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:07,229 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:07,324 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:07,418 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:07,529 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:07,638 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:07,780 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:07,982 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:08,180 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:08,390 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:08,637 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:08,880 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:09,162 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:09,495 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:09,881 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:10,381 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:10,841 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:11,362 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:11,917 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:12,390 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:12,895 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:13,460 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:14,088 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:14,731 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:15,421 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:16,190 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:17,068 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:17,084 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:17,100 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:17,132 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:17,163 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:17,195 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:17,258 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:17,321 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:17,415 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:17,510 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:17,604 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:17,730 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:17,904 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:18,108 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:18,359 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:18,596 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:18,831 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:19,093 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:19,350 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:19,648 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:20,011 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:20,394 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:20,784 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:21,178 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:21,650 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:22,196 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:23,014 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:25,312 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:26,987 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:28,761 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:30,326 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:30,374 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:30,408 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:30,469 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:30,517 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:30,612 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:30,708 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:30,848 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:30,978 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:31,120 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:31,277 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:31,471 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:31,709 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:31,912 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:32,147 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:32,501 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:32,898 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:33,491 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:34,190 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:34,664 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:35,259 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:35,914 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:36,963 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:37,769 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:38,462 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:39,186 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:39,957 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:40,853 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:41,975 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:43,308 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:44,406 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:44,422 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:44,438 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:44,469 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:44,501 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:44,548 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:44,611 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:44,674 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:44,752 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:44,862 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:44,972 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:45,097 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:45,270 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:45,474 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:45,678 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:45,897 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:46,196 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:46,558 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:46,921 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:47,380 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:47,855 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:48,392 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:49,041 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:49,708 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:50,389 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:51,179 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:51,903 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:52,672 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:53,505 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:54,385 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:18:55,330 - WARNING - ValueWarning: No frequency information was provided, so inferred frequency min will be used. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\statsmodels\tsa\base\tsa_model.py, Line: 473)
+2025-09-09 12:19:14,221 - INFO - Loading checkpoint from C:\Users\glislazaju2\.cache\huggingface\hub\models--google--timesfm-2.0-500m-pytorch\snapshots\dc2443792ce5516872b89b37cf1bc058c3bf0c10\torch_model.ckpt
+2025-09-09 12:19:21,984 - INFO - Sending checkpoint to device cpu
+2025-09-09 12:19:23,221 - INFO - Preprocessing dataframe.
+2025-09-09 12:20:02,776 - INFO - Finished creating output dataframe.
+2025-09-09 12:20:02,781 - INFO - Preprocessing dataframe.
+2025-09-09 12:20:40,044 - INFO - Finished creating output dataframe.
+2025-09-09 12:20:40,051 - INFO - Preprocessing dataframe.
+2025-09-09 12:21:12,132 - INFO - Finished creating output dataframe.
+2025-09-09 12:21:12,138 - INFO - Preprocessing dataframe.
+2025-09-09 12:21:38,693 - INFO - Finished creating output dataframe.
+2025-09-09 12:21:38,698 - INFO - Preprocessing dataframe.
+2025-09-09 12:22:05,668 - INFO - Finished creating output dataframe.
+2025-09-09 12:22:05,670 - INFO - Preprocessing dataframe.
+2025-09-09 12:22:43,195 - INFO - Finished creating output dataframe.
+2025-09-09 12:38:02,082 - INFO - CSV file read successfully.
+2025-09-09 12:39:22,300 - INFO - Loading checkpoint from C:\Users\glislazaju2\.cache\huggingface\hub\models--google--timesfm-2.0-500m-pytorch\snapshots\dc2443792ce5516872b89b37cf1bc058c3bf0c10\torch_model.ckpt
+2025-09-09 12:39:25,804 - INFO - Sending checkpoint to device cpu
+2025-09-09 12:39:26,023 - INFO - Preprocessing dataframe.
+2025-09-09 12:39:55,239 - INFO - Finished creating output dataframe.
+2025-09-09 12:39:55,239 - INFO - Preprocessing dataframe.
+2025-09-09 12:40:17,027 - INFO - Finished creating output dataframe.
+2025-09-09 12:40:17,030 - INFO - Preprocessing dataframe.
+2025-09-09 12:40:39,089 - INFO - Finished creating output dataframe.
+2025-09-09 12:40:39,092 - INFO - Preprocessing dataframe.
+2025-09-09 12:40:59,310 - INFO - Finished creating output dataframe.
+2025-09-09 12:40:59,310 - INFO - Preprocessing dataframe.
+2025-09-09 12:41:23,783 - INFO - Finished creating output dataframe.
+2025-09-09 12:41:23,786 - INFO - Preprocessing dataframe.
+2025-09-09 12:41:51,336 - INFO - Finished creating output dataframe.
+2025-09-09 12:55:01,663 - INFO - CSV file read successfully.
+2025-09-09 13:03:08,811 - INFO - Loading checkpoint from C:\Users\glislazaju2\.cache\huggingface\hub\models--google--timesfm-2.0-500m-pytorch\snapshots\dc2443792ce5516872b89b37cf1bc058c3bf0c10\torch_model.ckpt
+2025-09-09 13:03:15,742 - INFO - Sending checkpoint to device cpu
+2025-09-09 13:03:16,685 - INFO - Preprocessing dataframe.
+2025-09-09 13:03:52,353 - INFO - Finished creating output dataframe.
+2025-09-09 13:03:52,358 - INFO - Preprocessing dataframe.
+2025-09-09 13:04:19,814 - INFO - Finished creating output dataframe.
+2025-09-09 13:04:19,831 - INFO - Preprocessing dataframe.
+2025-09-09 13:04:41,663 - INFO - Finished creating output dataframe.
+2025-09-09 13:04:41,681 - INFO - Preprocessing dataframe.
+2025-09-09 13:05:03,361 - INFO - Finished creating output dataframe.
+2025-09-09 13:05:03,361 - INFO - Preprocessing dataframe.
+2025-09-09 13:05:26,624 - INFO - Finished creating output dataframe.
+2025-09-09 13:05:26,624 - INFO - Preprocessing dataframe.
+2025-09-09 13:05:46,074 - INFO - Finished creating output dataframe.
+2025-09-09 13:12:57,496 - INFO - CSV file read successfully.
+2025-09-09 13:14:16,932 - INFO - Loading checkpoint from C:\Users\glislazaju2\.cache\huggingface\hub\models--google--timesfm-2.0-500m-pytorch\snapshots\dc2443792ce5516872b89b37cf1bc058c3bf0c10\torch_model.ckpt
+2025-09-09 13:14:22,227 - INFO - Sending checkpoint to device cpu
+2025-09-09 13:14:23,101 - INFO - Preprocessing dataframe.
+2025-09-09 13:15:04,702 - INFO - Finished creating output dataframe.
+2025-09-09 13:15:04,711 - INFO - Preprocessing dataframe.
+2025-09-09 13:15:38,599 - INFO - Finished creating output dataframe.
+2025-09-09 13:15:38,614 - INFO - Preprocessing dataframe.
+2025-09-09 13:16:04,741 - INFO - Finished creating output dataframe.
+2025-09-09 13:16:04,741 - INFO - Preprocessing dataframe.
+2025-09-09 13:16:43,727 - INFO - Finished creating output dataframe.
+2025-09-09 13:16:43,727 - INFO - Preprocessing dataframe.
+2025-09-09 13:17:14,714 - INFO - Finished creating output dataframe.
+2025-09-09 13:17:14,714 - INFO - Preprocessing dataframe.
+2025-09-09 13:17:51,416 - INFO - Finished creating output dataframe.
