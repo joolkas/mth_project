@@ -1,0 +1,10 @@
+2025-09-11 17:44:32,883 - INFO - CSV file read successfully.
+2025-09-11 17:52:21,176 - INFO - CSV file read successfully.
+2025-09-11 17:53:55,460 - INFO - CSV file read successfully.
+2025-09-12 11:37:57,712 - INFO - CSV file read successfully.
+2025-09-12 12:06:03,008 - INFO - CSV file read successfully.
+2025-09-12 12:06:20,001 - INFO - CSV file read successfully.
+2025-09-12 12:09:42,823 - INFO - CSV file read successfully.
+2025-09-12 12:11:05,928 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\rnn\rnn.py, Line: 199)
+2025-09-12 12:12:01,360 - INFO - CSV file read successfully.
+2025-09-12 12:13:17,231 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\rnn\rnn.py, Line: 199)
