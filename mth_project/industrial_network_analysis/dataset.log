@@ -7,3 +7,58 @@
 2025-09-03 09:25:28,235 - INFO - CSV file read successfully.
 2025-09-03 09:28:07,314 - INFO - CSV file read successfully.
 2025-09-03 09:52:46,382 - INFO - CSV file read successfully.
+2025-09-16 12:50:06,091 - INFO - CSV file read successfully.
+2025-09-16 13:05:04,276 - INFO - CSV file read successfully.
+2025-09-16 14:01:23,127 - INFO - CSV file read successfully.
+2025-09-16 14:09:26,771 - INFO - CSV file read successfully.
+2025-09-16 14:18:41,430 - INFO - CSV file read successfully.
+2025-09-16 14:22:07,729 - INFO - CSV file read successfully.
+2025-09-16 14:25:04,977 - INFO - CSV file read successfully.
+2025-09-16 14:46:35,644 - INFO - CSV file read successfully.
+2025-09-16 14:55:46,070 - INFO - CSV file read successfully.
+2025-09-17 06:55:28,244 - INFO - CSV file read successfully.
+2025-09-17 07:00:09,513 - INFO - CSV file read successfully.
+2025-09-17 07:02:35,828 - INFO - CSV file read successfully.
+2025-09-17 07:29:00,168 - INFO - CSV file read successfully.
+2025-09-17 08:59:24,306 - INFO - CSV file read successfully.
+2025-09-17 09:02:08,499 - INFO - CSV file read successfully.
+2025-09-17 09:37:01,630 - INFO - CSV file read successfully.
+2025-09-17 09:43:56,828 - INFO - CSV file read successfully.
+2025-09-17 10:20:50,652 - INFO - CSV file read successfully.
+2025-09-17 10:40:20,914 - INFO - CSV file read successfully.
+2025-09-17 10:44:32,008 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\convolutional\base_conv.py, Line: 113)
+2025-09-17 10:47:29,756 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\convolutional\base_conv.py, Line: 113)
+2025-09-17 10:54:35,474 - INFO - CSV file read successfully.
+2025-09-17 11:01:06,895 - INFO - CSV file read successfully.
+2025-09-17 11:02:49,874 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\convolutional\base_conv.py, Line: 113)
+2025-09-17 11:11:57,400 - INFO - CSV file read successfully.
+2025-09-17 11:13:44,956 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\convolutional\base_conv.py, Line: 113)
+2025-09-17 11:18:41,440 - INFO - CSV file read successfully.
+2025-09-17 11:20:17,625 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\convolutional\base_conv.py, Line: 113)
+2025-09-17 11:20:25,777 - WARNING - You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+2025-09-17 11:22:53,454 - INFO - CSV file read successfully.
+2025-09-17 11:24:20,011 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\convolutional\base_conv.py, Line: 113)
+2025-09-17 11:24:31,108 - WARNING - You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+2025-09-17 11:26:03,786 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\convolutional\base_conv.py, Line: 113)
+2025-09-17 11:26:11,920 - WARNING - You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+2025-09-17 11:26:17,832 - WARNING - You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+2025-09-17 11:26:31,284 - WARNING - You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+2025-09-17 11:26:39,246 - WARNING - You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+2025-09-17 11:26:46,143 - WARNING - You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+2025-09-17 11:27:03,782 - WARNING - You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+2025-09-17 11:27:18,806 - WARNING - You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+2025-09-17 11:27:27,055 - WARNING - You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+2025-09-17 11:27:43,944 - WARNING - You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+2025-09-17 11:28:09,204 - WARNING - You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+2025-09-17 11:28:15,169 - WARNING - You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+2025-09-17 11:28:47,331 - WARNING - You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+2025-09-17 11:32:20,837 - INFO - CSV file read successfully.
+2025-09-17 11:34:17,556 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\convolutional\base_conv.py, Line: 113)
+2025-09-17 11:34:26,837 - WARNING - You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+2025-09-17 11:34:34,091 - WARNING - You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+2025-09-17 11:34:41,606 - WARNING - You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+2025-09-17 11:34:49,285 - WARNING - You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+2025-09-17 11:35:26,313 - WARNING - You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+2025-09-17 11:35:31,948 - WARNING - You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+2025-09-17 11:35:33,864 - WARNING - You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+2025-09-17 11:39:45,764 - WARNING - You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 

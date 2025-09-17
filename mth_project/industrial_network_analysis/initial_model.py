@@ -104,7 +104,18 @@ def filter_status_predictions(predictions_df, column_names, threshold=0.5):
     
     return filtered_df
 
-def test_initial_model(model, df, X_test, y_test, scalers):
+def inverse_difference(predictions_arrays, last_actual_values):
+    actual_predictions = []
+    current_values = last_actual_values.copy()
+    
+    for pred_diff in predictions_arrays:
+        # Add difference to get actual value
+        current_values = current_values + np.array(pred_diff)
+        actual_predictions.append(current_values.copy())
+    
+    return actual_predictions
+
+def test_initial_model(model, df, X_test, y_test, scalers, df_removed_nans_forecasting):
     predictions_test = []
     actuals_test = []
 
@@ -133,11 +144,19 @@ def test_initial_model(model, df, X_test, y_test, scalers):
         predictions_original[:, i] = scaler.inverse_transform(predictions_test[:, i].reshape(-1, 1)).flatten()
         actuals_original[:, i] = scaler.inverse_transform(actuals_test[:, i].reshape(-1, 1)).flatten()
 
+    forecasting_variables = df.columns.tolist()
+    last_actual_values = df_removed_nans_forecasting[forecasting_variables].mean().values
+
+    # inverse differencing
+    predictions_original = inverse_difference(predictions_original, last_actual_values)
+    actuals_original = inverse_difference(actuals_original, last_actual_values)
+
     # back to dataframe format
     actuals_df = pd.DataFrame(data=actuals_original,columns=df.columns)
     predictions_df = pd.DataFrame(data=predictions_original, columns=df.columns)
 
     return actuals_df, filter_status_predictions(predictions_df, df.columns)
+
 
 def calculate_metrics(df, actuals_original, predictions_original):
     mse = mean_squared_error(actuals_original, predictions_original)

@@ -8,3 +8,539 @@
 2025-09-12 12:11:05,928 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\rnn\rnn.py, Line: 199)
 2025-09-12 12:12:01,360 - INFO - CSV file read successfully.
 2025-09-12 12:13:17,231 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\rnn\rnn.py, Line: 199)
+2025-09-15 16:00:00,350 - INFO - CSV file read successfully.
+2025-09-15 16:11:57,326 - INFO - CSV file read successfully.
+2025-09-15 21:59:37,145 - INFO - CSV file read successfully.
+2025-09-15 22:05:53,615 - INFO - CSV file read successfully.
+2025-09-15 22:11:19,897 - INFO - CSV file read successfully.
+2025-09-15 22:20:27,619 - INFO - CSV file read successfully.
+2025-09-15 22:25:02,964 - INFO - CSV file read successfully.
+2025-09-15 22:40:42,698 - INFO - CSV file read successfully.
+2025-09-15 23:20:44,202 - INFO - CSV file read successfully.
+2025-09-15 23:20:44,258 - INFO - CSV file read successfully.
+2025-09-16 11:14:59,639 - INFO - CSV file read successfully.
+2025-09-16 11:18:30,002 - INFO - CSV file read successfully.
+2025-09-16 11:22:33,306 - INFO - CSV file read successfully.
+2025-09-16 11:31:06,760 - INFO - CSV file read successfully.
+2025-09-16 12:09:33,640 - INFO - CSV file read successfully.
+2025-09-16 12:11:00,995 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\convolutional\base_conv.py, Line: 113)
+2025-09-16 12:11:04,564 - WARNING - UserWarning: You are using a softmax over axis -1 of a tensor of shape (None, 1). This axis has size 1. The softmax operation will always return the value 1, which is likely not what you intended. Did you mean to use a sigmoid instead? (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\ops\nn.py, Line: 938)
+2025-09-16 12:12:28,587 - WARNING - UserWarning: You are using a softmax over axis -1 of a tensor of shape (32, 1). This axis has size 1. The softmax operation will always return the value 1, which is likely not what you intended. Did you mean to use a sigmoid instead? (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\ops\nn.py, Line: 938)
+2025-09-16 12:12:30,603 - WARNING - You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+2025-09-16 12:53:23,447 - INFO - CSV file read successfully.
+2025-09-16 12:54:41,219 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\convolutional\base_conv.py, Line: 113)
+2025-09-16 12:54:43,297 - WARNING - UserWarning: You are using a softmax over axis -1 of a tensor of shape (None, 1). This axis has size 1. The softmax operation will always return the value 1, which is likely not what you intended. Did you mean to use a sigmoid instead? (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\ops\nn.py, Line: 938)
+2025-09-16 12:55:54,907 - WARNING - UserWarning: You are using a softmax over axis -1 of a tensor of shape (32, 1). This axis has size 1. The softmax operation will always return the value 1, which is likely not what you intended. Did you mean to use a sigmoid instead? (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\ops\nn.py, Line: 938)
+2025-09-16 12:55:57,326 - WARNING - You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+2025-09-16 15:08:41,866 - INFO - CSV file read successfully.
+2025-09-16 15:10:07,466 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\convolutional\base_conv.py, Line: 113)
+2025-09-16 15:12:47,083 - WARNING - UndefinedMetricWarning: Precision is ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\metrics\_classification.py, Line: 1731)
+2025-09-16 15:12:47,091 - WARNING - UndefinedMetricWarning: Precision is ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\metrics\_classification.py, Line: 1731)
+2025-09-16 15:12:47,096 - WARNING - UndefinedMetricWarning: Precision is ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\metrics\_classification.py, Line: 1731)
+2025-09-16 15:13:26,461 - WARNING - You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+2025-09-16 15:24:08,892 - INFO - CSV file read successfully.
+2025-09-16 15:25:06,965 - INFO - CSV file read successfully.
+2025-09-16 15:26:16,504 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\rnn\rnn.py, Line: 199)
+2025-09-16 15:29:59,990 - INFO - CSV file read successfully.
+2025-09-16 15:31:11,273 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\rnn\rnn.py, Line: 199)
+2025-09-16 15:39:45,038 - INFO - CSV file read successfully.
+2025-09-16 15:40:48,521 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\rnn\rnn.py, Line: 199)
+2025-09-16 15:44:39,542 - INFO - CSV file read successfully.
+2025-09-16 15:45:46,748 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\rnn\rnn.py, Line: 199)
+2025-09-16 15:47:35,789 - INFO - CSV file read successfully.
+2025-09-16 15:48:45,256 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\rnn\rnn.py, Line: 199)
+2025-09-16 15:49:31,586 - INFO - Dash is running on http://127.0.0.1:8050/
+
+2025-09-16 15:49:31,659 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:8050
+2025-09-16 15:49:31,659 - INFO - [33mPress CTRL+C to quit[0m
+2025-09-16 15:49:34,590 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,590 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,590 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,590 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,590 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,590 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,590 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,590 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,590 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,603 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,603 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,603 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,603 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,603 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,603 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,603 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,603 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,603 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,603 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,603 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,603 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,603 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,603 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,603 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,603 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,603 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,603 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,619 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,619 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,619 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,619 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,619 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,619 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,619 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,619 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,619 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,619 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,619 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,619 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,619 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,619 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,619 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,619 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,619 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,619 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,634 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,634 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:49:34,634 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:53:11,333 - INFO - CSV file read successfully.
+2025-09-16 15:54:14,364 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\rnn\rnn.py, Line: 199)
+2025-09-16 15:55:41,252 - INFO - Dash is running on http://127.0.0.1:8050/
+
+2025-09-16 15:55:41,336 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:8050
+2025-09-16 15:55:41,336 - INFO - [33mPress CTRL+C to quit[0m
+2025-09-16 15:55:44,266 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,266 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,266 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,277 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,277 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,277 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,277 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,277 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,277 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,277 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,277 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,277 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,293 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,293 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,293 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,293 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,293 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,293 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,293 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,293 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,293 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,293 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,309 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,309 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,309 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,309 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,309 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,309 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,309 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,309 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,309 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,324 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,324 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,324 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,324 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,324 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,324 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,324 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,324 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,324 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,340 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,340 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,340 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,340 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,340 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,340 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,340 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,340 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 15:55:44,764 - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-09-16 16:10:12,481 - INFO - CSV file read successfully.
+2025-09-16 16:11:38,696 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\rnn\rnn.py, Line: 199)
+2025-09-16 16:12:20,401 - INFO - Dash is running on http://127.0.0.1:8050/
+
+2025-09-16 16:12:20,463 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:8050
+2025-09-16 16:12:20,464 - INFO - [33mPress CTRL+C to quit[0m
+2025-09-16 16:12:23,424 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,426 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,427 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,429 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,429 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,430 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,431 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,432 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,433 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,434 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,435 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,435 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,436 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,437 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,438 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,439 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,439 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,440 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,441 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,442 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,442 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,444 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,445 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,446 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,446 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,447 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,448 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,449 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,449 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,449 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,449 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,449 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,449 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,449 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,449 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,449 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,449 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,449 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,449 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,449 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,449 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,449 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,449 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,449 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,449 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,464 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,467 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,469 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:12:23,789 - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-09-16 16:15:53,424 - INFO - CSV file read successfully.
+2025-09-16 16:17:20,636 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\rnn\rnn.py, Line: 199)
+2025-09-16 16:18:09,688 - INFO - Dash is running on http://127.0.0.1:8050/
+
+2025-09-16 16:18:09,705 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:8050
+2025-09-16 16:18:09,705 - INFO - [33mPress CTRL+C to quit[0m
+2025-09-16 16:18:12,692 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,692 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,692 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,692 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,692 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,692 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,692 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,692 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,692 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,692 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,692 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,692 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,692 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,692 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,705 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,705 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,705 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,705 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,708 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,708 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,708 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,708 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,708 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,708 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,708 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,708 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,708 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,708 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,708 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,708 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,708 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,708 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,708 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,708 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,708 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,708 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,708 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,708 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,724 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,724 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,724 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,724 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,724 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,724 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,724 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,724 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,724 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,724 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 16:18:12,986 - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-09-16 19:32:26,399 - INFO - CSV file read successfully.
+2025-09-16 19:33:52,936 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\rnn\rnn.py, Line: 199)
+2025-09-16 19:34:37,897 - INFO - Dash is running on http://127.0.0.1:8050/
+
+2025-09-16 19:34:37,998 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:8050
+2025-09-16 19:34:37,998 - INFO - [33mPress CTRL+C to quit[0m
+2025-09-16 19:34:40,904 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,904 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,904 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,904 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,920 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,920 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,920 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,920 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,920 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,936 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,936 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,936 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,936 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,936 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,936 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,953 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,953 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,953 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,953 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,970 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,971 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,977 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,979 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,983 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,986 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,986 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,986 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,986 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:40,986 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:41,002 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:41,005 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:41,008 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:41,011 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:41,015 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:41,018 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:41,018 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:41,018 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:41,027 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:41,028 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:41,032 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:41,035 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:41,039 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:41,044 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:41,050 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:41,052 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:41,052 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:41,061 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:41,061 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 19:34:41,729 - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-09-16 19:50:39,161 - INFO - CSV file read successfully.
+2025-09-16 19:52:05,615 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\rnn\rnn.py, Line: 199)
+2025-09-16 19:52:48,480 - INFO - Dash is running on http://127.0.0.1:8050/
+
+2025-09-16 19:52:48,532 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:8050
+2025-09-16 19:52:48,532 - INFO - [33mPress CTRL+C to quit[0m
+2025-09-16 20:22:07,507 - INFO - CSV file read successfully.
+2025-09-16 20:23:08,876 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\rnn\rnn.py, Line: 199)
+2025-09-16 20:23:51,957 - INFO - Dash is running on http://127.0.0.1:8050/
+
+2025-09-16 20:23:52,004 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:8050
+2025-09-16 20:23:52,004 - INFO - [33mPress CTRL+C to quit[0m
+2025-09-16 20:23:55,436 - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-09-16 20:23:55,473 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,473 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,483 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,485 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,490 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,490 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,490 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,499 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,506 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,508 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,514 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,518 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,522 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,530 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,535 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,535 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,535 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,535 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,547 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,547 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,551 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,555 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,556 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,556 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,556 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,563 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,564 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,564 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,568 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,568 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,568 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,568 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,568 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,578 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,578 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,580 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,581 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,581 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,587 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,587 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,595 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,595 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,595 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,601 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,603 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,611 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,611 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:23:55,611 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 20:24:24,421 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:24] "GET / HTTP/1.1" 200 -
+2025-09-16 20:24:24,812 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:24] "GET /_dash-component-suites/dash/deps/react@18.v3_2_0m1757918647.3.1.min.js HTTP/1.1" 200 -
+2025-09-16 20:24:24,872 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:24] "GET /_dash-component-suites/dash/deps/polyfill@7.v3_2_0m1757918647.12.1.min.js HTTP/1.1" 200 -
+2025-09-16 20:24:24,884 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:24] "GET /_dash-component-suites/dash/deps/prop-types@15.v3_2_0m1757918647.8.1.min.js HTTP/1.1" 200 -
+2025-09-16 20:24:24,933 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:24] "GET /_dash-component-suites/dash/deps/react-dom@18.v3_2_0m1757918647.3.1.min.js HTTP/1.1" 200 -
+2025-09-16 20:24:25,111 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:25] "GET /_dash-component-suites/dash/dash-renderer/build/dash_renderer.v3_2_0m1757918646.min.js HTTP/1.1" 200 -
+2025-09-16 20:24:25,141 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:25] "GET /_dash-component-suites/dash/dcc/dash_core_components-shared.v3_2_0m1757918647.js HTTP/1.1" 200 -
+2025-09-16 20:24:25,277 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:25] "GET /_dash-component-suites/dash/dash_table/bundle.v6_0_4m1757918646.js HTTP/1.1" 200 -
+2025-09-16 20:24:25,292 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:25] "GET /_dash-component-suites/dash/dcc/dash_core_components.v3_2_0m1757918647.js HTTP/1.1" 200 -
+2025-09-16 20:24:25,373 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:25] "GET /_dash-component-suites/dash/html/dash_html_components.v3_0_4m1757918647.min.js HTTP/1.1" 200 -
+2025-09-16 20:24:25,492 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:25] "GET /_dash-layout HTTP/1.1" 200 -
+2025-09-16 20:24:25,497 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:25] "GET /_dash-dependencies HTTP/1.1" 200 -
+2025-09-16 20:24:25,686 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:25] "GET /_favicon.ico?v=3.2.0 HTTP/1.1" 200 -
+2025-09-16 20:24:25,711 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:25] "GET /_dash-component-suites/dash/dcc/async-graph.js HTTP/1.1" 200 -
+2025-09-16 20:24:27,696 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:27] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:24:27,962 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:27] "GET /_dash-component-suites/plotly/package_data/plotly.min.js HTTP/1.1" 200 -
+2025-09-16 20:24:28,789 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:28] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:24:30,254 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:30] "GET / HTTP/1.1" 200 -
+2025-09-16 20:24:30,271 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:30] "GET /_dash-component-suites/dash/deps/polyfill@7.v3_2_0m1757918647.12.1.min.js HTTP/1.1" 200 -
+2025-09-16 20:24:30,506 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:30] "GET /_dash-component-suites/dash/deps/react@18.v3_2_0m1757918647.3.1.min.js HTTP/1.1" 200 -
+2025-09-16 20:24:30,575 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:30] "GET /_dash-component-suites/dash/deps/react-dom@18.v3_2_0m1757918647.3.1.min.js HTTP/1.1" 200 -
+2025-09-16 20:24:30,575 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:30] "GET /_dash-component-suites/dash/deps/prop-types@15.v3_2_0m1757918647.8.1.min.js HTTP/1.1" 200 -
+2025-09-16 20:24:30,581 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:30] "GET /_dash-component-suites/dash/dash-renderer/build/dash_renderer.v3_2_0m1757918646.min.js HTTP/1.1" 200 -
+2025-09-16 20:24:30,588 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:30] "GET /_dash-component-suites/dash/dcc/dash_core_components.v3_2_0m1757918647.js HTTP/1.1" 200 -
+2025-09-16 20:24:30,593 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:30] "GET /_dash-component-suites/dash/dcc/dash_core_components-shared.v3_2_0m1757918647.js HTTP/1.1" 200 -
+2025-09-16 20:24:30,829 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:30] "GET /_dash-component-suites/dash/html/dash_html_components.v3_0_4m1757918647.min.js HTTP/1.1" 200 -
+2025-09-16 20:24:30,892 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:30] "GET /_dash-component-suites/dash/dash_table/bundle.v6_0_4m1757918646.js HTTP/1.1" 200 -
+2025-09-16 20:24:31,257 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:31] "GET /_dash-layout HTTP/1.1" 200 -
+2025-09-16 20:24:31,259 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:31] "GET /_dash-dependencies HTTP/1.1" 200 -
+2025-09-16 20:24:31,283 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:31] "GET /_favicon.ico?v=3.2.0 HTTP/1.1" 200 -
+2025-09-16 20:24:31,821 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:31] "GET /_dash-component-suites/dash/dcc/async-graph.js HTTP/1.1" 200 -
+2025-09-16 20:24:31,868 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:31] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:24:31,868 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:31] "GET /_dash-component-suites/plotly/package_data/plotly.min.js HTTP/1.1" 200 -
+2025-09-16 20:24:35,106 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:35] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:24:37,214 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:37] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:24:39,452 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:39] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:24:40,551 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:40] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:24:41,864 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:41] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:24:42,863 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:42] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:24:44,576 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:44] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:24:46,658 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:46] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:24:48,820 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:48] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:24:50,633 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:50] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:24:52,855 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:52] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:24:55,232 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:55] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:24:57,302 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:57] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:24:58,542 - INFO - 127.0.0.1 - - [16/Sep/2025 20:24:58] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:25:00,608 - INFO - 127.0.0.1 - - [16/Sep/2025 20:25:00] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:25:02,760 - INFO - 127.0.0.1 - - [16/Sep/2025 20:25:02] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:25:04,493 - INFO - 127.0.0.1 - - [16/Sep/2025 20:25:04] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:25:06,556 - INFO - 127.0.0.1 - - [16/Sep/2025 20:25:06] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:25:08,390 - INFO - 127.0.0.1 - - [16/Sep/2025 20:25:08] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:25:10,584 - INFO - 127.0.0.1 - - [16/Sep/2025 20:25:10] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:25:12,236 - INFO - 127.0.0.1 - - [16/Sep/2025 20:25:12] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:25:14,506 - INFO - 127.0.0.1 - - [16/Sep/2025 20:25:14] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:25:16,285 - INFO - 127.0.0.1 - - [16/Sep/2025 20:25:16] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:25:19,013 - INFO - 127.0.0.1 - - [16/Sep/2025 20:25:19] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:25:20,697 - INFO - 127.0.0.1 - - [16/Sep/2025 20:25:20] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:25:22,710 - INFO - 127.0.0.1 - - [16/Sep/2025 20:25:22] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:25:24,342 - INFO - 127.0.0.1 - - [16/Sep/2025 20:25:24] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:25:26,702 - INFO - 127.0.0.1 - - [16/Sep/2025 20:25:26] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:25:28,717 - INFO - 127.0.0.1 - - [16/Sep/2025 20:25:28] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:25:32,617 - INFO - 127.0.0.1 - - [16/Sep/2025 20:25:32] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:25:34,455 - INFO - 127.0.0.1 - - [16/Sep/2025 20:25:34] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:25:35,361 - INFO - 127.0.0.1 - - [16/Sep/2025 20:25:35] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:25:38,022 - INFO - 127.0.0.1 - - [16/Sep/2025 20:25:38] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:25:40,841 - INFO - 127.0.0.1 - - [16/Sep/2025 20:25:40] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:25:43,925 - INFO - 127.0.0.1 - - [16/Sep/2025 20:25:43] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:25:46,703 - INFO - 127.0.0.1 - - [16/Sep/2025 20:25:46] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 20:31:04,595 - INFO - CSV file read successfully.
+2025-09-16 20:32:40,398 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\convolutional\base_conv.py, Line: 113)
+2025-09-16 20:44:57,443 - INFO - CSV file read successfully.
+2025-09-16 20:52:17,640 - INFO - CSV file read successfully.
+2025-09-16 21:12:26,864 - INFO - CSV file read successfully.
+2025-09-16 21:17:15,920 - INFO - CSV file read successfully.
+2025-09-16 21:24:56,871 - INFO - CSV file read successfully.
+2025-09-16 21:28:06,981 - INFO - CSV file read successfully.
+2025-09-16 21:48:18,977 - INFO - CSV file read successfully.
+2025-09-16 21:49:56,721 - INFO - CSV file read successfully.
+2025-09-16 22:01:19,089 - INFO - CSV file read successfully.
+2025-09-16 22:07:50,799 - INFO - CSV file read successfully.
+2025-09-16 22:08:31,965 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\convolutional\base_conv.py, Line: 113)
+2025-09-16 22:17:26,751 - INFO - CSV file read successfully.
+2025-09-16 22:18:00,763 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\convolutional\base_conv.py, Line: 113)
+2025-09-16 22:20:13,008 - INFO - CSV file read successfully.
+2025-09-16 22:20:49,615 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\convolutional\base_conv.py, Line: 113)
+2025-09-16 22:21:06,050 - WARNING - You are saving your model as an HDF5 file via `model.save()` or `keras.saving.save_model(model)`. This file format is considered legacy. We recommend using instead the native Keras format, e.g. `model.save('my_model.keras')` or `keras.saving.save_model(model, 'my_model.keras')`. 
+2025-09-16 22:21:18,334 - INFO - CSV file read successfully.
+2025-09-16 22:21:55,941 - WARNING - UserWarning: Do not pass an `input_shape`/`input_dim` argument to a layer. When using Sequential models, prefer using an `Input(shape)` object as the first layer in the model instead. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\layers\rnn\rnn.py, Line: 199)
+2025-09-16 22:22:20,662 - INFO - Dash is running on http://127.0.0.1:8050/
+
+2025-09-16 22:22:20,704 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:8050
+2025-09-16 22:22:20,704 - INFO - [33mPress CTRL+C to quit[0m
+2025-09-16 22:22:21,694 - INFO - 127.0.0.1 - - [16/Sep/2025 22:22:21] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 22:22:23,773 - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-09-16 22:22:23,773 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,773 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,773 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,773 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,789 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,789 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,789 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,789 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,789 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,789 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,789 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,789 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,789 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,789 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,789 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,789 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,789 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,789 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,789 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,789 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,789 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,789 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,789 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,804 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,805 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,810 - INFO - 127.0.0.1 - - [16/Sep/2025 22:22:23] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 22:22:23,811 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,811 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,811 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,811 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,811 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,811 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,811 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,811 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,811 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,811 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,811 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,811 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,811 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,825 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,826 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,826 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,826 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,826 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,826 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,826 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,826 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,826 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:23,826 - WARNING - UserWarning: X has feature names, but StandardScaler was fitted without feature names (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\sklearn\utils\validation.py, Line: 2742)
+2025-09-16 22:22:25,941 - INFO - 127.0.0.1 - - [16/Sep/2025 22:22:25] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 22:22:29,966 - INFO - 127.0.0.1 - - [16/Sep/2025 22:22:29] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 22:22:34,678 - INFO - 127.0.0.1 - - [16/Sep/2025 22:22:34] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 22:22:37,023 - INFO - 127.0.0.1 - - [16/Sep/2025 22:22:37] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 22:22:39,732 - INFO - 127.0.0.1 - - [16/Sep/2025 22:22:39] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 22:22:44,093 - INFO - 127.0.0.1 - - [16/Sep/2025 22:22:44] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 22:22:47,808 - INFO - 127.0.0.1 - - [16/Sep/2025 22:22:47] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 22:22:50,079 - INFO - 127.0.0.1 - - [16/Sep/2025 22:22:50] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 22:22:52,712 - INFO - 127.0.0.1 - - [16/Sep/2025 22:22:52] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-16 22:22:57,147 - INFO - 127.0.0.1 - - [16/Sep/2025 22:22:57] "POST /_dash-update-component HTTP/1.1" 200 -

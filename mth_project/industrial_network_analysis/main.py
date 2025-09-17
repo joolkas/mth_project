@@ -1,6 +1,9 @@
-from data_preprocessing import Dataset
 from data_utils import *
 from initial_model import *
+from online_forecasting import *
+from dash_plotter import DashRealTimePlotter
+import numpy as np
+import time
 
 import warnings
 import logging
@@ -21,70 +24,21 @@ def warning_handler_func(message, category, filename, lineno, file=None, line=No
 warnings.showwarning = warning_handler_func
 
 ### READ DATA
-print("Reading data...")
-device_name = "SW-SUPV-243"
-df = Dataset(f'C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\Data082025\\{device_name}.csv')
+df_removed_nans_forecasting, df_removed_nans_classification = get_data()
 
-### search criteria
+print(f"Numeric columns: {df_removed_nans_forecasting.shape}")
+print(f"Status columns: {df_removed_nans_classification.shape}")
 
-def get_column_names_exclude(df, search_keyword, exclude_keyword):
-    df_column_names = df.get_column_names(search_keyword)
-    df_column_names_excluded = []
-
-    for col in df_column_names:
-        if exclude_keyword.lower() not in col.lower():
-            df_column_names_excluded.append(col)
-
-    return df_column_names_excluded
-
-# names for STATUSES
-statuses = ': operational status'
-statuses_exclude = 'Unused'
-
-# names for OTHER NUMERIC PARAMETERS
-icmp_params = 'ICMP'
-temperature = 'temperature'
-cpu = 'cpu'
-memory = 'used memory'
-
-numeric_exclude = "status"
-
-# names for traffic on ports - BITS SENT/RECEIVED
-bits = "bits"
-bits_exclude = "unused"
-
-df_numerics = get_column_names_exclude(df, icmp_params, numeric_exclude)\
-     + get_column_names_exclude(df, temperature, numeric_exclude)\
-     + get_column_names_exclude(df, cpu, numeric_exclude)\
-     + get_column_names_exclude(df, memory, numeric_exclude)\
-     + get_column_names_exclude(df, bits, bits_exclude)
-
-df_statuses = get_column_names_exclude(df, statuses, statuses_exclude)
-
-print("Getting values...")
-df_numeric_values = df.get_column_values(df_numerics)
-df_status_values = df.get_column_values(df_statuses)
-
-print(f"Numeric columns: {df_numeric_values.shape}")
-print(f"Status columns: {df_status_values.shape}")
-
-# limit amount of values, use numeric for forecasting
-df_all_program = pd.concat([df_numeric_values, df_status_values], axis=1)
-df_forecasting = df_numeric_values.iloc[8000:]
-
-# PREPROCESSING
-print("Preprocessing data...")
-
-df_removed_outliers = remove_outliers(df_forecasting, 3)
-df_removed_nans = df_removed_outliers.dropna(axis=1, how="all")
+# differenciate data for forecasting
+df_differenced = df_removed_nans_forecasting.diff().dropna()
 
 # Split data for initial training and online forecasting
 
 initial_idx = 24 * 60 # first 24 hours for initial training
-df_initial = df_removed_nans.iloc[:initial_idx].copy()
-df_online = df_removed_nans.iloc[initial_idx:].copy()
+df_initial = df_differenced.iloc[:initial_idx].copy()
+df_online = df_differenced.iloc[initial_idx:].copy()
 
-# Create online model
+### create initial model
 
 context_length = 60
 model = create_online_multivariate_model(
@@ -98,13 +52,14 @@ model = create_online_multivariate_model(
 )
 
 # split data for initial model training
+
 split_ratio = 0.8
 
 df_train = df_initial.iloc[:int(split_ratio * len(df_initial))]
 df_test = df_initial.iloc[int(split_ratio * len(df_initial)):]
 
-X_train, y_train, scalers = split_data_for_initial_model(df_train)
-X_test, y_test, scalers = split_data_for_initial_model(df_test)
+X_train, y_train, scalers_train = split_data_for_initial_model(df_train)
+X_test, y_test, scalers_test = split_data_for_initial_model(df_test)
 
 epochs = 5
 
@@ -112,12 +67,41 @@ print("Training initial model...")
 
 history, initial_model = train_initial_model(model, X_train, y_train, epochs = epochs)
 
-# test model
+# test initial model
 test_samples = 60
 
-df_actuals, df_predictions = test_initial_model(model, df_initial, X_test, y_test, scalers)
+df_actuals, df_predictions = test_initial_model(model, df_initial, X_test, y_test, scalers_test, df_removed_nans_forecasting)
 calculate_metrics(df_initial, df_actuals, df_predictions)
-plot_results(df_actuals, df_predictions)
+#plot_results(df_actuals, df_predictions)
 
 print()
+
+### online forecasting with classification
+
+prediction_horizon = 6
+plotter = DashRealTimePlotter(update_interval = 2000, prediction_horizon = prediction_horizon, port = 8050)
+
+# Start Dash server
+print("Starting Dash server...")
+server_thread = plotter.start_server(debug=False, threaded=True)
+
+print("Open http://localhost:8050 in your browser to view real-time plots")
+print("Waiting 3 seconds for server to initialize...")
+time.sleep(3)
+
+variables = df_initial.columns
+variables = list(variables)
+
+# Initialize the system
+forecasting_system = OnlineForecastingSystem(models_dir="C:\ThesisWork\offical_approach\mth_project\mth_project\industrial_network_analysis\classification_model")
+
+# Run predictions
+results = forecasting_system.rolling_buffer_prediction_with_dash(
+    initial_model, df_online, scalers_train, context_length,
+    df_removed_nans_forecasting, df_removed_nans_classification, 
+    plotter, prediction_horizon=6
+)
+dash_stats = plotter.get_statistics()
+
+
 

@@ -8,20 +8,24 @@ import sys
 import os
 import pickle
 from tensorflow.keras.models import load_model
+
 from dash_plotter import DashRealTimePlotter
+
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 import pandas as pd
 import matplotlib.pyplot as plt
-from classification_model_improved import *
+
 # Try to import the improved classification model function
 try:
     from classification_model_improved import create_multihot_encoding
-except ImportError as e:
-    print(f"Warning: classification_model_improved module not found: {e} Classification features may not work.")
+except ImportError:
+    print("Warning: classification_model_improved module not found. Classification features may not work.")
     create_multihot_encoding = None
+
 # Global model storage to avoid repeated loading
 _classification_model = None
 _preprocessing_data = None
+
 class OnlineForecastingSystem:
     """
     Enhanced online forecasting system with proper model management,
@@ -88,6 +92,7 @@ class OnlineForecastingSystem:
         except Exception as e:
             print(f"Error loading classification model: {e}")
             return False
+
     def predict_recursive_steps(self, initial_model, initial_context, variables, prediction_horizon=6, context_length=60):
         """
         Predict multiple steps ahead using recursive feedback.
@@ -124,6 +129,7 @@ class OnlineForecastingSystem:
                 context_reshaped = context.reshape(1, context_length, len(variables))
                 step_prediction = initial_model.predict(context_reshaped, verbose=0)
                 predictions.append(step_prediction.flatten())
+
                 # Recursive feedback mechanism
                 # Each prediction becomes input for the next prediction
                 new_row = context[-1].copy()  # Start with last row of context
@@ -131,13 +137,16 @@ class OnlineForecastingSystem:
                 # Update values with predictions (true feedback loop)
                 for i in range(len(variables)):
                     new_row[i] = step_prediction[0, i]
+
                 # Slide context window - remove oldest, add new prediction
                 context = np.vstack((context[1:], new_row))
+
         except Exception as e:
             print(f"Error during recursive prediction at step {step}: {e}")
             raise
             
         return predictions
+
     def inverse_difference(self, predictions_arrays, last_actual_values):
         """
         Convert differenced predictions back to actual values.
@@ -172,6 +181,7 @@ class OnlineForecastingSystem:
                 actual_predictions.append(current_values.copy())
         
         return actual_predictions
+
     def _perform_classification(self, step_predictions_actual, current_time_idx, 
                                df_removed_nans_classification, forecasting_variables):
         """
@@ -202,11 +212,13 @@ class OnlineForecastingSystem:
                 else:
                     # Truncate to required size
                     step_predictions_actual = step_predictions_actual[:window_size]
+
             # Create DataFrame with predictions
             temp_forecasting_df = pd.DataFrame(
                 step_predictions_actual, 
                 columns=forecasting_variables
             )
+
             # Get TEMPORALLY ALIGNED status data
             # Use status data that corresponds to the SAME time period as predictions
             status_start_idx = max(0, current_time_idx - window_size)
@@ -218,6 +230,7 @@ class OnlineForecastingSystem:
                 status_start_idx = max(0, status_end_idx - window_size)
             
             status_window = df_removed_nans_classification.iloc[status_start_idx:status_end_idx].copy()
+
             # Ensure same number of rows
             if len(status_window) != len(temp_forecasting_df):
                 if len(status_window) < len(temp_forecasting_df):
@@ -228,6 +241,7 @@ class OnlineForecastingSystem:
                 else:
                     # Truncate status window
                     status_window = status_window.iloc[-len(temp_forecasting_df):].copy()
+
             # Merge predictions with status data
             # Remove timestamp column from status if it exists
             status_cols_to_use = [col for col in status_window.columns if col != 'timestamp']
@@ -235,208 +249,231 @@ class OnlineForecastingSystem:
                 temp_forecasting_df.reset_index(drop=True),
                 status_window[status_cols_to_use].reset_index(drop=True)
             ], axis=1)
+
             # Apply multi-hot encoding
             df_encoded, _ = create_multihot_encoding(combined_df)
+
             # Extract feature columns and reshape
             feature_columns = self.preprocessing_data['feature_columns']
             classification_input = df_encoded[feature_columns].values
             classification_input = classification_input.reshape(1, window_size, len(feature_columns))
+
             # Make prediction
             prediction_probs = self.classification_model.predict(classification_input, verbose=0)
             prediction_idx = prediction_probs.argmax(axis=1)[0]
             prediction_confidence = prediction_probs[0][prediction_idx]
+
             # Decode prediction
             class_names = self.preprocessing_data['class_names']
             prediction_name = class_names[prediction_idx]
+
             return f"{prediction_name} (confidence: {prediction_confidence:.2%})"
             
         except Exception as e:
             print(f"Classification error: {e}")
             return None
-    
-    def rolling_buffer_prediction_with_dash(self, initial_model, df_online, scalers_train,
-                                        context_length, df_removed_nans_forecasting, df_removed_nans_classification, 
-                                        dash_plotter, prediction_horizon=6, real_time_delay=0):
-        # Input validation
-        if len(df_online) < context_length + prediction_horizon:
-            raise ValueError(f"Insufficient data: need at least {context_length + prediction_horizon} rows")
+        
+        def rolling_buffer_prediction_with_dash(self, initial_model, df_online, scalers_train,
+                                            context_length, df_removed_nans_forecasting, df_removed_nans_classification, 
+                                            dash_plotter, prediction_horizon=6, real_time_delay=0):
+
+            # Input validation
+            if len(df_online) < context_length + prediction_horizon:
+                raise ValueError(f"Insufficient data: need at least {context_length + prediction_horizon} rows")
+                
+            # Initialize classification model if not already done
+            if not self.is_initialized:
+                classification_success = self.initialize_classification_model()
+                if not classification_success:
+                    print("Warning: Classification features disabled due to model loading failure")
             
-        # Initialize classification model if not already done
-        if not self.is_initialized:
-            classification_success = self.initialize_classification_model()
-            if not classification_success:
-                print("Warning: Classification features disabled due to model loading failure")
-        
-        # Prepare data
-        df_online_scaled = df_online.copy()
-        forecasting_variables = df_online.columns.tolist()
-        
-        # Scale the online data
-        for var in df_online.columns:
-            if var in scalers_train:
-                scaler = scalers_train[var]
-                df_online_scaled[var] = scaler.transform(df_online[[var]])
-            else:
-                print(f"Warning: No scaler found for variable {var}")
-        
-        # Initialize result containers
-        final_predictions = []
-        final_actuals = []
-        final_timestamps = []
-        predictions_actuals = []
-        actuals_actuals = []
-        
-        total_steps = len(df_online_scaled) - context_length - prediction_horizon + 1
-        if dash_plotter is not None:
-            dash_plotter.set_total_steps(total_steps)
-        # Initialize context window
-        current_context = df_online_scaled[:context_length].copy().values
-        print(f"Starting rolling prediction for {total_steps} steps...")
-        
-        # Main prediction loop
-        for t in range(context_length, len(df_online_scaled) - prediction_horizon + 1):
-            current_step = t - context_length
+            # Prepare data
+            df_online_scaled = df_online.copy()
+            forecasting_variables = df_online.columns.tolist()
             
-            try:
-                # 1. Make predictions for next 'prediction_horizon' steps
-                step_predictions = self.predict_recursive_steps(
-                    initial_model, current_context, 
-                    variables=forecasting_variables, 
-                    prediction_horizon=prediction_horizon,
-                    context_length=context_length
-                )
-                
-                # 2. Convert all predictions to original scale
-                step_predictions_original = []
-                for pred in step_predictions:
-                    pred_original = []
-                    for i, var in enumerate(forecasting_variables):
-                        # Handle status variables specially
-                        if 'status' in var.lower():
-                            pred[i] = np.round(pred[i])
-                        
-                        if var in scalers_train:
-                            scaler = scalers_train[var]
-                            try:
-                                original_val = scaler.inverse_transform([[pred[i]]])[0, 0]
-                                pred_original.append(original_val)
-                            except Exception as e:
-                                print(f"Warning: Error inverse transforming {var}: {e}")
-                                pred_original.append(pred[i])  # Use scaled value as fallback
-                        else:
-                            pred_original.append(pred[i])
-                    step_predictions_original.append(pred_original)
-                
-                # 3. Get actual values for all predicted steps
-                actual_values = []
-                for step in range(prediction_horizon):
-                    if t + step < len(df_online_scaled):
-                        actual_values.append(df_online_scaled.iloc[t + step].values)
-                # Convert actuals to original scale
-                actuals_original = []
-                for actual in actual_values:
-                    actual_original = []
-                    for i, var in enumerate(forecasting_variables):
-                        if var in scalers_train:
-                            scaler = scalers_train[var]
-                            try:
-                                original_val = scaler.inverse_transform([[actual[i]]])[0, 0]
-                                actual_original.append(original_val)
-                            except Exception as e:
-                                print(f"Warning: Error inverse transforming actual {var}: {e}")
-                                actual_original.append(actual[i])
-                        else:
-                            actual_original.append(actual[i])
-                    actuals_original.append(actual_original)
-                
-                # 4. BUFFER STRATEGY: Only keep the FIRST prediction (t+1)
-                if len(step_predictions_original) > 0 and len(actuals_original) > 0:
-                    final_predictions.append(step_predictions_original[0])  # only t+1
-                    final_actuals.append(actuals_original[0])
-                    final_timestamps.append(df_online.index[t])
-                # 5. Inverse differencing with proper temporal alignment
-                # Use the corresponding row from the original forecasting data
-                forecast_idx = min(t - context_length, len(df_removed_nans_forecasting) - 1)
-                if forecast_idx >= 0:
-                    last_actual_values = df_removed_nans_forecasting.iloc[forecast_idx][forecasting_variables].values
+            # Scale the online data
+            for var in df_online.columns:
+                if var in scalers_train:
+                    scaler = scalers_train[var]
+                    df_online_scaled[var] = scaler.transform(df_online[[var]])
                 else:
-                    # Fallback to mean values if index is out of bounds
-                    last_actual_values = df_removed_nans_forecasting[forecasting_variables].mean().values
-                step_predictions_actual = self.inverse_difference(
-                    step_predictions_original, 
-                    last_actual_values
-                )
-                actuals_actual = self.inverse_difference(
-                    actuals_original, 
-                    last_actual_values
-                )
-                # 6. CLASSIFICATION with proper temporal alignment
-                if self.is_initialized and create_multihot_encoding is not None:
-                    try:
-                        classification_result = self._perform_classification(
-                            step_predictions_actual, t, df_removed_nans_classification,
-                            forecasting_variables
-                        )
-                        if classification_result:
-                            print(f"Network Status: {classification_result}")
-                    except Exception as e:
-                        print(f"Warning: Classification failed at step {current_step}: {e}")
-                # Store actual predictions for plotting
-                if len(step_predictions_actual) > 0 and len(actuals_actual) > 0:
-                    predictions_actuals.append(step_predictions_actual[0])  # Only t+1
-                    actuals_actuals.append(actuals_actual[0])              # Only t+1
-                # 7. Send data to Dash plotter
-                if dash_plotter is not None and len(step_predictions_actual) > 0:
-                    current_timestamp = df_online.index[t]
-                    dash_plotter.add_buffer_predictions(
-                        predictions=step_predictions_actual, 
-                        actuals=actuals_actual, 
-                        current_step=current_step,
-                        current_datetime=current_timestamp,
-                        variable_names=forecasting_variables
-                    )
-                
-                # 8. Update context for next iteration
-                new_row = df_online_scaled.iloc[t].values.copy()
-                current_context = np.vstack((current_context[1:], new_row))
-                
-                # Progress reporting
-                if current_step % 50 == 0 or current_step < 5:
-                    progress = (current_step * 100 / total_steps)
-                    print(f"Step {current_step:3d}/{total_steps} ({progress:5.1f}%)")
-            except Exception as e:
-                print(f"Error at step {current_step}: {e}")
-                # Continue with next iteration rather than failing completely
-                continue
-        print("=" * 60)
-        print("Rolling prediction completed!")
-        # Create result DataFrames
-        try:
-            predictions_df = pd.DataFrame(
-                data=final_predictions,
-                columns=forecasting_variables,
-                index=pd.Index(range(context_length, context_length + len(final_predictions)), name='time_index')
-            )
-            actuals_df = pd.DataFrame(
-                data=final_actuals,
-                columns=forecasting_variables,
-                index=pd.Index(range(context_length, context_length + len(final_actuals)), name='time_index')
-            )
-            predictions_actuals_df = pd.DataFrame(
-                data=predictions_actuals,
-                columns=forecasting_variables,
-                index=pd.Index(range(context_length, context_length + len(predictions_actuals)), name='time_index')
-            )
-            actuals_actuals_df = pd.DataFrame(
-                data=actuals_actuals,
-                columns=forecasting_variables,
-                index=pd.Index(range(context_length, context_length + len(actuals_actuals)), name='time_index')
-            )
-            return predictions_df, actuals_df, predictions_actuals_df, actuals_actuals_df
+                    print(f"Warning: No scaler found for variable {var}")
             
-        except Exception as e:
-            print(f"Error creating result DataFrames: {e}")
-            return None, None, None, None
+            # Initialize result containers
+            final_predictions = []
+            final_actuals = []
+            final_timestamps = []
+            predictions_actuals = []
+            actuals_actuals = []
+            
+            total_steps = len(df_online_scaled) - context_length - prediction_horizon + 1
+
+            if dash_plotter is not None:
+                dash_plotter.set_total_steps(total_steps)
+
+            # Initialize context window
+            current_context = df_online_scaled[:context_length].copy().values
+
+            print(f"Starting rolling prediction for {total_steps} steps...")
+            
+            # Main prediction loop
+            for t in range(context_length, len(df_online_scaled) - prediction_horizon + 1):
+                current_step = t - context_length
+                
+                try:
+                    # 1. Make predictions for next 'prediction_horizon' steps
+                    step_predictions = self.predict_recursive_steps(
+                        initial_model, current_context, 
+                        variables=forecasting_variables, 
+                        prediction_horizon=prediction_horizon,
+                        context_length=context_length
+                    )
+                    
+                    # 2. Convert all predictions to original scale
+                    step_predictions_original = []
+                    for pred in step_predictions:
+                        pred_original = []
+                        for i, var in enumerate(forecasting_variables):
+                            # Handle status variables specially
+                            if 'status' in var.lower():
+                                pred[i] = np.round(pred[i])
+                            
+                            if var in scalers_train:
+                                scaler = scalers_train[var]
+                                try:
+                                    original_val = scaler.inverse_transform([[pred[i]]])[0, 0]
+                                    pred_original.append(original_val)
+                                except Exception as e:
+                                    print(f"Warning: Error inverse transforming {var}: {e}")
+                                    pred_original.append(pred[i])  # Use scaled value as fallback
+                            else:
+                                pred_original.append(pred[i])
+                        step_predictions_original.append(pred_original)
+                    
+                    # 3. Get actual values for all predicted steps
+                    actual_values = []
+                    for step in range(prediction_horizon):
+                        if t + step < len(df_online_scaled):
+                            actual_values.append(df_online_scaled.iloc[t + step].values)
+
+                    # Convert actuals to original scale
+                    actuals_original = []
+                    for actual in actual_values:
+                        actual_original = []
+                        for i, var in enumerate(forecasting_variables):
+                            if var in scalers_train:
+                                scaler = scalers_train[var]
+                                try:
+                                    original_val = scaler.inverse_transform([[actual[i]]])[0, 0]
+                                    actual_original.append(original_val)
+                                except Exception as e:
+                                    print(f"Warning: Error inverse transforming actual {var}: {e}")
+                                    actual_original.append(actual[i])
+                            else:
+                                actual_original.append(actual[i])
+                        actuals_original.append(actual_original)
+                    
+                    # 4. BUFFER STRATEGY: Only keep the FIRST prediction (t+1)
+                    if len(step_predictions_original) > 0 and len(actuals_original) > 0:
+                        final_predictions.append(step_predictions_original[0])  # only t+1
+                        final_actuals.append(actuals_original[0])
+                        final_timestamps.append(df_online.index[t])
+
+                    # 5. Inverse differencing with proper temporal alignment
+                    # Use the corresponding row from the original forecasting data
+                    forecast_idx = min(t - context_length, len(df_removed_nans_forecasting) - 1)
+                    if forecast_idx >= 0:
+                        last_actual_values = df_removed_nans_forecasting.iloc[forecast_idx][forecasting_variables].values
+                    else:
+                        # Fallback to mean values if index is out of bounds
+                        last_actual_values = df_removed_nans_forecasting[forecasting_variables].mean().values
+
+                    step_predictions_actual = self.inverse_difference(
+                        step_predictions_original, 
+                        last_actual_values
+                    )
+
+                    actuals_actual = self.inverse_difference(
+                        actuals_original, 
+                        last_actual_values
+                    )
+
+                    # 6. CLASSIFICATION with proper temporal alignment
+                    if self.is_initialized and create_multihot_encoding is not None:
+                        try:
+                            classification_result = self._perform_classification(
+                                step_predictions_actual, t, df_removed_nans_classification,
+                                forecasting_variables
+                            )
+                            if classification_result:
+                                print(f"Network Status: {classification_result}")
+                        except Exception as e:
+                            print(f"Warning: Classification failed at step {current_step}: {e}")
+
+                    # Store actual predictions for plotting
+                    if len(step_predictions_actual) > 0 and len(actuals_actual) > 0:
+                        predictions_actuals.append(step_predictions_actual[0])  # Only t+1
+                        actuals_actuals.append(actuals_actual[0])              # Only t+1
+
+                    # 7. Send data to Dash plotter
+                    if dash_plotter is not None and len(step_predictions_actual) > 0:
+                        current_timestamp = df_online.index[t]
+                        dash_plotter.add_buffer_predictions(
+                            predictions=step_predictions_actual, 
+                            actuals=actuals_actual, 
+                            current_step=current_step,
+                            current_datetime=current_timestamp,
+                            variable_names=forecasting_variables
+                        )
+                    
+                    # 8. Update context for next iteration
+                    new_row = df_online_scaled.iloc[t].values.copy()
+                    current_context = np.vstack((current_context[1:], new_row))
+                    
+                    # Progress reporting
+                    if current_step % 50 == 0 or current_step < 5:
+                        progress = (current_step * 100 / total_steps)
+                        print(f"Step {current_step:3d}/{total_steps} ({progress:5.1f}%)")
+
+                except Exception as e:
+                    print(f"Error at step {current_step}: {e}")
+                    # Continue with next iteration rather than failing completely
+                    continue
+
+            print("=" * 60)
+            print("Rolling prediction completed!")
+
+            # Create result DataFrames
+            try:
+                predictions_df = pd.DataFrame(
+                    data=final_predictions,
+                    columns=forecasting_variables,
+                    index=pd.Index(range(context_length, context_length + len(final_predictions)), name='time_index')
+                )
+
+                actuals_df = pd.DataFrame(
+                    data=final_actuals,
+                    columns=forecasting_variables,
+                    index=pd.Index(range(context_length, context_length + len(final_actuals)), name='time_index')
+                )
+
+                predictions_actuals_df = pd.DataFrame(
+                    data=predictions_actuals,
+                    columns=forecasting_variables,
+                    index=pd.Index(range(context_length, context_length + len(predictions_actuals)), name='time_index')
+                )
+
+                actuals_actuals_df = pd.DataFrame(
+                    data=actuals_actuals,
+                    columns=forecasting_variables,
+                    index=pd.Index(range(context_length, context_length + len(actuals_actuals)), name='time_index')
+                )
+
+                return predictions_df, actuals_df, predictions_actuals_df, actuals_actuals_df
+                
+            except Exception as e:
+                print(f"Error creating result DataFrames: {e}")
+                return None, None, None, None
 
 
 # Convenience functions for backward compatibility
@@ -444,21 +481,24 @@ def predict_recursive_steps(initial_model, initial_context, variables, predictio
     """Backward compatibility wrapper"""
     system = OnlineForecastingSystem()
     return system.predict_recursive_steps(initial_model, initial_context, variables, prediction_horizon, context_length)
+
 def inverse_difference(predictions_arrays, last_actual_values):
     """Backward compatibility wrapper"""
     system = OnlineForecastingSystem()
     return system.inverse_difference(predictions_arrays, last_actual_values)
-# def rolling_buffer_prediction_with_dash(initial_model, df_online, scalers_train,
-#                                         context_length, df_removed_nans_forecasting, df_removed_nans_classification, 
-#                                         dash_plotter, classification_model_path=None, prediction_horizon=6, real_time_delay=0):
-#     """Backward compatibility wrapper with improved functionality"""
-#     if classification_model_path is None:
-#         system = OnlineForecastingSystem()
-#     else:
-#         system = OnlineForecastingSystem(models_dir=classification_model_path)
+
+def rolling_buffer_prediction_with_dash(initial_model, df_online, scalers_train,
+                                        context_length, df_removed_nans_forecasting, df_removed_nans_classification, 
+                                        dash_plotter, classification_model_path=None, prediction_horizon=6, real_time_delay=0):
+    """Backward compatibility wrapper with improved functionality"""
+    if classification_model_path is None:
+        system = OnlineForecastingSystem()
+    else:
+        system = OnlineForecastingSystem(models_dir=classification_model_path)
     
-#     return system.rolling_buffer_prediction_with_dash(
-#         initial_model, df_online, scalers_train, context_length,
-#         df_removed_nans_forecasting, df_removed_nans_classification, 
-#         dash_plotter, prediction_horizon, real_time_delay
-#     )
+    return system.rolling_buffer_prediction_with_dash(
+        initial_model, df_online, scalers_train, context_length,
+        df_removed_nans_forecasting, df_removed_nans_classification, 
+        dash_plotter, prediction_horizon, real_time_delay
+    )
+
