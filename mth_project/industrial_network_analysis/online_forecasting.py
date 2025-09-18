@@ -8,457 +8,386 @@ import sys
 import os
 import pickle
 from tensorflow.keras.models import load_model
-from dash_plotter import DashRealTimePlotter
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 import pandas as pd
 import matplotlib.pyplot as plt
-from classification_model_improved import *
-# Try to import the improved classification model function
-try:
-    from classification_model_improved import create_multihot_encoding
-except ImportError as e:
-    print(f"Warning: classification_model_improved module not found: {e} Classification features may not work.")
-    create_multihot_encoding = None
-# Global model storage to avoid repeated loading
+
+
+# Global variables for classification model (loaded once)
 _classification_model = None
 _preprocessing_data = None
-class OnlineForecastingSystem:
-    """
-    Enhanced online forecasting system with proper model management,
-    error handling, and temporal consistency.
-    """
+
+def load_classification_model(models_dir=None):
+    global _classification_model, _preprocessing_data
     
-    def __init__(self, models_dir=None):
-        """
-        Initialize the forecasting system with model paths.
+    # Return cached model if already loaded
+    if _classification_model is not None and _preprocessing_data is not None:
+        print("Using cached classification model...")
+        return (
+            _classification_model,
+            _preprocessing_data['label_to_index'],
+            _preprocessing_data['index_to_label'],
+            _preprocessing_data['label_to_name']
+        )
+    
+    # Set default models directory
+    if models_dir is None:
+        models_dir = r"C:\ThesisWork\offical_approach\mth_project\mth_project\industrial_network_analysis\classification_model"
+    
+    try:
+        print(f"Loading classification model from: {models_dir}")
         
-        Args:
-            models_dir: Directory containing trained models. If None, uses default path.
-        """
-        if models_dir is None:
-            # Use relative path or allow configuration
-            self.models_dir = os.path.join(
-                os.path.dirname(__file__), 
-                "..", "..", "experimenting", "03_Forecasting_and_classification_approach", "models"
-            )
+        # Try to load improved model first, fallback to original
+        model_candidates = [
+            "improved_cnn_classifier.h5",
+            "cnn_classifier.h5",
+            "final_model.h5",
+            "best_model.h5"
+        ]
+        
+        model_path = None
+        for model_name in model_candidates:
+            candidate_path = os.path.join(models_dir, model_name)
+            if os.path.exists(candidate_path):
+                model_path = candidate_path
+                print(f"Found model: {model_name}")
+                break
+        
+        if model_path is None:
+            raise FileNotFoundError(f"No classification model found in {models_dir}")
+        
+        # Load the model (using keras.models.load_model to avoid naming conflict)
+        _classification_model = keras.models.load_model(model_path)
+        print(f"Model loaded successfully from: {model_path}")
+        
+        # Try to load improved preprocessing first, fallback to original
+        preprocessing_candidates = [
+            "improved_preprocessing_objects.pkl",
+            "preprocessing_objects.pkl",
+            "encoders.pkl"
+        ]
+        
+        preprocessing_path = None
+        for preprocessing_name in preprocessing_candidates:
+            candidate_path = os.path.join(models_dir, preprocessing_name)
+            if os.path.exists(candidate_path):
+                preprocessing_path = candidate_path
+                print(f"Found preprocessing: {preprocessing_name}")
+                break
+        
+        if preprocessing_path is None:
+            raise FileNotFoundError(f"No preprocessing objects found in {models_dir}")
+        
+        # Load preprocessing objects
+        with open(preprocessing_path, 'rb') as f:
+            _preprocessing_data = pickle.load(f)
+        print(f"Preprocessing objects loaded from: {preprocessing_path}")
+        
+        # Validate required keys
+        required_keys = ['label_to_index', 'label_to_name']
+        for key in required_keys:
+            if key not in _preprocessing_data:
+                raise KeyError(f"Missing required key '{key}' in preprocessing data")
+        
+        # Create index_to_label if not present
+        if 'index_to_label' not in _preprocessing_data:
+            _preprocessing_data['index_to_label'] = {
+                v: k for k, v in _preprocessing_data['label_to_index'].items()
+            }
+            print("✓ Created index_to_label mapping")
+        
+        # print("✓ Classification model loaded successfully!")
+        # print(f"  - Model input shape: {_classification_model.input_shape}")
+        # print(f"  - Number of classes: {len(_preprocessing_data['label_to_index'])}")
+        # print(f"  - Available classes: {list(_preprocessing_data['label_to_name'].keys())}")
+        
+        return (
+            _classification_model,
+            _preprocessing_data['label_to_index'],
+            _preprocessing_data['index_to_label'],
+            _preprocessing_data['label_to_name']
+        )
+        
+    except FileNotFoundError as e:
+        print(f"File not found error: {e}")
+        raise
+    except Exception as e:
+        print(f"Error loading classification model: {e}")
+        print(f"   Models directory: {models_dir}")
+        print(f"   Directory exists: {os.path.exists(models_dir)}")
+        if os.path.exists(models_dir):
+            print(f"   Directory contents: {os.listdir(models_dir)}")
+        raise
+
+def get_classification_model_info():
+    global _classification_model, _preprocessing_data
+    
+    if _classification_model is None or _preprocessing_data is None:
+        return None
+    
+    return {
+        'model_loaded': True,
+        'input_shape': _classification_model.input_shape,
+        'output_shape': _classification_model.output_shape,
+        'num_classes': len(_preprocessing_data['label_to_index']),
+        'class_names': list(_preprocessing_data['label_to_name'].keys()),
+        'model_summary': _classification_model.summary
+    }
+
+def perform_classification(forecasted_actual, removed_nans_classification, t, classification_model):
+    # forecasted_actual shape: (1, timesteps, forecasting_features)
+    # We want: (timesteps, forecasting_features + classification_features)
+    
+    timesteps = forecasted_actual.shape[1]  # Should be 6
+    forecasting_features = forecasted_actual.shape[2]  # Number of forecasting features
+    
+    # Extract the corresponding classification data for the same time window
+    classification_start_idx = t
+    classification_end_idx = t + timesteps
+    
+    # Get classification features for the same temporal window
+    classification_data = removed_nans_classification.iloc[classification_start_idx:classification_end_idx].values
+    
+    # Reshape forecasted data: (1, timesteps, features) -> (timesteps, features)
+    forecasted_reshaped = forecasted_actual.squeeze(0)  # Remove batch dimension
+    
+    # Concatenate along feature dimension: (timesteps, forecasting_features + classification_features)
+    combined_input = np.concatenate([forecasted_reshaped, classification_data], axis=1)
+    
+    # Reshape for model input: (1, timesteps, total_features)
+    model_input = combined_input.reshape(1, timesteps, -1)
+    
+    # print(f"Classification input shape: {model_input.shape}")
+    # print(f"  - Timesteps: {timesteps}")
+    # print(f"  - Forecasting features: {forecasting_features}")
+    # print(f"  - Classification features: {classification_data.shape[1]}")
+    # print(f"  - Total features: {model_input.shape[2]}")
+
+    prediction = classification_model.predict(model_input)
+    prediction_idx = np.argmax(prediction, axis=1)[0]
+    prediction_confidence = prediction[0, prediction_idx]
+    prediction_label = _preprocessing_data['index_to_label'][prediction_idx]
+    prediction_name = _preprocessing_data['label_to_name'][prediction_label]
+
+    return prediction_name
+
+def predict_recursive_steps(initial_model, initial_context, variables, prediction_horizon=6, context_length=60):
+    context = initial_context.copy()
+    predictions = []
+    
+    for step in range(prediction_horizon):
+        # Reshape for model input (batch_size=1, timesteps, features)
+        context_reshaped = context.reshape(1, context_length, len(variables))
+        step_prediction = initial_model.predict(context_reshaped, verbose=0)
+        predictions.append(step_prediction.flatten())
+
+        # Recursive feedback mechanism
+        # Each prediction becomes input for the next prediction
+        new_row = context[-1].copy()  # Start with last row of context
+        
+        # Update values with predictions (true feedback loop)
+        for i in range(len(variables)):
+            new_row[i] = step_prediction[0, i]
+
+        # Slide context window - remove oldest, add new prediction
+        context = np.vstack((context[1:], new_row))
+
+    return predictions
+
+### good inverse transform function for differenced data
+def inverse_difference(predictions_arrays, last_actual_values):
+    actual_predictions = []
+    current_values = last_actual_values.copy()
+    
+    for pred_diff in predictions_arrays:
+        # Add difference to get actual value
+        current_values = current_values + np.array(pred_diff)
+        actual_predictions.append(current_values.copy())
+    
+    return actual_predictions
+
+def rolling_buffer_prediction_with_dash(initial_model, 
+                                        df_online, 
+                                        scalers, 
+                                        context_length,
+                                        df_removed_nans_forecasting, 
+                                        df_removed_nans_classification,
+                                        dash_plotter, 
+                                        variables, 
+                                        prediction_horizon=6, 
+                                        classification_model_path=None):
+    # Scale the online data using the same scalers from training
+    scaled_data = np.zeros_like(df_online.values)
+    for i, var in enumerate(variables):
+        scaler = scalers[var]
+        scaled_data[:, i] = scaler.transform(df_online[var].values.reshape(-1, 1)).flatten()
+    
+    final_predictions = []
+    final_actuals = []
+    final_timestamps = []
+
+    predictions_actuals = []
+    actuals_actuals = []
+    total_steps = len(scaled_data) - context_length - prediction_horizon + 1
+
+    if dash_plotter is not None:
+        dash_plotter.set_total_steps(total_steps)
+
+    current_context = scaled_data[:context_length].copy() 
+    
+    # Load classification model once at the beginning
+    try:
+        if classification_model_path is None:
+            classification_model_path = r"C:\ThesisWork\offical_approach\mth_project\mth_project\industrial_network_analysis\classification_model"
+        
+        classification_model, label_to_index, index_to_label, label_to_name = load_classification_model(classification_model_path)
+        classification_enabled = True
+        print("Classification model initialized successfully")
+    except Exception as e:
+        print(f"Warning: Could not load classification model: {e}")
+        print("   Continuing with forecasting only...")
+        classification_enabled = False
+        classification_model = None
+
+    # Main prediction loop
+    for t in range(context_length, len(scaled_data) - prediction_horizon + 1):
+        # wait 5 seconds
+        time.sleep(5)  
+        current_step = t - context_length
+        
+        # 1. Make predictions for next 'prediction_horizon' steps
+        step_predictions = predict_recursive_steps(initial_model, current_context, variables = variables, prediction_horizon = prediction_horizon)
+        
+        # 2. Convert all predictions to original scale
+        step_predictions_original = []
+        for pred in step_predictions:
+            pred_original = []
+            for i, var in enumerate(variables):
+                # Filter status columns
+                if 'status' in var.lower():
+                    pred[i] = np.round(pred[i])
+                
+                scaler = scalers[var]
+                original_val = scaler.inverse_transform([[pred[i]]])[0, 0]
+                pred_original.append(original_val)
+            step_predictions_original.append(pred_original)
+        
+        # 3. Get actual values for all predicted steps
+        actual_values = []
+        for step in range(prediction_horizon):
+            if t + step < len(scaled_data):
+                actual_values.append(scaled_data[t + step, :])
+        
+        actuals_original = []
+        for actual in actual_values:
+            actual_original = []
+            for i, var in enumerate(variables):
+                scaler = scalers[var]
+                original_val = scaler.inverse_transform([[actual[i]]])[0, 0]
+                actual_original.append(original_val)
+            actuals_original.append(actual_original)
+        
+        # 4. BUFFER STRATEGY: Only keep the FIRST prediction (t+1)
+        if len(step_predictions_original) > 0 and len(actuals_original) > 0:
+            final_predictions.append(step_predictions_original[0])  # only t+1
+            final_actuals.append(actuals_original[0])
+            final_timestamps.append(df_online.index[t])
+
+        # 5. Inverse differencing for plotting
+        last_actual_index = t - context_length
+        if last_actual_index >= 0 and last_actual_index < len(df_removed_nans_forecasting):
+            last_actual_values = df_removed_nans_forecasting.iloc[last_actual_index][variables].values
         else:
-            self.models_dir = models_dir
-            
-        self.classification_model = None
-        self.preprocessing_data = None
-        self.is_initialized = False
-        
-    def initialize_classification_model(self):
-        """
-        Load classification model and preprocessing data once.
-        
-        Returns:
-            bool: True if successful, False otherwise
-        """
-        try:
-            # Load the model
-            model_path = os.path.join(self.models_dir, "improved_cnn_classifier.h5")
-            if not os.path.exists(model_path):
-                # Fallback to original model
-                model_path = os.path.join(self.models_dir, "cnn_classifier.h5")
-                
-            if not os.path.exists(model_path):
-                print(f"Warning: No classification model found in {self.models_dir}")
-                return False
-                
-            self.classification_model = load_model(model_path)
-            
-            # Load preprocessing objects
-            preprocessing_path = os.path.join(self.models_dir, "improved_preprocessing_objects.pkl")
-            if not os.path.exists(preprocessing_path):
-                # Fallback to original preprocessing
-                preprocessing_path = os.path.join(self.models_dir, "preprocessing_objects.pkl")
-                
-            if not os.path.exists(preprocessing_path):
-                print(f"Warning: No preprocessing objects found in {self.models_dir}")
-                return False
-                
-            with open(preprocessing_path, 'rb') as f:
-                self.preprocessing_data = pickle.load(f)
-            
-            self.is_initialized = True
-            print("Classification model loaded successfully!")
-            return True
-            
-        except Exception as e:
-            print(f"Error loading classification model: {e}")
-            return False
-    def predict_recursive_steps(self, initial_model, initial_context, variables, prediction_horizon=6, context_length=60):
-        """
-        Predict multiple steps ahead using recursive feedback.
-        
-        Args:
-            initial_model: Trained forecasting model
-            initial_context: Initial context window (shape: context_length, num_features)
-            variables: List of variable names being predicted
-            prediction_horizon: Number of steps to predict ahead (default 6)
-            context_length: Length of context window (default 60)
-            
-        Returns:
-            predictions: List of predictions for each step
-            
-        Raises:
-            ValueError: If input shapes don't match expected dimensions
-        """
-        # Input validation
-        if initial_context is None or len(initial_context) == 0:
-            raise ValueError("Initial context cannot be empty")
-            
-        if len(initial_context) != context_length:
-            raise ValueError(f"Context length mismatch: expected {context_length}, got {len(initial_context)}")
-            
-        if len(variables) != initial_context.shape[1]:
-            raise ValueError(f"Variables count mismatch: expected {len(variables)}, got {initial_context.shape[1]}")
-        
-        context = initial_context.copy()
-        predictions = []
-        
-        try:
-            for step in range(prediction_horizon):
-                # Reshape for model input (batch_size=1, timesteps, features)
-                context_reshaped = context.reshape(1, context_length, len(variables))
-                step_prediction = initial_model.predict(context_reshaped, verbose=0)
-                predictions.append(step_prediction.flatten())
-                # Recursive feedback mechanism
-                # Each prediction becomes input for the next prediction
-                new_row = context[-1].copy()  # Start with last row of context
-                
-                # Update values with predictions (true feedback loop)
-                for i in range(len(variables)):
-                    new_row[i] = step_prediction[0, i]
-                # Slide context window - remove oldest, add new prediction
-                context = np.vstack((context[1:], new_row))
-        except Exception as e:
-            print(f"Error during recursive prediction at step {step}: {e}")
-            raise
-            
-        return predictions
-    def inverse_difference(self, predictions_arrays, last_actual_values):
-        """
-        Convert differenced predictions back to actual values.
-        
-        Args:
-            predictions_arrays: List of prediction arrays (differenced values)
-            last_actual_values: The last known actual values as reference point
-            
-        Returns:
-            actual_predictions: List of actual value predictions
-            
-        Raises:
-            ValueError: If input arrays have mismatched dimensions
-        """
-        if not predictions_arrays:
-            return []
-            
-        if len(last_actual_values) != len(predictions_arrays[0]):
-            raise ValueError("Dimension mismatch between last_actual_values and predictions")
-        
-        actual_predictions = []
-        current_values = last_actual_values.copy()
-        
-        for pred_diff in predictions_arrays:
+            last_actual_values = df_removed_nans_forecasting[variables].mean().values
+
+        step_predictions_actual = inverse_difference(
+            step_predictions_original, 
+            last_actual_values
+        )
+
+        actuals_actual = inverse_difference(
+            actuals_original, 
+            last_actual_values
+        )
+
+        # 6. Classification (Only if model is loaded), with proper temporal alignment
+        classification_result = None
+        if classification_enabled and classification_model is not None:
             try:
-                # Add difference to get actual value
-                current_values = current_values + np.array(pred_diff)
-                actual_predictions.append(current_values.copy())
+                timesteps = prediction_horizon
+                features = len(variables)
+
+                step_predictions_actual_array = np.array(step_predictions_actual)
+                
+                step_predictions_actual_classification = step_predictions_actual_array.reshape(1, timesteps, features)
+                
+                # Make prediction
+                classification_result = perform_classification(step_predictions_actual_classification, df_removed_nans_classification, t, classification_model)
+                print(f"🔍 Classification prediction: {classification_result}")
+                
             except Exception as e:
-                print(f"Error in inverse differencing: {e}")
-                # Use previous values as fallback
-                actual_predictions.append(current_values.copy())
-        
-        return actual_predictions
-    def _perform_classification(self, step_predictions_actual, current_time_idx, 
-                               df_removed_nans_classification, forecasting_variables):
-        """
-        Perform network status classification with proper temporal alignment.
-        
-        Args:
-            step_predictions_actual: Actual predictions (non-differenced)
-            current_time_idx: Current time index in the main loop
-            df_removed_nans_classification: Classification data
-            forecasting_variables: List of forecasting variable names
-            
-        Returns:
-            str: Classification result or None if failed
-        """
-        try:
-            # Get the required window size from preprocessing data
-            window_size = self.preprocessing_data.get('window_size', len(step_predictions_actual))
-            
-            # Don't adjust window_size dynamically - this breaks the model
-            if len(step_predictions_actual) != window_size:
-                print(f"Warning: Prediction length {len(step_predictions_actual)} doesn't match expected window size {window_size}")
-                # Pad or truncate to match expected size
-                if len(step_predictions_actual) < window_size:
-                    # Pad with last values
-                    last_pred = step_predictions_actual[-1]
-                    while len(step_predictions_actual) < window_size:
-                        step_predictions_actual.append(last_pred)
-                else:
-                    # Truncate to required size
-                    step_predictions_actual = step_predictions_actual[:window_size]
-            # Create DataFrame with predictions
-            temp_forecasting_df = pd.DataFrame(
-                step_predictions_actual, 
-                columns=forecasting_variables
-            )
-            # Get TEMPORALLY ALIGNED status data
-            # Use status data that corresponds to the SAME time period as predictions
-            status_start_idx = max(0, current_time_idx - window_size)
-            status_end_idx = current_time_idx
-            
-            if status_end_idx > len(df_removed_nans_classification):
-                # Use the last available window
-                status_end_idx = len(df_removed_nans_classification)
-                status_start_idx = max(0, status_end_idx - window_size)
-            
-            status_window = df_removed_nans_classification.iloc[status_start_idx:status_end_idx].copy()
-            # Ensure same number of rows
-            if len(status_window) != len(temp_forecasting_df):
-                if len(status_window) < len(temp_forecasting_df):
-                    # Pad status window with last row
-                    last_row = status_window.iloc[-1:] if len(status_window) > 0 else None
-                    while len(status_window) < len(temp_forecasting_df) and last_row is not None:
-                        status_window = pd.concat([status_window, last_row], ignore_index=True)
-                else:
-                    # Truncate status window
-                    status_window = status_window.iloc[-len(temp_forecasting_df):].copy()
-            # Merge predictions with status data
-            # Remove timestamp column from status if it exists
-            status_cols_to_use = [col for col in status_window.columns if col != 'timestamp']
-            combined_df = pd.concat([
-                temp_forecasting_df.reset_index(drop=True),
-                status_window[status_cols_to_use].reset_index(drop=True)
-            ], axis=1)
-            # Apply multi-hot encoding
-            df_encoded, _ = create_multihot_encoding(combined_df)
-            # Extract feature columns and reshape
-            feature_columns = self.preprocessing_data['feature_columns']
-            classification_input = df_encoded[feature_columns].values
-            classification_input = classification_input.reshape(1, window_size, len(feature_columns))
-            # Make prediction
-            prediction_probs = self.classification_model.predict(classification_input, verbose=0)
-            prediction_idx = prediction_probs.argmax(axis=1)[0]
-            prediction_confidence = prediction_probs[0][prediction_idx]
-            # Decode prediction
-            class_names = self.preprocessing_data['class_names']
-            prediction_name = class_names[prediction_idx]
-            return f"{prediction_name} (confidence: {prediction_confidence:.2%})"
-            
-        except Exception as e:
-            print(f"Classification error: {e}")
-            return None
-    
-    def rolling_buffer_prediction_with_dash(self, initial_model, df_online, scalers_train,
-                                        context_length, df_removed_nans_forecasting, df_removed_nans_classification, 
-                                        dash_plotter, prediction_horizon=6, real_time_delay=0):
-        # Input validation
-        if len(df_online) < context_length + prediction_horizon:
-            raise ValueError(f"Insufficient data: need at least {context_length + prediction_horizon} rows")
-            
-        # Initialize classification model if not already done
-        if not self.is_initialized:
-            classification_success = self.initialize_classification_model()
-            if not classification_success:
-                print("Warning: Classification features disabled due to model loading failure")
-        
-        # Prepare data
-        df_online_scaled = df_online.copy()
-        forecasting_variables = df_online.columns.tolist()
-        
-        # Scale the online data
-        for var in df_online.columns:
-            if var in scalers_train:
-                scaler = scalers_train[var]
-                df_online_scaled[var] = scaler.transform(df_online[[var]])
-            else:
-                print(f"Warning: No scaler found for variable {var}")
-        
-        # Initialize result containers
-        final_predictions = []
-        final_actuals = []
-        final_timestamps = []
-        predictions_actuals = []
-        actuals_actuals = []
-        
-        total_steps = len(df_online_scaled) - context_length - prediction_horizon + 1
+                print(f"⚠️ Classification error: {e}")
+                classification_result = "Classification Error"
+
+        if len(step_predictions_actual) > 0 and len(actuals_actual) > 0:
+            predictions_actuals.append(step_predictions_actual[0])  # Only t+1
+            actuals_actuals.append(actuals_actual[0])              # Only t+1
+
+        # 7. Send data to Dash plotter (all buffer predictions)
         if dash_plotter is not None:
-            dash_plotter.set_total_steps(total_steps)
-        # Initialize context window
-        current_context = df_online_scaled[:context_length].copy().values
-        print(f"Starting rolling prediction for {total_steps} steps...")
-        
-        # Main prediction loop
-        for t in range(context_length, len(df_online_scaled) - prediction_horizon + 1):
-            current_step = t - context_length
-            
-            try:
-                # 1. Make predictions for next 'prediction_horizon' steps
-                step_predictions = self.predict_recursive_steps(
-                    initial_model, current_context, 
-                    variables=forecasting_variables, 
-                    prediction_horizon=prediction_horizon,
-                    context_length=context_length
-                )
-                
-                # 2. Convert all predictions to original scale
-                step_predictions_original = []
-                for pred in step_predictions:
-                    pred_original = []
-                    for i, var in enumerate(forecasting_variables):
-                        # Handle status variables specially
-                        if 'status' in var.lower():
-                            pred[i] = np.round(pred[i])
-                        
-                        if var in scalers_train:
-                            scaler = scalers_train[var]
-                            try:
-                                original_val = scaler.inverse_transform([[pred[i]]])[0, 0]
-                                pred_original.append(original_val)
-                            except Exception as e:
-                                print(f"Warning: Error inverse transforming {var}: {e}")
-                                pred_original.append(pred[i])  # Use scaled value as fallback
-                        else:
-                            pred_original.append(pred[i])
-                    step_predictions_original.append(pred_original)
-                
-                # 3. Get actual values for all predicted steps
-                actual_values = []
-                for step in range(prediction_horizon):
-                    if t + step < len(df_online_scaled):
-                        actual_values.append(df_online_scaled.iloc[t + step].values)
-                # Convert actuals to original scale
-                actuals_original = []
-                for actual in actual_values:
-                    actual_original = []
-                    for i, var in enumerate(forecasting_variables):
-                        if var in scalers_train:
-                            scaler = scalers_train[var]
-                            try:
-                                original_val = scaler.inverse_transform([[actual[i]]])[0, 0]
-                                actual_original.append(original_val)
-                            except Exception as e:
-                                print(f"Warning: Error inverse transforming actual {var}: {e}")
-                                actual_original.append(actual[i])
-                        else:
-                            actual_original.append(actual[i])
-                    actuals_original.append(actual_original)
-                
-                # 4. BUFFER STRATEGY: Only keep the FIRST prediction (t+1)
-                if len(step_predictions_original) > 0 and len(actuals_original) > 0:
-                    final_predictions.append(step_predictions_original[0])  # only t+1
-                    final_actuals.append(actuals_original[0])
-                    final_timestamps.append(df_online.index[t])
-                # 5. Inverse differencing with proper temporal alignment
-                # Use the corresponding row from the original forecasting data
-                forecast_idx = min(t - context_length, len(df_removed_nans_forecasting) - 1)
-                if forecast_idx >= 0:
-                    last_actual_values = df_removed_nans_forecasting.iloc[forecast_idx][forecasting_variables].values
-                else:
-                    # Fallback to mean values if index is out of bounds
-                    last_actual_values = df_removed_nans_forecasting[forecasting_variables].mean().values
-                step_predictions_actual = self.inverse_difference(
-                    step_predictions_original, 
-                    last_actual_values
-                )
-                actuals_actual = self.inverse_difference(
-                    actuals_original, 
-                    last_actual_values
-                )
-                # 6. CLASSIFICATION with proper temporal alignment
-                if self.is_initialized and create_multihot_encoding is not None:
-                    try:
-                        classification_result = self._perform_classification(
-                            step_predictions_actual, t, df_removed_nans_classification,
-                            forecasting_variables
-                        )
-                        if classification_result:
-                            print(f"Network Status: {classification_result}")
-                    except Exception as e:
-                        print(f"Warning: Classification failed at step {current_step}: {e}")
-                # Store actual predictions for plotting
-                if len(step_predictions_actual) > 0 and len(actuals_actual) > 0:
-                    predictions_actuals.append(step_predictions_actual[0])  # Only t+1
-                    actuals_actuals.append(actuals_actual[0])              # Only t+1
-                # 7. Send data to Dash plotter
-                if dash_plotter is not None and len(step_predictions_actual) > 0:
-                    current_timestamp = df_online.index[t]
+            if len(step_predictions_actual) > 0:
+                print("DEBUG: About to call add_buffer_predictions")
+                current_timestamp = df_online.index[t]
+                try:
                     dash_plotter.add_buffer_predictions(
                         predictions=step_predictions_actual, 
                         actuals=actuals_actual, 
                         current_step=current_step,
                         current_datetime=current_timestamp,
-                        variable_names=forecasting_variables
+                        variable_names=variables
                     )
-                
-                # 8. Update context for next iteration
-                new_row = df_online_scaled.iloc[t].values.copy()
-                current_context = np.vstack((current_context[1:], new_row))
-                
-                # Progress reporting
-                if current_step % 50 == 0 or current_step < 5:
-                    progress = (current_step * 100 / total_steps)
-                    print(f"Step {current_step:3d}/{total_steps} ({progress:5.1f}%)")
-            except Exception as e:
-                print(f"Error at step {current_step}: {e}")
-                # Continue with next iteration rather than failing completely
-                continue
-        print("=" * 60)
-        print("Rolling prediction completed!")
-        # Create result DataFrames
-        try:
-            predictions_df = pd.DataFrame(
-                data=final_predictions,
-                columns=forecasting_variables,
-                index=pd.Index(range(context_length, context_length + len(final_predictions)), name='time_index')
-            )
-            actuals_df = pd.DataFrame(
-                data=final_actuals,
-                columns=forecasting_variables,
-                index=pd.Index(range(context_length, context_length + len(final_actuals)), name='time_index')
-            )
-            predictions_actuals_df = pd.DataFrame(
-                data=predictions_actuals,
-                columns=forecasting_variables,
-                index=pd.Index(range(context_length, context_length + len(predictions_actuals)), name='time_index')
-            )
-            actuals_actuals_df = pd.DataFrame(
-                data=actuals_actuals,
-                columns=forecasting_variables,
-                index=pd.Index(range(context_length, context_length + len(actuals_actuals)), name='time_index')
-            )
-            return predictions_df, actuals_df, predictions_actuals_df, actuals_actuals_df
-            
-        except Exception as e:
-            print(f"Error creating result DataFrames: {e}")
-            return None, None, None, None
+                    
+                    # Add classification result if available
+                    # if classification_result is not None:
+                    #     dash_plotter.add_classification_result(classification_result)
+                    
+                    # print("DEBUG: add_buffer_predictions called successfully")
+                except Exception as e:
+                    print(f"DEBUG: Error in add_buffer_predictions: {e}")
+            else:
+                print("DEBUG: step_predictions_actual is empty, not calling dash plotter")
+        else:
+            print("DEBUG: dash_plotter is None, not calling dash plotter")
 
+        # 8. Update context for next iteration
+        new_row = scaled_data[t, :].copy()
+        current_context = np.vstack((current_context[1:], new_row))
 
-# Convenience functions for backward compatibility
-def predict_recursive_steps(initial_model, initial_context, variables, prediction_horizon=6, context_length=60):
-    """Backward compatibility wrapper"""
-    system = OnlineForecastingSystem()
-    return system.predict_recursive_steps(initial_model, initial_context, variables, prediction_horizon, context_length)
-def inverse_difference(predictions_arrays, last_actual_values):
-    """Backward compatibility wrapper"""
-    system = OnlineForecastingSystem()
-    return system.inverse_difference(predictions_arrays, last_actual_values)
-# def rolling_buffer_prediction_with_dash(initial_model, df_online, scalers_train,
-#                                         context_length, df_removed_nans_forecasting, df_removed_nans_classification, 
-#                                         dash_plotter, classification_model_path=None, prediction_horizon=6, real_time_delay=0):
-#     """Backward compatibility wrapper with improved functionality"""
-#     if classification_model_path is None:
-#         system = OnlineForecastingSystem()
-#     else:
-#         system = OnlineForecastingSystem(models_dir=classification_model_path)
-    
-#     return system.rolling_buffer_prediction_with_dash(
-#         initial_model, df_online, scalers_train, context_length,
-#         df_removed_nans_forecasting, df_removed_nans_classification, 
-#         dash_plotter, prediction_horizon, real_time_delay
-#     )
+    print("=" * 60)
+    print("Rolling prediction completed!")
+
+    predictions_df = pd.DataFrame(
+        data=final_predictions,
+        columns=variables,
+        index=pd.Index(range(context_length, context_length + len(final_predictions)), name='time_index')
+    )
+
+    actuals_df = pd.DataFrame(
+        data=final_actuals,
+        columns=variables,
+        index=pd.Index(range(context_length, context_length + len(final_actuals)), name='time_index')
+    )
+
+    predictions_actuals_df = pd.DataFrame(
+        data=predictions_actuals,
+        columns=variables,
+        index=pd.Index(range(context_length, context_length + len(predictions_actuals)), name='time_index')
+    )
+
+    actuals_actuals_df = pd.DataFrame(
+        data=actuals_actuals,
+        columns=variables,
+        index=pd.Index(range(context_length, context_length + len(actuals_actuals)), name='time_index')
+    )
+
+    return predictions_df, actuals_df, predictions_actuals_df, actuals_actuals_df

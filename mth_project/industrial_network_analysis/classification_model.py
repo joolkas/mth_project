@@ -1,24 +1,27 @@
 from get_data import *
-from online_forecasting import *
-from dash_plotter import DashRealTimePlotter
+from mth_project.industrial_network_analysis.dash_plotter_old import DashRealTimePlotter
 import warnings
 import logging
 
 import pandas as pd
-import numpy as np
 from sklearn.utils import resample
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder
 import pickle
 import os
 
+
 import tensorflow as tf
 from tensorflow.keras import layers, models
-from sklearn.metrics import classification_report, confusion_matrix
-import matplotlib.pyplot as plt
-import seaborn as sns
+from sklearn.metrics import classification_report
 
-# Setup logging for warnings
+import re
+from sklearn.preprocessing import RobustScaler
+import tensorflow as tf
+from tensorflow.keras import layers, models
+from tensorflow.keras import callbacks
+import pickle
+import numpy as np
+
 warnings_logger = logging.getLogger('warnings')
 warnings_logger.setLevel(logging.WARNING)
 warning_handler = logging.FileHandler('warnings.log')
@@ -30,3 +33,343 @@ def warning_handler_func(message, category, filename, lineno, file=None, line=No
 
 warnings.showwarning = warning_handler_func
 
+# 1. encode column names
+
+def extract_port_numbers(string_input):
+    """Extract all numbers from interface string, handling multi-digit ports"""
+    numbers = re.findall(r'\d+', string_input)
+    return ''.join(numbers) if numbers else None
+
+def encode_column_names(df):
+    encoded_columns = {}
+    unique_ports = []
+
+    for column in df.columns:
+        if "interface" in column.lower() and "/" in column:
+            port_strings = column.split("/")
+            port_numbers = []
+            for port_string in port_strings:
+                #num = extract_int(port_string)
+                num = extract_port_numbers(port_string)
+                if num is not None:
+                    port_numbers.append(str(num))
+            encoded_columns[column] = "".join(port_numbers)
+        elif ": operational status" in column.lower() and "/" in column:
+            encoded_columns[column] = column
+
+    for idx, name in encoded_columns.items():
+        if ": operational status" in idx.lower():
+            map_name = f"Status {name}"
+            encoded_columns[idx] = map_name
+        elif "bits sent" in idx.lower():
+            map_name = f"Bits Sent {name}"
+            encoded_columns[idx] = map_name
+        elif "bits received" in idx.lower():
+            map_name = f"Bits Received {name}"
+            encoded_columns[idx] = map_name
+
+        if int(name) not in unique_ports:
+            unique_ports.append(int(name))
+    
+    return encoded_columns, sorted(unique_ports)
+
+# map ports to start from 1
+def map_ports_to_start_from_one(unique_ports):
+    mapped_ports = {}
+    i = 1
+    for port in unique_ports:
+        mapped_ports[port] = i
+        i+=1
+    return mapped_ports
+
+# 2. encode labels
+
+def encode_labels(df, down_value, temperature_threshold, cpu_threshold, temp_bit, cpu_bit, mapped_ports):
+    status_columns_classification = [col for col in df.columns if "Status" in col and "interface" not in col]
+    temperature_columns = [col for col in df.columns if "temperature" in col.lower()]
+    cpu_columns = [col for col in df.columns if "cpu" in col.lower()]
+
+    # pandas method that applies function to each row in DataFrame, one at a time
+    def create_binary_encoding(row):
+        down_ports = []
+
+        for col in status_columns_classification:
+            port_num = int(col.replace('Status ',''))
+            mapped_port = mapped_ports[port_num]
+            
+            status_value = row[col]
+            if status_value == down_value:
+                down_ports.append(mapped_port)
+        
+        # encode statuses 
+        binary_value = 0
+        for port in down_ports:
+
+            # Initial: binary_value = 0 (00000000)
+
+            # Port 1 down:
+            # binary_value |= (1 << 0)  →  0 | 1  →  00000001 (decimal 1)
+
+            # Port 3 down:
+            # binary_value |= (1 << 2)  →  1 | 4  →  00000101 (decimal 5)
+
+            # Port 5 down:
+            # binary_value |= (1 << 4)  →  5 | 16 →  00010101 (decimal 21)
+            
+            binary_value |= (1 << port - 1)
+
+        # simple temperature check (OK/NOK)
+        # if either of the temperature sensors is above threshold, set bit
+        for temperature_column in temperature_columns:
+            if row[temperature_column] > temperature_threshold:
+                binary_value |= (1 << temp_bit)
+
+        for cpu_column in cpu_columns:
+            if row[cpu_column] > cpu_threshold:
+                binary_value |= (1 << cpu_bit)
+
+        return binary_value
+
+    df_labeled = df.copy()
+    df_labeled['Label'] = df.apply(create_binary_encoding, axis=1)
+    return df_labeled
+
+# 3. label decoder
+
+def decode_label(label, mapped_ports, temp_bit, cpu_bit):
+    """
+    Decodes the integer label into a dictionary indicating which ports are down,
+    and whether temperature/cpu alarms are set.
+    """
+    result = {
+        "down_ports": [],
+        "temperature_alarm": False,
+        "cpu_alarm": False
+    }
+    
+    # Create reverse mapping from mapped port numbers back to original port numbers
+    reverse_mapped_ports = {v: k for k, v in mapped_ports.items()}
+    
+    # Check each possible mapped port position
+    for mapped_port in range(1, len(mapped_ports) + 1):
+        if label & (1 << (mapped_port - 1)):
+            original_port = reverse_mapped_ports[mapped_port]
+            result["down_ports"].append(original_port)
+    
+    # Check temperature bit
+    if label & (1 << temp_bit):
+        result["temperature_alarm"] = True
+    
+    # Check cpu bit
+    if label & (1 << cpu_bit):
+        result["cpu_alarm"] = True
+    
+    return result
+
+# 4. Balance Classes by Downsampling Majority Classes
+def merge_small_classes(df, label_col='label', threshold=10, other_label='other'):
+    class_counts = df[label_col].value_counts()
+    small_classes = class_counts[class_counts < threshold].index
+    df_merged = df.copy()
+    df_merged[label_col] = df_merged[label_col].apply(lambda x: other_label if x in small_classes else x)
+    return df_merged
+
+# 5. Merge Small Classes
+def balance_classes(df, label_col='label', random_state=42):
+    class_counts = df[label_col].value_counts()
+    min_count = class_counts.min()
+
+    balanced_frames = []
+    for cls in class_counts.index:
+        cls_df = df[df[label_col] == cls]
+        balanced_cls_df = resample(cls_df, 
+                                   replace=False, 
+                                   n_samples=min_count, 
+                                   random_state=random_state)
+        balanced_frames.append(balanced_cls_df)
+    
+    # Concatenate and shuffle
+    balanced_df = pd.concat(balanced_frames).sample(frac=1, random_state=random_state).reset_index(drop=True)
+    return balanced_df
+
+# 6. Prepare Data for Training
+
+def prepare_classification_data(df_balanced_labeled):
+    # simple approach of labeling for classification model
+    df_classification_input = df_balanced_labeled.copy()
+    unique_labels = sorted(df_classification_input['Label'].unique())
+    label_to_index = {label: index for index, label in enumerate(unique_labels)}
+    df_classification_input['Label'] = df_classification_input['Label'].map(label_to_index)
+    num_classes = len(df_classification_input['Label'].unique())
+
+    features_classification = df_classification_input[df_classification_input.columns[0:-1]].values
+    labels_classification = df_classification_input[df_classification_input.columns[-1]].values
+    # RobustScaler is better for network data (handles outliers)
+    scaler = RobustScaler()
+    features_scaled = scaler.fit_transform(features_classification)
+
+    # save the scaler for later use
+
+    with open('C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\classification_model\\scaler.pkl', 'wb') as f:
+        pickle.dump(scaler, f)
+
+    return features_scaled, labels_classification, label_to_index, unique_labels, num_classes
+
+def create_windows(X, y, window_size):
+    Xs, ys = [], []
+    for i in range(len(X) - window_size + 1):
+        Xs.append(X[i:i+window_size])
+        ys.append(y[i+window_size-1])  # label from last time step in window
+    return np.array(Xs), np.array(ys)
+
+
+def data_split(features_scaled, labels_classification, window_size):
+    X_seq, y_seq = create_windows(features_scaled, labels_classification, window_size)
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_seq, y_seq,
+        test_size=0.2,
+        stratify=y_seq,   # ensures same label distribution in both
+        random_state=42
+    )
+    return X_train, X_test, y_train, y_test
+
+# 7. Build and Train the Model
+
+def build_classification_model(X_seq, num_classes, window_size):
+    input_shape=(window_size, X_seq.shape[2])
+    model = models.Sequential([
+        layers.Conv1D(64, kernel_size=3, activation='relu', input_shape=input_shape),
+        layers.BatchNormalization(),
+        layers.Conv1D(128, kernel_size=3, activation='relu'),
+        layers.BatchNormalization(),
+        layers.GlobalAveragePooling1D(),
+        layers.Dense(64, activation='relu'),
+        layers.Dropout(0.3),
+        layers.Dense(num_classes, activation='softmax')
+    ])
+
+    model.compile(optimizer='adam',
+                loss='sparse_categorical_crossentropy',
+                metrics=['accuracy'])
+    
+    return model
+
+def train_classification_model(model, X_train, y_train, X_test, y_test):
+    # callbacks for better training
+    callbacks_list = [
+        callbacks.EarlyStopping(
+            monitor='val_loss',
+            patience=5,
+            restore_best_weights=True,
+            verbose=1
+        ),
+        callbacks.ReduceLROnPlateau(
+            monitor='val_loss',
+            factor=0.5,
+            patience=3,
+            min_lr=1e-7,
+            verbose=1
+        ),
+        callbacks.ModelCheckpoint(
+            'C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\classification_model\\best_model.h5',
+            monitor='val_loss',
+            save_best_only=True,
+            verbose=1
+        )
+    ]
+
+    # updated training call
+    history = model.fit(
+        X_train, y_train,
+        validation_split=0.2,
+        epochs=10,  # More epochs with early stopping
+        batch_size=16,
+        callbacks=callbacks_list,
+        verbose=1
+    )
+
+    y_pred = model.predict(X_test).argmax(axis=1)
+
+    test_loss, test_accuracy = model.evaluate(X_test, y_test, verbose=0)
+
+    return history, y_pred, test_loss, test_accuracy
+
+### 0. Get the same Data as in Forecasting part
+print("STEP 0/7: Loading data...")
+
+df_removed_nans_forecasting, df_removed_nans_classification = get_data()
+# to do in future: train model on input data from different dates
+# merge data
+df = pd.merge(df_removed_nans_forecasting, df_removed_nans_classification, on=['timestamp'])
+### ad 1. Encode Column Names
+print("STEP 1/7: Encoding column names...")
+
+encoded_columns, unique_ports = encode_column_names(df)
+
+# update DataFrame with encoded column names
+df.rename(columns=encoded_columns, inplace=True)
+
+### ad 2. Encode Labels
+print("STEP 2/7: Encoding labels...")
+
+# down value for status columns
+down = 2
+
+temperature_threshold = 50
+cpu_threshold = 30
+
+temp_bit = 8
+cpu_bit = 10
+
+mapped_ports = map_ports_to_start_from_one(unique_ports)
+df_labeled = encode_labels(df, down_value=down, temperature_threshold=temperature_threshold, cpu_threshold=cpu_threshold, temp_bit=temp_bit, cpu_bit=cpu_bit, mapped_ports=mapped_ports)
+
+### ad 3. Decode Labels
+print("STEP 3/7: Decoding example labels...")
+label_to_name = {}
+labels = df_labeled['Label'].unique()
+
+for label in labels:
+    label_to_name[label] = decode_label(label, mapped_ports, temp_bit=temp_bit, cpu_bit=cpu_bit)
+
+print("    Example label decoding:")
+example_label = labels[0]
+print(f"    Label {example_label}: {label_to_name[example_label]}")
+
+### ad 4. Balance Classes by Downsampling Majority Classes
+print("STEP 4/7: Merging small classes...")
+threshold = 3000
+df_merged_labeled = merge_small_classes(df_labeled, label_col='Label', threshold=threshold, other_label='0000')
+print(f"    results for threshold: {threshold} = {df_merged_labeled['Label'].value_counts()}")
+
+# unify datatype for label column
+df_merged_labeled['Label'] = df_merged_labeled['Label'].astype(int)
+
+### ad 5. Merge Small Classes
+print("STEP 5/7: Balancing classes...")
+df_balanced_labeled = balance_classes(df_merged_labeled, label_col='Label', random_state=42)
+print(f"    {df_balanced_labeled['Label'].value_counts()}")
+
+### ad 6. Prepare Data for Training
+print("STEP 6/7: Preparing data for training...")
+features_scaled, labels_classification, label_to_index, unique_labels, num_classes = prepare_classification_data(df_balanced_labeled)
+window_size = 6
+X_train, X_test, y_train, y_test = data_split(features_scaled, labels_classification, window_size)
+
+### ad 7. Build and Train the Model
+print("STEP 7/7: Building and training the model...")
+model = build_classification_model(X_train, num_classes, window_size)
+history, y_pred, test_loss, test_accuracy = train_classification_model(model, X_train, y_train, X_test, y_test)
+
+print(f"    Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}")
+
+### 8. Save Model and Encoders
+
+model.save('C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\classification_model\\final_model.h5')
+encoder_data = {}
+encoder_data['label_to_index'] = label_to_index
+encoder_data['index_to_label'] = {v: k for k, v in label_to_index.items()}
+encoder_data['label_to_name'] = label_to_name
+with open('C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\classification_model\\encoders.pkl', 'wb') as f:
+    pickle.dump(encoder_data, f)

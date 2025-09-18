@@ -1,8 +1,6 @@
 from data_preprocessing import Dataset
 from data_utils import *
 from initial_model import *
-from online_forecasting import *
-
 import warnings
 import logging
 
@@ -73,4 +71,10 @@ def get_data(device_name="SW-SUPV-243", data_path="C:\\ThesisWork\\offical_appro
     df_removed_outliers_statuses = remove_outliers(df_classification, 1000)
     df_removed_nans_statuses = df_removed_outliers_statuses.dropna(axis=1, how="all")
 
+    # save as csv
+    df_removed_nans_forecasting.to_csv(f'{data_path}{device_name}_forecasting.csv')
+    df_removed_nans_statuses.to_csv(f'{data_path}{device_name}_statuses.csv')
+
     return df_removed_nans_forecasting, df_removed_nans_statuses
+
+get_data()

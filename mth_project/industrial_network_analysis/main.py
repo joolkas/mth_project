@@ -1,7 +1,9 @@
 from data_utils import *
 from initial_model import *
 from online_forecasting import *
-from dash_plotter import DashRealTimePlotter
+#from get_data import *
+
+from dash_plotter import *
 import numpy as np
 import time
 
@@ -24,12 +26,24 @@ def warning_handler_func(message, category, filename, lineno, file=None, line=No
 warnings.showwarning = warning_handler_func
 
 ### READ DATA
-df_removed_nans_forecasting, df_removed_nans_classification = get_data()
+# df_removed_nans_forecasting, df_removed_nans_classification = get_data()
 
-print(f"Numeric columns: {df_removed_nans_forecasting.shape}")
-print(f"Status columns: {df_removed_nans_classification.shape}")
+import pandas as pd
+device_name="SW-SUPV-243"
+data_path="C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\Data082025\\"
+
+df_removed_nans_forecasting = pd.read_csv(f'{data_path}{device_name}_forecasting.csv')
+df_removed_nans_classification = pd.read_csv(f'{data_path}{device_name}_statuses.csv')
+
+df_removed_nans_forecasting = df_removed_nans_forecasting.select_dtypes(include=[np.number])
+df_removed_nans_classification = df_removed_nans_classification.select_dtypes(include=[np.number])
+
+# Select only numeric columns for differencing
+# numeric_cols_forecasting = df_removed_nans_forecasting.select_dtypes(include=[np.number]).columns
+# df_numeric_forecasting = df_removed_nans_forecasting[numeric_cols_forecasting]
 
 # differenciate data for forecasting
+
 df_differenced = df_removed_nans_forecasting.diff().dropna()
 
 # Split data for initial training and online forecasting
@@ -63,7 +77,9 @@ X_test, y_test, scalers_test = split_data_for_initial_model(df_test)
 
 epochs = 5
 
+print("======================================================")
 print("Training initial model...")
+print("======================================================")
 
 history, initial_model = train_initial_model(model, X_train, y_train, epochs = epochs)
 
@@ -79,11 +95,11 @@ print()
 ### online forecasting with classification
 
 prediction_horizon = 6
-plotter = DashRealTimePlotter(update_interval = 2000, prediction_horizon = prediction_horizon, port = 8050)
+plotter = DashRealTimePlotter()
 
 # Start Dash server
 print("Starting Dash server...")
-server_thread = plotter.start_server(debug=False, threaded=True)
+server_thread = plotter.start_server()
 
 print("Open http://localhost:8050 in your browser to view real-time plots")
 print("Waiting 3 seconds for server to initialize...")
@@ -92,14 +108,17 @@ time.sleep(3)
 variables = df_initial.columns
 variables = list(variables)
 
-# Initialize the system
-forecasting_system = OnlineForecastingSystem(models_dir="C:\ThesisWork\offical_approach\mth_project\mth_project\industrial_network_analysis\classification_model")
-
 # Run predictions
-results = forecasting_system.rolling_buffer_prediction_with_dash(
-    initial_model, df_online, scalers_train, context_length,
-    df_removed_nans_forecasting, df_removed_nans_classification, 
-    plotter, prediction_horizon=6
+results = rolling_buffer_prediction_with_dash(
+    initial_model=initial_model,
+    df_online=df_online, 
+    scalers=scalers_train, 
+    context_length=context_length,
+    df_removed_nans_forecasting=df_removed_nans_forecasting,
+    df_removed_nans_classification=df_removed_nans_classification, 
+    dash_plotter=plotter,
+    variables=variables, 
+    prediction_horizon=prediction_horizon
 )
 dash_stats = plotter.get_statistics()
 
