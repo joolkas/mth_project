@@ -17,18 +17,20 @@ from tensorflow import keras
 
 # model parameters that can be adjusted or changed for testing purpose
 epochs = 50
-batch_size = 32
+batch_size = 64
 validation_split = 0.2
 verbose = 1
 context_length = 60    # FIXED!
-first_layer_units = 128
-second_layer_units = 64
+first_layer_units = 256
+second_layer_units = 128
 dense_units = 256
 activation = 'relu'
-dropout_rate = 0.2
+dropout_rate = 0.4
+
+callbacks = False
 
 model_description = f"Epochs: {epochs}, Batch Size: {batch_size}, Validation Split: {validation_split}, Context Length: {context_length}, First Layer Units: {first_layer_units}, Second Layer Units: {second_layer_units}, Dense Units: {dense_units}, Activation: {activation}, Dropout Rate: {dropout_rate}"
-results_file_name = "initial_model_results"
+results_file_name = "initial_model_results_36h_no_callbacks_001"
 
 def create_online_multivariate_model(df,
                                      context_length=context_length,
@@ -102,18 +104,42 @@ def split_data_for_initial_model(df, context_length=context_length):
 
     return X_train, y_train, scalers
 
-def train_initial_model(model, X_train, y_train, epochs = epochs, batch_size = batch_size, validation_split = validation_split, verbose = verbose):
+def train_initial_model(model, X_train, y_train, epochs = epochs, batch_size = batch_size, validation_split = validation_split, verbose = verbose, callbacks = False):
+    
+    if callbacks:
+        callback_list = [
+        callbacks.EarlyStopping(
+            monitor='val_loss',
+            patience=5,
+            restore_best_weights=True,
+            verbose=1
+        ),
+        callbacks.ReduceLROnPlateau(
+            monitor='val_loss',
+            factor=0.5,
+            patience=3,
+            min_lr=1e-7,
+            verbose=1
+        ),
+        callbacks.ModelCheckpoint(
+            'C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\classification_model\\best_model.h5',
+            monitor='val_loss',
+            save_best_only=True,
+            verbose=1
+        )
+        ]
 
     history = model.fit(
         X_train, y_train,
         epochs=epochs,
         batch_size=batch_size,
         validation_split=validation_split,
-        verbose=verbose
+        verbose=verbose,
+        callbacks=callback_list if callbacks else None
     )
 
     # early stopping?
-
+    
 
     return history, model
 
@@ -248,6 +274,7 @@ def save_online_data(initial_model_path, df_online, scalers_train, context_lengt
     
     # Save DataFrames as CSV or Parquet to preserve structure
     df_online.to_csv(f"{initial_model_path}\\df_online.csv", index=True)
+    
     df_removed_nans_forecasting.to_csv(f"{initial_model_path}\\df_removed_nans_forecasting.csv", index=True)
     df_removed_nans_classification.to_csv(f"{initial_model_path}\\df_removed_nans_classification.csv", index=True)
     
@@ -355,9 +382,9 @@ def get_online_data(initial_model_path):
     
     if csv_format:
         # Load DataFrames from CSV (preserves original structure)
-        df_online = pd.read_csv(f"{initial_model_path}\\df_online.csv", index_col=0)
-        df_removed_nans_forecasting = pd.read_csv(f"{initial_model_path}\\df_removed_nans_forecasting.csv", index_col=0)
-        df_removed_nans_classification = pd.read_csv(f"{initial_model_path}\\df_removed_nans_classification.csv", index_col=0)
+        df_online = pd.read_csv(f"{initial_model_path}\\df_online.csv", index_col=0, parse_dates=True)
+        df_removed_nans_forecasting = pd.read_csv(f"{initial_model_path}\\df_removed_nans_forecasting.csv", index_col=0, parse_dates=True)
+        df_removed_nans_classification = pd.read_csv(f"{initial_model_path}\\df_removed_nans_classification.csv", index_col=0, parse_dates=True)
         
         # Load scalers from pickle (preserves sklearn objects)
         import pickle
@@ -380,7 +407,6 @@ def get_online_data(initial_model_path):
         # Fallback: Load from old numpy format (for backward compatibility)
         print("⚠ Loading from legacy numpy format. Consider regenerating data for better compatibility.")
         
-        df_online_data = np.load(f"{initial_model_path}\\df_online.npy", allow_pickle=True)
         df_forecasting_data = np.load(f"{initial_model_path}\\df_removed_nans_forecasting.npy", allow_pickle=True)
         df_classification_data = np.load(f"{initial_model_path}\\df_removed_nans_classification.npy", allow_pickle=True)
         
@@ -389,11 +415,6 @@ def get_online_data(initial_model_path):
         context_length = np.load(f"{initial_model_path}\\context_length.npy", allow_pickle=True).item()
         
         # Handle DataFrame loading - check if they were saved as object arrays (containing DataFrames) or regular arrays
-        if df_online_data.dtype == 'object' and df_online_data.ndim == 0:
-            df_online = df_online_data.item()
-        else:
-            df_online = df_online_data
-        
         if df_forecasting_data.dtype == 'object' and df_forecasting_data.ndim == 0:
             df_removed_nans_forecasting = df_forecasting_data.item()
         else:
@@ -419,8 +440,14 @@ if __name__ == "__main__":
     ### READ DATA
     processed_forecasting_path, processed_statuses_path = get_processed_path()
 
-    df_removed_nans_forecasting = pd.read_csv(processed_forecasting_path)
-    df_removed_nans_classification = pd.read_csv(processed_statuses_path)
+    df_removed_nans_forecasting = pd.read_csv(processed_forecasting_path, index_col=0, parse_dates=True)
+    df_removed_nans_classification = pd.read_csv(processed_statuses_path, index_col=0, parse_dates=True)
+
+    original_timestamps = df_removed_nans_forecasting.index.copy()
+    
+    print(f"Original timestamps: {original_timestamps}")
+    print(f"forecastin data index: {df_removed_nans_forecasting.index}")
+    print(f"path: {processed_forecasting_path}")
 
     df_removed_nans_forecasting = df_removed_nans_forecasting.select_dtypes(include=[np.number])
     df_removed_nans_classification = df_removed_nans_classification.select_dtypes(include=[np.number])
@@ -431,9 +458,11 @@ if __name__ == "__main__":
 
     # Split data for initial training and online forecasting
 
-    initial_idx = 24 * 60 # first 24 hours for initial training
+    initial_idx = 36 * 60 # first 36 hours for initial training
+
     df_initial = df_differenced.iloc[:initial_idx].copy()
     df_online = df_differenced.iloc[initial_idx:].copy()
+    df_online.index = original_timestamps[initial_idx + 1:]  # +1 because diff().dropna() removes first row
 
     variables = df_initial.columns
 
@@ -462,7 +491,7 @@ if __name__ == "__main__":
     print("Training initial model...")
     print("======================================================")
 
-    history, initial_model = train_initial_model(model, X_train, y_train, epochs = epochs)
+    history, initial_model = train_initial_model(model, X_train, y_train, epochs = epochs, callbacks = callbacks)
 
     # save initial model
     initial_model_path = "C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\forecasting_model"

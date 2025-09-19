@@ -12,9 +12,16 @@ import queue
 
 
 class DashRealTimePlotter:
-    def __init__(self, max_points=200, update_interval=1000):
+    def __init__(self, max_points=60, update_interval=1000):
         """
         Real-time plotter for industrial network forecasting data.
+        
+        Timing convention:
+        - Data points are 1 minute apart
+        - If current time is 06:30:00, then:
+          - Blue line (actual): shows historical values up to 06:29:00 (excludes last sample)
+          - Red line (t+1): shows predictions aligned with historical timestamps
+          - Orange line (t+6): starts from 06:29:00 and shows 06:30:00, 06:31:00, 06:32:00, 06:33:00, 06:34:00, 06:35:00
         
         Args:
             max_points: Maximum number of points to display in each plot
@@ -24,15 +31,17 @@ class DashRealTimePlotter:
         self.max_points = max_points
         self.update_interval = update_interval
         
-        # Data storage
+        # Data storage - simplified to three essential streams
         self.data_queue = queue.Queue()
         self.timestamps = deque(maxlen=max_points)
-        self.predictions_data = {}
-        self.actuals_data = {}
+        self.actual_values = {}           # 1. Actual values (historical)
+        self.saved_predictions = {}       # 2. Saved predictions with latest t+1
+        self.temporal_predictions = {}    # 3. Temporal predictions (t+6 horizon)
         self.variable_names = []
         self.current_step = 0
         self.total_steps = 0
         self.classification_results = deque(maxlen=50)
+        self.prediction_horizon = 6
         
         # Statistics
         self.stats = {
@@ -84,145 +93,154 @@ class DashRealTimePlotter:
             return self._update_graphs(), self._get_status_info(), self._get_classification_display()
     
     def _update_graphs(self):
-        """Update all graphs with latest data"""
+        """Update all graphs with latest data - simplified to show three traces per variable"""
         try:
             if not self.variable_names:
                 return html.Div("Waiting for data...", style={'textAlign': 'center', 'padding': '50px'})
             
-            # Create subplots organized in max 3 columns
+            # Create two-column layout
             num_vars = len(self.variable_names)
-            cols = min(3, num_vars)
-            rows = (num_vars + cols - 1) // cols  # Ceiling division
+            cols = 2
+            rows = (num_vars + cols - 1) // cols
             
-            print(f"Dashboard Debug: {num_vars} variables, {cols} columns, {rows} rows")
+            # print(f"Dashboard Debug: {num_vars} variables, {cols} columns, {rows} rows")
             
-            # Calculate appropriate spacing based on number of rows
-            # Maximum vertical spacing is 1/(rows-1), we use 80% of that to be safe
-            if rows > 1:
-                max_vertical_spacing = 1.0 / (rows - 1)
-                vertical_spacing = min(0.08, max_vertical_spacing * 0.8)
-                print(f"Dashboard Debug: Using vertical spacing {vertical_spacing:.4f} (max allowed: {max_vertical_spacing:.4f})")
-            else:
-                vertical_spacing = 0.08
+            # Simple spacing
+            vertical_spacing = 0.01
+            horizontal_spacing = 0.03
             
-            # Create subplot titles with line breaks for long names
-            subplot_titles = []
-            for var in self.variable_names:
-                # Break long variable names into two lines
-                if len(var) > 25:  # If variable name is longer than 25 characters
-                    # Try to break at a natural point (space, underscore, or dash)
-                    break_points = [' ', '_', '-', '.']
-                    mid_point = len(var) // 2
-                    best_break = mid_point
-                    
-                    # Find the best break point near the middle
-                    for i in range(max(0, mid_point - 10), min(len(var), mid_point + 10)):
-                        if var[i] in break_points:
-                            best_break = i
-                            break
-                    
-                    line1 = var[:best_break].strip()
-                    line2 = var[best_break:].strip()
-                    title = f"{line1}<br>{line2} - Pred vs Actual"
-                else:
-                    title = f"{var}<br>Predictions vs Actuals"
-                subplot_titles.append(title)
+            # Simple subplot titles
+            subplot_titles = [var for var in self.variable_names]
             
             fig = sp.make_subplots(
                 rows=rows, 
                 cols=cols,
                 subplot_titles=subplot_titles,
                 vertical_spacing=vertical_spacing,
-                horizontal_spacing=0.06
+                horizontal_spacing=horizontal_spacing
             )
             
-            # Add traces for each variable
+            # Add traces for each variable - simplified to three traces only
             for i, var in enumerate(self.variable_names):
                 row = i // cols + 1
                 col = i % cols + 1
                 
-                if var in self.predictions_data and var in self.actuals_data:
-                    # Get data for this variable
-                    pred_data = list(self.predictions_data[var])
-                    actual_data = list(self.actuals_data[var])
-                    timestamps = list(self.timestamps)
+                timestamps = list(self.timestamps)
+                
+                # 1. Actual values trace (blue) - exclude last sample
+                if var in self.actual_values and len(self.actual_values[var]) > 0:
+                    actual_data = list(self.actual_values[var])
+                    data_length = min(len(actual_data), len(timestamps))
                     
-                    if len(pred_data) > 0 and len(actual_data) > 0:
-                        # Ensure we have corresponding timestamps
-                        data_length = min(len(pred_data), len(actual_data), len(timestamps))
-                        if data_length > 0:
-                            # Get the most recent data points
-                            recent_timestamps = timestamps[-data_length:]
-                            recent_pred_data = pred_data[-data_length:]
-                            recent_actual_data = actual_data[-data_length:]
-                            
-                            # Predictions trace
-                            fig.add_trace(
-                                go.Scatter(
-                                    x=recent_timestamps,
-                                    y=recent_pred_data,
-                                    mode='lines+markers',
-                                    name=f'{var} Predicted',
-                                    line=dict(color='red', width=2, dash='dash'),
-                                    marker=dict(size=4),
-                                    showlegend=(i == 0),  # Only show legend for first variable
-                                    hovertemplate='<b>%{fullData.name}</b><br>' +
-                                                'Time: %{x}<br>' +
-                                                'Value: %{y:.4f}<extra></extra>'
-                                ),
-                                row=row, col=col
-                            )
-                            
-                            # Actuals trace
+                    if data_length > 1:  # Need at least 2 points to remove last one
+                        # Remove the last sample from display
+                        recent_timestamps = timestamps[-data_length:-1]  # Exclude last timestamp
+                        recent_actual_data = actual_data[-data_length:-1]  # Exclude last actual value
+                        
+                        if len(recent_timestamps) > 0 and len(recent_actual_data) > 0:
                             fig.add_trace(
                                 go.Scatter(
                                     x=recent_timestamps,
                                     y=recent_actual_data,
                                     mode='lines+markers',
-                                    name=f'{var} Actual',
+                                    name='Actual Values',
                                     line=dict(color='blue', width=2),
                                     marker=dict(size=4),
-                                    showlegend=(i == 0),  # Only show legend for first variable
-                                    hovertemplate='<b>%{fullData.name}</b><br>' +
-                                                'Time: %{x}<br>' +
-                                                'Value: %{y:.4f}<extra></extra>'
+                                    showlegend=(i == 0),
+                                    hovertemplate='<b>Actual Values</b><br>Time: %{x}<br>Value: %{y:.4f}<extra></extra>'
                                 ),
                                 row=row, col=col
                             )
+                
+                # 2. Saved predictions (red) - no time extension
+                if var in self.saved_predictions and len(self.saved_predictions[var]) > 0:
+                    saved_data = list(self.saved_predictions[var])
+                    data_length = min(len(saved_data), len(timestamps))
+                    
+                    if data_length > 0:
+                        recent_timestamps = timestamps[-data_length:]
+                        recent_saved_data = saved_data[-data_length:]
+                        
+                        fig.add_trace(
+                            go.Scatter(
+                                x=recent_timestamps,
+                                y=recent_saved_data,
+                                mode='lines+markers',
+                                name='Saved Pred (t+1)',
+                                line=dict(color='red', width=2, dash='dash'),
+                                marker=dict(size=4),
+                                showlegend=(i == 0),
+                                hovertemplate='<b>Saved Pred (t+1)</b><br>Time: %{x}<br>Value: %{y:.4f}<extra></extra>'
+                            ),
+                            row=row, col=col
+                        )
+                
+                # 3. Temporal predictions t+6 horizon (orange) - shorter and moved one sample left
+                if var in self.temporal_predictions and len(self.temporal_predictions[var]) > 0:
+                    temporal_data = list(self.temporal_predictions[var])
+                    
+                    if timestamps and len(temporal_data) > 0 and len(timestamps) > 1:
+                        # Start from one sample before the current time (moved left)
+                        start_time = timestamps[-2] if len(timestamps) >= 2 else timestamps[-1]
+                        
+                        # Create shorter orange line - start from one sample left, no connection point
+                        future_timestamps = []
+                        future_predictions = []
+                        
+                        # Add future predictions t+1 to t+6 (no t=0 connection point)
+                        for step in range(1, min(7, len(temporal_data[-1]) + 1)):
+                            future_time = start_time + timedelta(minutes=step)
+                            future_timestamps.append(future_time)
                             
-                            # Calculate and display error
-                            if len(recent_pred_data) == len(recent_actual_data):
-                                error = np.mean(np.abs(np.array(recent_pred_data) - np.array(recent_actual_data)))
-                                self.stats['prediction_errors'][var] = error
+                            # Use the most recent temporal prediction array
+                            if step <= len(temporal_data[-1]):
+                                future_predictions.append(temporal_data[-1][step - 1])
+                            else:
+                                future_predictions.append(temporal_data[-1][-1])
+                        
+                        if len(future_timestamps) > 0 and len(future_predictions) > 0:
+                            fig.add_trace(
+                                go.Scatter(
+                                    x=future_timestamps,
+                                    y=future_predictions,
+                                    mode='lines+markers',
+                                    name='Temporal Pred (t+6)',
+                                    line=dict(color='orange', width=2, dash='dot'),
+                                    marker=dict(size=3),
+                                    showlegend=(i == 0),
+                                    hovertemplate='<b>Temporal Pred (t+6)</b><br>Time: %{x}<br>Value: %{y:.4f}<extra></extra>'
+                                ),
+                                row=row, col=col
+                            )
             
-            # Update layout
+            # Simple layout
+            total_height = 800 * rows
+            
             fig.update_layout(
-                height=600 * rows,  # Increased from 450 to 600 for even better visibility
+                height=total_height,
                 title_text="Real-Time Forecasting Dashboard",
                 title_x=0.5,
                 showlegend=True,
                 legend=dict(
                     orientation="h",
                     yanchor="bottom",
-                    y=1.02,
-                    xanchor="right",
-                    x=1
+                    y=-0.02,
+                    xanchor="center",
+                    x=0.5,
+                    font=dict(size=10)
                 )
             )
             
-            # Update x-axis for all subplots with better time formatting
-            fig.update_xaxes(
-                title_text="Time", 
-                showgrid=True,
-                tickformat='%H:%M:%S',  # Format as HH:MM:SS
-                tickangle=45  # Angle the time labels for better readability
-            )
+            # Update axes
+            fig.update_xaxes(title_text="Time", showgrid=True, tickformat='%H:%M:%S')
             fig.update_yaxes(title_text="Value", showgrid=True)
             
-            return dcc.Graph(figure=fig, style={'height': f'{600 * rows}px'})
+            return dcc.Graph(figure=fig, style={'height': f'{total_height}px'})
             
         except Exception as e:
             print(f"Error in _update_graphs: {e}")
+            import traceback
+            traceback.print_exc()
             return html.Div(f"Error updating graphs: {str(e)}", 
                           style={'textAlign': 'center', 'padding': '50px', 'color': 'red'})
     
@@ -257,48 +275,74 @@ class DashRealTimePlotter:
         self.total_steps = total_steps
         print(f"Dashboard: Set total steps to {total_steps}")
     
-    def add_buffer_predictions(self, predictions, actuals, current_step, current_datetime, variable_names):
+    def add_buffer_predictions(self, predictions, actuals, current_step, current_datetime, variable_names, saved_prediction=None, future_prediction=None):
         """
-        Add new prediction data to the dashboard
+        Add new prediction data to the dashboard - simplified version
         
         Args:
-            predictions: List of prediction arrays for each time step
+            predictions: List of prediction arrays for temporal horizon (t+1 to t+6)
             actuals: List of actual arrays for each time step  
             current_step: Current step number
             current_datetime: Current timestamp
             variable_names: List of variable names
+            saved_prediction: Single prediction array for t+1
+            future_prediction: Not used in simplified version
         """
         try:
             # Initialize variable names if first time
             if not self.variable_names:
                 self.variable_names = variable_names
+                print(f"Dashboard: Initializing {len(variable_names)} variables")
                 for var in variable_names:
-                    self.predictions_data[var] = deque(maxlen=self.max_points)
-                    self.actuals_data[var] = deque(maxlen=self.max_points)
+                    self.actual_values[var] = deque(maxlen=self.max_points)
+                    self.saved_predictions[var] = deque(maxlen=self.max_points)
+                    self.temporal_predictions[var] = deque(maxlen=10)  # Keep recent temporal predictions
             
-            # Add data for the first prediction step (t+1)
-            if len(predictions) > 0 and len(actuals) > 0:
-                pred_step = predictions[0]  # First prediction step
-                actual_step = actuals[0]   # Corresponding actual
+            # Validate inputs
+            if not predictions or not actuals:
+                print("Dashboard: Empty predictions or actuals received")
+                return
+            
+            if len(predictions) == 0 or len(actuals) == 0:
+                print("Dashboard: No prediction or actual data")
+                return
                 
-                # Add timestamp
-                self.timestamps.append(current_datetime)
+            # Use saved prediction if provided, otherwise use first prediction
+            pred_t1_step = saved_prediction if saved_prediction is not None else predictions[0]
+            actual_step = actuals[0]
+            
+            # Validate data lengths
+            if len(pred_t1_step) != len(variable_names) or len(actual_step) != len(variable_names):
+                print(f"Dashboard: Data length mismatch. Pred: {len(pred_t1_step)}, Actual: {len(actual_step)}, Variables: {len(variable_names)}")
+                return
+            
+            # Add timestamp
+            self.timestamps.append(current_datetime)
+            
+            # Add data for each variable - simplified to three streams
+            for i, var in enumerate(variable_names):
+                # 1. Actual values
+                self.actual_values[var].append(actual_step[i])
                 
-                # Add data for each variable
-                for i, var in enumerate(variable_names):
-                    if i < len(pred_step) and i < len(actual_step):
-                        self.predictions_data[var].append(pred_step[i])
-                        self.actuals_data[var].append(actual_step[i])
+                # 2. Saved predictions (t+1)
+                self.saved_predictions[var].append(pred_t1_step[i])
                 
-                # Update statistics
-                self.current_step = current_step
-                self.stats['total_predictions'] += 1
-                self.stats['last_update'] = datetime.now().strftime("%H:%M:%S")
-                
-                print(f"Dashboard: Added data for step {current_step}, variables: {len(variable_names)}")
-                
+                # 3. Temporal predictions (t+6 horizon) - store the full prediction horizon
+                var_temporal_predictions = [pred[i] for pred in predictions if i < len(pred)]
+                if var_temporal_predictions:
+                    self.temporal_predictions[var].append(var_temporal_predictions)
+            
+            # Update statistics
+            self.current_step = current_step
+            self.stats['total_predictions'] += 1
+            self.stats['last_update'] = datetime.now().strftime("%H:%M:%S")
+            
+            print(f"Dashboard: Added data for step {current_step}, {len(variable_names)} variables")
+            
         except Exception as e:
             print(f"Error in add_buffer_predictions: {e}")
+            import traceback
+            traceback.print_exc()
     
     def add_classification_result(self, classification_result):
         """Add classification result to display"""
@@ -329,10 +373,12 @@ class DashRealTimePlotter:
         """Clear all stored data"""
         self.timestamps.clear()
         for var in self.variable_names:
-            if var in self.predictions_data:
-                self.predictions_data[var].clear()
-            if var in self.actuals_data:
-                self.actuals_data[var].clear()
+            if var in self.actual_values:
+                self.actual_values[var].clear()
+            if var in self.saved_predictions:
+                self.saved_predictions[var].clear()
+            if var in self.temporal_predictions:
+                self.temporal_predictions[var].clear()
         self.classification_results.clear()
         self.stats['total_predictions'] = 0
         self.current_step = 0
@@ -354,7 +400,11 @@ def test_dashboard():
     
     for step in range(20):
         # Generate fake predictions and actuals
-        predictions = [np.random.randn(len(variables)) * 10 + 50]
+        # Generate multiple prediction steps (t+1 to t+6)
+        predictions = []
+        for pred_step in range(6):  # prediction horizon of 6
+            predictions.append(np.random.randn(len(variables)) * 10 + 50 + pred_step)
+        
         actuals = [predictions[0] + np.random.randn(len(variables)) * 2]
         
         timestamp = datetime.now() + timedelta(seconds=step*5)
@@ -364,7 +414,8 @@ def test_dashboard():
             actuals=actuals,
             current_step=step,
             current_datetime=timestamp,
-            variable_names=variables
+            variable_names=variables,
+            saved_prediction=predictions[0]  # Pass the saved prediction (t+1)
         )
         
         # Add some classification results

@@ -1,4 +1,4 @@
-from get_data import *
+from get_data import get_data_function
 from mth_project.industrial_network_analysis.dash_plotter_old import DashRealTimePlotter
 import warnings
 import logging
@@ -298,7 +298,7 @@ def train_classification_model(model, X_train, y_train, X_test, y_test):
 ### 0. Get the same Data as in Forecasting part
 print("STEP 0/7: Loading data...")
 
-df_removed_nans_forecasting, df_removed_nans_classification = get_data()
+df_removed_nans_forecasting, df_removed_nans_classification = get_data_function()
 # to do in future: train model on input data from different dates
 # merge data
 df = pd.merge(df_removed_nans_forecasting, df_removed_nans_classification, on=['timestamp'])

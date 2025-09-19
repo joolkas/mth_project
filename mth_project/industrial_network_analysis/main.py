@@ -1,6 +1,8 @@
 from data_utils import *
 from initial_model import get_online_data, get_initial_model
 from online_forecasting import rolling_buffer_prediction_with_dash
+from online_forecasting_learning import rolling_buffer_learning_prediction_with_dash
+
 from get_data import *
 
 from dash_plotter import *
@@ -34,6 +36,7 @@ print(f"Initial model path: {initial_model_path}")
 print("Loading online data...")
 df_online, scalers_train, context_length, df_removed_nans_forecasting, df_removed_nans_classification, variables = get_online_data(online_data_path)
 
+
 ### 2. Load initial model
 print("Loading initial model...")
 initial_model = get_initial_model(initial_model_path)
@@ -52,17 +55,33 @@ print("Waiting 3 seconds for server to initialize...")
 time.sleep(3)
 
 # Run predictions
-results = rolling_buffer_prediction_with_dash(
-    initial_model=initial_model,
-    df_online=df_online, 
-    scalers=scalers_train, 
-    context_length=context_length,
-    df_removed_nans_forecasting=df_removed_nans_forecasting,
-    df_removed_nans_classification=df_removed_nans_classification, 
-    dash_plotter=plotter,
-    variables=variables, 
-    prediction_horizon=prediction_horizon
-)
+
+online_condition = "learning"
+
+if online_condition == "learning":
+    results = rolling_buffer_learning_prediction_with_dash(
+        initial_model=initial_model,
+        df_online=df_online, 
+        scalers=scalers_train, 
+        context_length=context_length,
+        df_removed_nans_forecasting=df_removed_nans_forecasting,
+        df_removed_nans_classification=df_removed_nans_classification, 
+        dash_plotter=plotter,
+        variables=variables, 
+        prediction_horizon=prediction_horizon
+    )
+else:
+    results = rolling_buffer_prediction_with_dash(
+        initial_model=initial_model,
+        df_online=df_online, 
+        scalers=scalers_train, 
+        context_length=context_length,
+        df_removed_nans_forecasting=df_removed_nans_forecasting,
+        df_removed_nans_classification=df_removed_nans_classification, 
+        dash_plotter=plotter,
+        variables=variables, 
+        prediction_horizon=prediction_horizon
+    )
 dash_stats = plotter.get_statistics()
 
 

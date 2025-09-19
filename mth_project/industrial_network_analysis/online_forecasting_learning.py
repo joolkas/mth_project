@@ -1,4 +1,5 @@
 from tensorflow import keras
+import tensorflow as tf
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 import numpy as np
@@ -7,11 +8,11 @@ import time
 import sys
 import os
 import pickle
-from tensorflow.keras.models import load_model
-from sklearn.metrics import mean_squared_error, mean_absolute_error
-import pandas as pd
 import matplotlib.pyplot as plt
 import keyboard
+
+# Ensure TensorFlow eager execution is enabled
+tf.config.run_functions_eagerly(True)
 
 # Global variables for classification model (loaded once)
 _classification_model = None
@@ -194,6 +195,78 @@ def predict_recursive_steps(initial_model, initial_context, variables, predictio
 
     return predictions
 
+def improve_model(initial_model, training_data, target_data, epochs=1, batch_size=1):
+    """
+    Improve model with online learning using proper supervision.
+    
+    Args:
+        initial_model: The model to improve
+        training_data: Context window (batch_size, timesteps, features)
+        target_data: Ground truth next step (batch_size, features)
+        epochs: Number of training epochs
+        batch_size: Batch size for training
+    
+    Returns:
+        improved_model: Updated model
+    """
+    try:
+        # Calculate prediction error before training
+        current_prediction = initial_model.predict(training_data, verbose=0)
+        
+        # Ensure target_data is numpy array
+        if hasattr(target_data, 'numpy'):
+            target_data_np = target_data.numpy()
+        else:
+            target_data_np = np.array(target_data)
+            
+        # Ensure prediction is numpy array
+        if hasattr(current_prediction, 'numpy'):
+            current_prediction_np = current_prediction.numpy()
+        else:
+            current_prediction_np = np.array(current_prediction)
+            
+        prediction_error = np.mean(np.abs(current_prediction_np - target_data_np))
+        
+        # Try training with existing optimizer first
+        try:
+            history = initial_model.fit(
+                training_data, 
+                target_data, 
+                epochs=epochs, 
+                batch_size=batch_size, 
+                verbose=0
+            )
+        except ValueError as optimizer_error:
+            if "Unknown variable" in str(optimizer_error):
+                # Recompile with fresh optimizer if variable tracking issue
+                print("   Recompiling model with fresh optimizer...")
+                initial_model.compile(
+                    optimizer=keras.optimizers.Adam(learning_rate=0.001), 
+                    loss='mse', 
+                    metrics=['mae']
+                )
+                # Try training again
+                history = initial_model.fit(
+                    training_data, 
+                    target_data, 
+                    epochs=epochs, 
+                    batch_size=batch_size, 
+                    verbose=0
+                )
+            else:
+                raise optimizer_error
+        
+        # Log improvement (simplified)
+        if prediction_error > 0.01:  # Only log if error is significant
+            print(f"   Model training completed, pre-training error: {prediction_error:.4f}")
+            
+    except Exception as e:
+        print(f"   Warning: Model training failed ({e})")
+        print("   Continuing with original model...")
+        # If all training attempts fail, return the original model unchanged
+    
+    return initial_model
+
 ### good inverse transform function for differenced data
 def inverse_difference(predictions_arrays, last_actual_values):
     actual_predictions = []
@@ -206,7 +279,9 @@ def inverse_difference(predictions_arrays, last_actual_values):
     
     return actual_predictions
 
-def rolling_buffer_prediction_with_dash(initial_model, 
+# learning version is alternative that improves the model during each step 
+
+def rolling_buffer_learning_prediction_with_dash(initial_model, 
                                         df_online, 
                                         scalers, 
                                         context_length,
@@ -216,6 +291,18 @@ def rolling_buffer_prediction_with_dash(initial_model,
                                         variables, 
                                         prediction_horizon=6, 
                                         classification_model_path=None):
+    # Prepare model for online learning by recompiling with fresh optimizer
+    print("Preparing model for online learning...")
+    try:
+        initial_model.compile(
+            optimizer=keras.optimizers.Adam(learning_rate=0.001), 
+            loss='mse', 
+            metrics=['mae']
+        )
+        print("Model successfully prepared for online learning")
+    except Exception as e:
+        print(f"Warning: Could not recompile model ({e}), will try per-step recompilation")
+    
     # Scale the online data using the same scalers from training
     scaled_data = np.zeros_like(df_online.values)
     for i, var in enumerate(variables):
@@ -234,7 +321,8 @@ def rolling_buffer_prediction_with_dash(initial_model,
         dash_plotter.set_total_steps(total_steps)
 
     current_context = scaled_data[:context_length].copy() 
-    
+    model = initial_model
+
     # Load classification model once at the beginning
     try:
         if classification_model_path is None:
@@ -252,11 +340,12 @@ def rolling_buffer_prediction_with_dash(initial_model,
     # Main prediction loop
     for t in range(context_length, len(scaled_data) - prediction_horizon + 1):
         # wait 30 seconds (for demo - real data is 1 minute apart)
-        time.sleep(30)  
+        time.sleep(30)
         current_step = t - context_length
-        
+
         # 1. Make predictions for next 'prediction_horizon' steps
-        step_predictions = predict_recursive_steps(initial_model, current_context, variables = variables, prediction_horizon = prediction_horizon)
+        step_predictions = predict_recursive_steps(model, current_context, variables = variables, prediction_horizon = prediction_horizon)
+        print(f"Step {t}, raw predictions: {step_predictions}")
         
         # 2. Convert all predictions to original scale
         step_predictions_original = []
@@ -272,6 +361,8 @@ def rolling_buffer_prediction_with_dash(initial_model,
                 pred_original.append(original_val)
             step_predictions_original.append(pred_original)
         
+        print(f"Step {t}, inverse transformed predictions: {step_predictions_original}")
+
         # 3. Get actual values for all predicted steps
         actual_values = []
         for step in range(prediction_horizon):
@@ -310,6 +401,10 @@ def rolling_buffer_prediction_with_dash(initial_model,
             last_actual_values
         )
 
+        print(f"Step {t}, inverse differenced predictions all: {step_predictions_actual}")
+        print(f"Step {t}, inverse differenced predictions (t+1): {step_predictions_actual[0]}")
+        print(f"Step {t}, inverse differenced actuals: {actuals_actual}")
+
         # 6. Classification (Only if model is loaded), with proper temporal alignment
         classification_result = None
         if classification_enabled and classification_model is not None:
@@ -336,11 +431,16 @@ def rolling_buffer_prediction_with_dash(initial_model,
         # 7. Send data to Dash plotter (all buffer predictions)
         if dash_plotter is not None:
             if len(step_predictions_actual) > 0:
-                print("DEBUG: About to call add_buffer_predictions")
+                # print("DEBUG: About to call add_buffer_predictions")
                 current_timestamp = df_online.index[t]
                 
-                # Pass the saved prediction (t+1) separately
+                # Pass the ACTUAL prediction for t+1 (already computed!)
+                # step_predictions_actual[0] is the prediction for t+1
                 saved_prediction_t1 = step_predictions_actual[0] if len(step_predictions_actual) > 0 else None
+                
+                # For the red line extension, we use the SAME prediction for t+1
+                # This IS the future prediction - no need to recompute!
+                future_prediction_t1 = step_predictions_actual[0] if len(step_predictions_actual) > 0 else None
                 
                 try:
                     dash_plotter.add_buffer_predictions(
@@ -349,7 +449,8 @@ def rolling_buffer_prediction_with_dash(initial_model,
                         current_step=current_step,
                         current_datetime=current_timestamp,
                         variable_names=variables,
-                        saved_prediction=saved_prediction_t1
+                        saved_prediction=saved_prediction_t1,
+                        future_prediction=future_prediction_t1  # Same as saved prediction - it IS the future!
                     )
                     
                     # Add classification result if available
@@ -364,8 +465,28 @@ def rolling_buffer_prediction_with_dash(initial_model,
         else:
             print("DEBUG: dash_plotter is None, not calling dash plotter")
 
-        # 8. Update context for next iteration
+        # 8. Update context and model for next iteration
         new_row = scaled_data[t, :].copy()
+        
+        # Prepare training data for model improvement
+        # Train to predict next step (t+1) using context up to current step (t)
+        if t + 1 < len(scaled_data):  # Ensure we have ground truth for t+1
+            # Context: up to current step t
+            training_context = np.vstack((current_context[1:], new_row))
+            # Target: next step t+1 (ground truth)
+            target_next_step = scaled_data[t + 1, :].copy()
+            
+            # Train model to predict t+1 from context ending at t
+            model = improve_model(
+                model, 
+                training_context.reshape(1, context_length, len(variables)), 
+                target_next_step.reshape(1, len(variables)), 
+                epochs=1, 
+                batch_size=1
+            )
+            print(f"Model improved at step {current_step}: training to predict t+1")
+        
+        # Update context for next iteration
         current_context = np.vstack((current_context[1:], new_row))
         
         # 9. if 'Q' is pressed by user, end program and clean all variables

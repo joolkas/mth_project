@@ -1,7 +1,7 @@
 Initial Model Training Description:
-Epochs: 50, Batch Size: 32, Validation Split: 0.2, Context Length: 60, First Layer Units: 128, Second Layer Units: 64, Dense Units: 256, Activation: relu, Dropout Rate: 0.2
+Epochs: 10, Batch Size: 32, Validation Split: 0.2, Context Length: 60, First Layer Units: 128, Second Layer Units: 64, Dense Units: 256, Activation: relu, Dropout Rate: 0.2
  Results:
- MSE: 70486418.406342
- MAE: 2117.582422
- RMSE: 8395.619001
+ MSE: 108322695.318820
+ MAE: 3059.651163
+ RMSE: 10407.818951
  Percentage Error: inf
