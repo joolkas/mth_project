@@ -292,6 +292,7 @@ def rolling_buffer_prediction_with_dash(initial_model,
             final_predictions.append(step_predictions_original[0])  # only t+1
             final_actuals.append(actuals_original[0])
             final_timestamps.append(df_online.index[t])
+            print(f"timestamps: {final_timestamps[-1]}")
 
         # 5. Inverse differencing for plotting
         last_actual_index = t - context_length

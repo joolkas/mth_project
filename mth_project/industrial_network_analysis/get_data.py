@@ -1,6 +1,5 @@
 from data_preprocessing import Dataset
 from data_utils import *
-from initial_model import *
 import warnings
 import logging
 
@@ -19,9 +18,17 @@ def warning_handler_func(message, category, filename, lineno, file=None, line=No
 
 warnings.showwarning = warning_handler_func
 
-print("Reading data...")
+def get_path_and_device_name():
+    device_name="SW-SUPV-243"
+    data_path="C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\Data082025\\"
+    return device_name, data_path
 
-### search criteria
+def get_processed_path():
+    device_name, data_path = get_path_and_device_name()
+    processed_data_path = f"{data_path}processed\\"
+    processed_forecasting_path = f"{processed_data_path}{device_name}_forecasting.csv"
+    processed_statuses_path = f"{processed_data_path}{device_name}_statuses.csv"
+    return processed_forecasting_path, processed_statuses_path
 
 def get_column_names_exclude(df, search_keyword, exclude_keyword):
     df_column_names = df.get_column_names(search_keyword)
@@ -33,7 +40,10 @@ def get_column_names_exclude(df, search_keyword, exclude_keyword):
 
     return df_column_names_excluded
 
-def get_data(device_name="SW-SUPV-243", data_path="C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\Data082025\\",\
+device_name, data_path = get_path_and_device_name()
+processed_forecasting_path, processed_statuses_path = get_processed_path()
+
+def get_data_function(device_name=device_name, data_path=data_path,
               numeric_names=["ICMP", "temperature", "cpu", "used memory", "bits"], status_names = [": operational status"], numeric_exclude ="status", status_exclude="unused"):
     
     df = Dataset(f'{data_path}{device_name}.csv')
@@ -72,9 +82,11 @@ def get_data(device_name="SW-SUPV-243", data_path="C:\\ThesisWork\\offical_appro
     df_removed_nans_statuses = df_removed_outliers_statuses.dropna(axis=1, how="all")
 
     # save as csv
-    df_removed_nans_forecasting.to_csv(f'{data_path}{device_name}_forecasting.csv')
-    df_removed_nans_statuses.to_csv(f'{data_path}{device_name}_statuses.csv')
+    df_removed_nans_forecasting.to_csv(processed_forecasting_path)
+    df_removed_nans_statuses.to_csv(processed_statuses_path)
 
     return df_removed_nans_forecasting, df_removed_nans_statuses
 
-get_data()
+if __name__ == "__main__":
+    print("Reading data...")
+    get_data_function()

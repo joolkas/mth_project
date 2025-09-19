@@ -316,7 +316,7 @@ print("STEP 2/7: Encoding labels...")
 # down value for status columns
 down = 2
 
-temperature_threshold = 50
+temperature_threshold = 30
 cpu_threshold = 30
 
 temp_bit = 8
