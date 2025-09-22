@@ -1,5 +1,4 @@
-from get_data import get_data_function
-from mth_project.industrial_network_analysis.dash_plotter_old import DashRealTimePlotter
+from get_data import get_processed_path
 import warnings
 import logging
 
@@ -32,6 +31,23 @@ def warning_handler_func(message, category, filename, lineno, file=None, line=No
     warnings_logger.warning(f"{category.__name__}: {message} (File: {filename}, Line: {lineno})")
 
 warnings.showwarning = warning_handler_func
+
+# 0. params for model training
+
+batch_size = 16
+epochs = 50
+
+layer_one_units = 64,
+layer_two_units = 128,
+dense_units = 64,
+activation='relu',
+dropout_rate=0.2
+
+threshold = 500
+
+model_description = f"Conv1D_{layer_one_units}_{layer_two_units}_Dense{dense_units}_Act{activation}_Dropout{dropout_rate}_Batch{batch_size}_Epochs{epochs}"
+results_file_name = "SW-SUPV-243-classification_results_model1_001"
+
 
 # 1. encode column names
 
@@ -236,16 +252,26 @@ def data_split(features_scaled, labels_classification, window_size):
 
 # 7. Build and Train the Model
 
-def build_classification_model(X_seq, num_classes, window_size):
+# BASIC MODEL:
+
+def build_classification_model(X_seq,
+                                num_classes, 
+                                window_size,
+                                layer_one_units = 64,
+                                layer_two_units = 128,
+                                dense_units = 64,
+                                activation='relu',
+                                dropout_rate=0.3
+                            ):
     input_shape=(window_size, X_seq.shape[2])
     model = models.Sequential([
-        layers.Conv1D(64, kernel_size=3, activation='relu', input_shape=input_shape),
+        layers.Conv1D(layer_one_units, kernel_size=3, activation='relu', input_shape=input_shape),
         layers.BatchNormalization(),
-        layers.Conv1D(128, kernel_size=3, activation='relu'),
+        layers.Conv1D(layer_two_units, kernel_size=3, activation='relu'),
         layers.BatchNormalization(),
         layers.GlobalAveragePooling1D(),
-        layers.Dense(64, activation='relu'),
-        layers.Dropout(0.3),
+        layers.Dense(dense_units, activation=activation),
+        layers.Dropout(dropout_rate),
         layers.Dense(num_classes, activation='softmax')
     ])
 
@@ -255,8 +281,9 @@ def build_classification_model(X_seq, num_classes, window_size):
     
     return model
 
-def train_classification_model(model, X_train, y_train, X_test, y_test):
+def train_classification_model(model, X_train, y_train, X_test, y_test, epochs = 10, batch_size=16):
     # callbacks for better training
+
     callbacks_list = [
         callbacks.EarlyStopping(
             monitor='val_loss',
@@ -283,8 +310,8 @@ def train_classification_model(model, X_train, y_train, X_test, y_test):
     history = model.fit(
         X_train, y_train,
         validation_split=0.2,
-        epochs=10,  # More epochs with early stopping
-        batch_size=16,
+        epochs=epochs,  # More epochs with early stopping
+        batch_size=batch_size,
         callbacks=callbacks_list,
         verbose=1
     )
@@ -295,81 +322,98 @@ def train_classification_model(model, X_train, y_train, X_test, y_test):
 
     return history, y_pred, test_loss, test_accuracy
 
-### 0. Get the same Data as in Forecasting part
-print("STEP 0/7: Loading data...")
+if __name__ == "__main__":
+    ### 0. Get the same Data as in Forecasting part
+    print("STEP 0/7: Loading data...")
 
-df_removed_nans_forecasting, df_removed_nans_classification = get_data_function()
-# to do in future: train model on input data from different dates
-# merge data
-df = pd.merge(df_removed_nans_forecasting, df_removed_nans_classification, on=['timestamp'])
-### ad 1. Encode Column Names
-print("STEP 1/7: Encoding column names...")
+    processed_forecasting_path, processed_statuses_path = get_processed_path()
 
-encoded_columns, unique_ports = encode_column_names(df)
+    df_removed_nans_forecasting = pd.read_csv(processed_forecasting_path, index_col=0, parse_dates=True)
+    df_removed_nans_classification = pd.read_csv(processed_statuses_path, index_col=0, parse_dates=True)
+    # to do in future: train model on input data from different dates
+    # merge data
+    df = pd.merge(df_removed_nans_forecasting, df_removed_nans_classification, on=['timestamp'])
+    print(f"    Merged DataFrame shape: {df.shape}")
 
-# update DataFrame with encoded column names
-df.rename(columns=encoded_columns, inplace=True)
+    ### ad 1. Encode Column Names
+    print("STEP 1/7: Encoding column names...")
 
-### ad 2. Encode Labels
-print("STEP 2/7: Encoding labels...")
+    encoded_columns, unique_ports = encode_column_names(df)
 
-# down value for status columns
-down = 2
+    # update DataFrame with encoded column names
+    df.rename(columns=encoded_columns, inplace=True)
 
-temperature_threshold = 30
-cpu_threshold = 30
+    ### ad 2. Encode Labels
+    print("STEP 2/7: Encoding labels...")
 
-temp_bit = 8
-cpu_bit = 10
+    # down value for status columns
+    down = 2
 
-mapped_ports = map_ports_to_start_from_one(unique_ports)
-df_labeled = encode_labels(df, down_value=down, temperature_threshold=temperature_threshold, cpu_threshold=cpu_threshold, temp_bit=temp_bit, cpu_bit=cpu_bit, mapped_ports=mapped_ports)
+    temperature_threshold = 50
+    cpu_threshold = 10
 
-### ad 3. Decode Labels
-print("STEP 3/7: Decoding example labels...")
-label_to_name = {}
-labels = df_labeled['Label'].unique()
+    temp_bit = 8
+    cpu_bit = 10
 
-for label in labels:
-    label_to_name[label] = decode_label(label, mapped_ports, temp_bit=temp_bit, cpu_bit=cpu_bit)
+    mapped_ports = map_ports_to_start_from_one(unique_ports)
+    df_labeled = encode_labels(df, down_value=down, temperature_threshold=temperature_threshold, cpu_threshold=cpu_threshold, temp_bit=temp_bit, cpu_bit=cpu_bit, mapped_ports=mapped_ports)
 
-print("    Example label decoding:")
-example_label = labels[0]
-print(f"    Label {example_label}: {label_to_name[example_label]}")
+    ### ad 3. Decode Labels
+    print("STEP 3/7: Decoding example labels...")
+    label_to_name = {}
+    labels = df_labeled['Label'].unique()
 
-### ad 4. Balance Classes by Downsampling Majority Classes
-print("STEP 4/7: Merging small classes...")
-threshold = 3000
-df_merged_labeled = merge_small_classes(df_labeled, label_col='Label', threshold=threshold, other_label='0000')
-print(f"    results for threshold: {threshold} = {df_merged_labeled['Label'].value_counts()}")
+    for label in labels:
+        label_to_name[label] = decode_label(label, mapped_ports, temp_bit=temp_bit, cpu_bit=cpu_bit)
 
-# unify datatype for label column
-df_merged_labeled['Label'] = df_merged_labeled['Label'].astype(int)
+    print("    Example of label decoding:")
+    for idx, label in enumerate(labels):
+        example_label = labels[idx]
+        print(f"    Label {example_label}: {label_to_name[example_label]}")
 
-### ad 5. Merge Small Classes
-print("STEP 5/7: Balancing classes...")
-df_balanced_labeled = balance_classes(df_merged_labeled, label_col='Label', random_state=42)
-print(f"    {df_balanced_labeled['Label'].value_counts()}")
+    ### ad 4. Balance Classes by Downsampling Majority Classes
+    print("STEP 4/7: Merging small classes...")
+    df_merged_labeled = merge_small_classes(df_labeled, label_col='Label', threshold=threshold, other_label='0000')
+    print(f"    results for threshold: {threshold} = {df_merged_labeled['Label'].value_counts()}")
 
-### ad 6. Prepare Data for Training
-print("STEP 6/7: Preparing data for training...")
-features_scaled, labels_classification, label_to_index, unique_labels, num_classes = prepare_classification_data(df_balanced_labeled)
-window_size = 6
-X_train, X_test, y_train, y_test = data_split(features_scaled, labels_classification, window_size)
+    # unify datatype for label column
+    df_merged_labeled['Label'] = df_merged_labeled['Label'].astype(int)
 
-### ad 7. Build and Train the Model
-print("STEP 7/7: Building and training the model...")
-model = build_classification_model(X_train, num_classes, window_size)
-history, y_pred, test_loss, test_accuracy = train_classification_model(model, X_train, y_train, X_test, y_test)
+    ### ad 5. Merge Small Classes
+    print("STEP 5/7: Balancing classes...")
+    df_balanced_labeled = balance_classes(df_merged_labeled, label_col='Label', random_state=42)
+    print(f"    {df_balanced_labeled['Label'].value_counts()}")
 
-print(f"    Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}")
+    ### ad 6. Prepare Data for Training
+    print("STEP 6/7: Preparing data for training...")
+    features_scaled, labels_classification, label_to_index, unique_labels, num_classes = prepare_classification_data(df_balanced_labeled)
+    window_size = 6
+    X_train, X_test, y_train, y_test = data_split(features_scaled, labels_classification, window_size)
 
-### 8. Save Model and Encoders
+    ### ad 7. Build and Train the Model
+    print("STEP 7/7: Building and training the model...")
+    model = build_classification_model(X_train, num_classes, window_size)
 
-model.save('C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\classification_model\\final_model.h5')
-encoder_data = {}
-encoder_data['label_to_index'] = label_to_index
-encoder_data['index_to_label'] = {v: k for k, v in label_to_index.items()}
-encoder_data['label_to_name'] = label_to_name
-with open('C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\classification_model\\encoders.pkl', 'wb') as f:
-    pickle.dump(encoder_data, f)
+    history, y_pred, test_loss, test_accuracy = train_classification_model(model, X_train, y_train, X_test, y_test, epochs=epochs, batch_size=batch_size)
+
+    print(f"    Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.4f}")
+
+    ### 8. Save Model and Encoders
+    classification_path = "C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\classification_model"
+    model.save(f'{classification_path}\\final_model.h5')
+    encoder_data = {}
+    encoder_data['label_to_index'] = label_to_index
+    encoder_data['index_to_label'] = {v: k for k, v in label_to_index.items()}
+    encoder_data['label_to_name'] = label_to_name
+    with open(f'{classification_path}\\encoders.pkl', 'wb') as f:
+        pickle.dump(encoder_data, f)
+
+    print(f"Model and encoders saved under {classification_path}")
+
+    description = f"Model Description: {model_description}, \n \
+    Test Loss: {test_loss:.4f}, Test Accuracy: {test_accuracy:.4f} \n \
+        Threshold for merging small classes: {threshold}, \n \
+        Amount of classes: {num_classes}"
+    with open(f"{classification_path}\\{results_file_name}.txt", "w") as f:
+        f.write(f"Model Description: {description}\n")
+        

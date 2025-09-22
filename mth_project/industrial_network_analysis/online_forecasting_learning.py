@@ -172,14 +172,37 @@ def perform_classification(forecasted_actual, removed_nans_classification, t, cl
 
     return prediction_name
 
-def predict_recursive_steps(initial_model, initial_context, variables, prediction_horizon=6, context_length=60):
+def predict_recursive_steps(model, initial_context, variables, prediction_horizon=6, context_length=60):
     context = initial_context.copy()
     predictions = []
     
     for step in range(prediction_horizon):
         # Reshape for model input (batch_size=1, timesteps, features)
         context_reshaped = context.reshape(1, context_length, len(variables))
-        step_prediction = initial_model.predict(context_reshaped, verbose=0)
+        
+        # Make prediction for next step
+        step_prediction = model.predict(context_reshaped, verbose=0)
+        
+        # Store the prediction (flattened for compatibility)
+        predictions.append(step_prediction.flatten())
+        
+        # FIXED: Create new row directly from prediction
+        # This is the predicted next timestep
+        new_row = step_prediction[0].copy()  # Extract from batch dimension and copy
+        
+        # Slide context window: remove oldest, add new prediction
+        context = np.vstack((context[1:], new_row.reshape(1, -1)))
+    
+    return predictions
+
+def predict_recursive_steps_old(model, initial_context, variables, prediction_horizon=6, context_length=60):
+    context = initial_context.copy()
+    predictions = []
+    
+    for step in range(prediction_horizon):
+        # Reshape for model input (batch_size=1, timesteps, features)
+        context_reshaped = context.reshape(1, context_length, len(variables))
+        step_prediction = model.predict(context_reshaped, verbose=0)
         predictions.append(step_prediction.flatten())
 
         # Recursive feedback mechanism
@@ -195,20 +218,8 @@ def predict_recursive_steps(initial_model, initial_context, variables, predictio
 
     return predictions
 
+
 def improve_model(initial_model, training_data, target_data, epochs=1, batch_size=1):
-    """
-    Improve model with online learning using proper supervision.
-    
-    Args:
-        initial_model: The model to improve
-        training_data: Context window (batch_size, timesteps, features)
-        target_data: Ground truth next step (batch_size, features)
-        epochs: Number of training epochs
-        batch_size: Batch size for training
-    
-    Returns:
-        improved_model: Updated model
-    """
     try:
         # Calculate prediction error before training
         current_prediction = initial_model.predict(training_data, verbose=0)
@@ -225,9 +236,43 @@ def improve_model(initial_model, training_data, target_data, epochs=1, batch_siz
         else:
             current_prediction_np = np.array(current_prediction)
             
-        prediction_error = np.mean(np.abs(current_prediction_np - target_data_np))
+        # Calculate different error metrics
+        prediction_error_mae = np.mean(np.abs(current_prediction_np - target_data_np))
+        prediction_error_mse = np.mean((current_prediction_np - target_data_np) ** 2)
+        max_error = np.max(np.abs(current_prediction_np - target_data_np))
         
-        # Try training with existing optimizer first
+        # Analyze data patterns to choose adaptation strategy
+        data_variance = np.var(target_data_np)
+        data_range = np.max(target_data_np) - np.min(target_data_np)
+        is_constant_like = data_variance < 1e-6 or data_range < 1e-4
+        
+        # Skip training if error is very small and data is constant-like
+        if is_constant_like and prediction_error_mae < 1e-3:
+            print(f"   Skipping training: constant-like data with low error ({prediction_error_mae:.6f})")
+            return initial_model
+        
+        # Determine training parameters based on strategy and data characteristics
+        if prediction_error_mae > 0.1:
+            learning_rate = 0.005
+            epochs = min(3, epochs * 2)
+        elif prediction_error_mae < 0.01:
+            learning_rate = 0.0001
+            epochs = 1
+        else:
+            learning_rate = 0.001
+            epochs = epochs
+        
+        # Create a copy of the model for safe training
+        original_weights = initial_model.get_weights()
+        
+        # Recompile with adaptive learning rate
+        initial_model.compile(
+            optimizer=keras.optimizers.Adam(learning_rate=learning_rate), 
+            loss='mse', 
+            metrics=['mae']
+        )
+        
+        # Train the model
         try:
             history = initial_model.fit(
                 training_data, 
@@ -236,29 +281,30 @@ def improve_model(initial_model, training_data, target_data, epochs=1, batch_siz
                 batch_size=batch_size, 
                 verbose=0
             )
-        except ValueError as optimizer_error:
-            if "Unknown variable" in str(optimizer_error):
-                # Recompile with fresh optimizer if variable tracking issue
-                print("   Recompiling model with fresh optimizer...")
-                initial_model.compile(
-                    optimizer=keras.optimizers.Adam(learning_rate=0.001), 
-                    loss='mse', 
-                    metrics=['mae']
-                )
-                # Try training again
-                history = initial_model.fit(
-                    training_data, 
-                    target_data, 
-                    epochs=epochs, 
-                    batch_size=batch_size, 
-                    verbose=0
-                )
+            
+            # Validate improvement
+            new_prediction = initial_model.predict(training_data, verbose=0)
+            if hasattr(new_prediction, 'numpy'):
+                new_prediction_np = new_prediction.numpy()
             else:
-                raise optimizer_error
-        
-        # Log improvement (simplified)
-        if prediction_error > 0.01:  # Only log if error is significant
-            print(f"   Model training completed, pre-training error: {prediction_error:.4f}")
+                new_prediction_np = np.array(new_prediction)
+                
+            new_error = np.mean(np.abs(new_prediction_np - target_data_np))
+            improvement_ratio = (prediction_error_mae - new_error) / (prediction_error_mae + 1e-8)
+            
+            # Accept improvement if error decreased or improvement is significant
+            if new_error < prediction_error_mae or improvement_ratio > 0.01:
+                print(f"   ✓ Model improved: {prediction_error_mae:.6f} → {new_error:.6f} (Δ{improvement_ratio*100:.1f}%)")
+                return initial_model
+            else:
+                # Revert to original weights if no improvement
+                initial_model.set_weights(original_weights)
+                print(f"   ✗ No improvement: {prediction_error_mae:.6f} → {new_error:.6f}, reverting weights")
+                return initial_model
+                
+        except ValueError as optimizer_error:
+            print(f"   Skipping training: optimizer error ({optimizer_error})")
+            return initial_model
             
     except Exception as e:
         print(f"   Warning: Model training failed ({e})")
@@ -290,7 +336,8 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
                                         dash_plotter, 
                                         variables, 
                                         prediction_horizon=6, 
-                                        classification_model_path=None):
+                                        classification_model_path=None,
+                                        adaptation_strategy='smart'):
     # Prepare model for online learning by recompiling with fresh optimizer
     print("Preparing model for online learning...")
     try:
@@ -337,15 +384,17 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
         classification_enabled = False
         classification_model = None
 
+    # for improved model
+    feature_states = None
+
     # Main prediction loop
     for t in range(context_length, len(scaled_data) - prediction_horizon + 1):
-        # wait 30 seconds (for demo - real data is 1 minute apart)
-        time.sleep(30)
+        # wait 1 seconds (for demo - real data is 1 minute apart)
+        time.sleep(1)
         current_step = t - context_length
 
         # 1. Make predictions for next 'prediction_horizon' steps
         step_predictions = predict_recursive_steps(model, current_context, variables = variables, prediction_horizon = prediction_horizon)
-        print(f"Step {t}, raw predictions: {step_predictions}")
         
         # 2. Convert all predictions to original scale
         step_predictions_original = []
@@ -361,8 +410,6 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
                 pred_original.append(original_val)
             step_predictions_original.append(pred_original)
         
-        print(f"Step {t}, inverse transformed predictions: {step_predictions_original}")
-
         # 3. Get actual values for all predicted steps
         actual_values = []
         for step in range(prediction_horizon):
@@ -400,10 +447,6 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
             actuals_original, 
             last_actual_values
         )
-
-        print(f"Step {t}, inverse differenced predictions all: {step_predictions_actual}")
-        print(f"Step {t}, inverse differenced predictions (t+1): {step_predictions_actual[0]}")
-        print(f"Step {t}, inverse differenced actuals: {actuals_actual}")
 
         # 6. Classification (Only if model is loaded), with proper temporal alignment
         classification_result = None
@@ -476,13 +519,14 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
             # Target: next step t+1 (ground truth)
             target_next_step = scaled_data[t + 1, :].copy()
             
-            # Train model to predict t+1 from context ending at t
+            # # Train model to predict t+1 from context ending at t
             model = improve_model(
                 model, 
                 training_context.reshape(1, context_length, len(variables)), 
                 target_next_step.reshape(1, len(variables)), 
                 epochs=1, 
-                batch_size=1
+                batch_size=1,
+                adaptation_strategy=adaptation_strategy  # Use configurable strategy
             )
             print(f"Model improved at step {current_step}: training to predict t+1")
         

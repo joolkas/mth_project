@@ -713,3 +713,5 @@
 2025-09-16 12:20:37,881 - INFO - CSV file read successfully.
 2025-09-16 12:36:00,487 - INFO - CSV file read successfully.
 2025-09-18 14:36:48,367 - INFO - CSV file read successfully.
+2025-09-21 14:28:45,964 - WARNING - TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html (File: c:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\tqdm\auto.py, Line: 21)
+2025-09-21 14:28:56,384 - INFO - CSV file read successfully.

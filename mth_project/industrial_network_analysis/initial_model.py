@@ -9,14 +9,17 @@ import os
 import pickle
 from get_data import get_processed_path
 
-from sklearn.metrics import mean_squared_error, mean_absolute_error
-import pandas as pd
 import matplotlib.pyplot as plt
 
-from tensorflow import keras
+# Import callbacks at module level to avoid conflicts
+try:
+    from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
+except ImportError:
+    # Fallback for different TensorFlow versions
+    from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 
 # model parameters that can be adjusted or changed for testing purpose
-epochs = 50
+epochs = 80
 batch_size = 64
 validation_split = 0.2
 verbose = 1
@@ -27,10 +30,15 @@ dense_units = 256
 activation = 'relu'
 dropout_rate = 0.4
 
-callbacks = False
+use_callbacks = True
+
+# Split data for initial training and online forecasting
+
+initial_idx = 24 * 60 # first 24 hours for initial training
+
 
 model_description = f"Epochs: {epochs}, Batch Size: {batch_size}, Validation Split: {validation_split}, Context Length: {context_length}, First Layer Units: {first_layer_units}, Second Layer Units: {second_layer_units}, Dense Units: {dense_units}, Activation: {activation}, Dropout Rate: {dropout_rate}"
-results_file_name = "initial_model_results_36h_no_callbacks_001"
+results_file_name = "initial_model_results_24h_with_callbacks_001"
 
 def create_online_multivariate_model(df,
                                      context_length=context_length,
@@ -104,29 +112,31 @@ def split_data_for_initial_model(df, context_length=context_length):
 
     return X_train, y_train, scalers
 
-def train_initial_model(model, X_train, y_train, epochs = epochs, batch_size = batch_size, validation_split = validation_split, verbose = verbose, callbacks = False):
+def train_initial_model(model, X_train, y_train, epochs = epochs, batch_size = batch_size, validation_split = validation_split, verbose = verbose, use_callbacks = False):
     
-    if callbacks:
+    callback_list = []
+    
+    if use_callbacks:
         callback_list = [
-        callbacks.EarlyStopping(
-            monitor='val_loss',
-            patience=5,
-            restore_best_weights=True,
-            verbose=1
-        ),
-        callbacks.ReduceLROnPlateau(
-            monitor='val_loss',
-            factor=0.5,
-            patience=3,
-            min_lr=1e-7,
-            verbose=1
-        ),
-        callbacks.ModelCheckpoint(
-            'C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\classification_model\\best_model.h5',
-            monitor='val_loss',
-            save_best_only=True,
-            verbose=1
-        )
+            EarlyStopping(
+                monitor='val_loss',
+                patience=5,
+                restore_best_weights=True,
+                verbose=1
+            ),
+            ReduceLROnPlateau(
+                monitor='val_loss',
+                factor=0.5,
+                patience=3,
+                min_lr=1e-7,
+                verbose=1
+            ),
+            ModelCheckpoint(
+                'C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\forecasting_model\\best_model.h5',
+                monitor='val_loss',
+                save_best_only=True,
+                verbose=1
+            )
         ]
 
     history = model.fit(
@@ -135,7 +145,7 @@ def train_initial_model(model, X_train, y_train, epochs = epochs, batch_size = b
         batch_size=batch_size,
         validation_split=validation_split,
         verbose=verbose,
-        callbacks=callback_list if callbacks else None
+        callbacks=callback_list if use_callbacks else None
     )
 
     # early stopping?
@@ -456,13 +466,9 @@ if __name__ == "__main__":
 
     df_differenced = df_removed_nans_forecasting.diff().dropna()
 
-    # Split data for initial training and online forecasting
-
-    initial_idx = 36 * 60 # first 36 hours for initial training
-
     df_initial = df_differenced.iloc[:initial_idx].copy()
     df_online = df_differenced.iloc[initial_idx:].copy()
-    df_online.index = original_timestamps[initial_idx + 1:]  # +1 because diff().dropna() removes first row
+    #df_online.index = original_timestamps[initial_idx + 1:]  # +1 because diff().dropna() removes first row
 
     variables = df_initial.columns
 
@@ -491,7 +497,7 @@ if __name__ == "__main__":
     print("Training initial model...")
     print("======================================================")
 
-    history, initial_model = train_initial_model(model, X_train, y_train, epochs = epochs, callbacks = callbacks)
+    history, initial_model = train_initial_model(model, X_train, y_train, epochs = epochs, use_callbacks = use_callbacks)
 
     # save initial model
     initial_model_path = "C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\forecasting_model"
