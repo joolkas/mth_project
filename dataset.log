@@ -64850,3 +64850,713 @@ It was originally created here:
 2025-09-23 08:39:25,289 - INFO - 127.0.0.1 - - [23/Sep/2025 08:39:25] "POST /_dash-update-component HTTP/1.1" 200 -
 2025-09-23 08:39:27,354 - INFO - 127.0.0.1 - - [23/Sep/2025 08:39:27] "POST /_dash-update-component HTTP/1.1" 200 -
 2025-09-23 08:39:27,454 - INFO - 127.0.0.1 - - [23/Sep/2025 08:39:27] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:56:41,463 - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-09-23 08:56:42,361 - INFO - Dash is running on http://127.0.0.1:8050/
+
+2025-09-23 08:56:42,401 - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:8050
+2025-09-23 08:56:42,401 - INFO - [33mPress CTRL+C to quit[0m
+2025-09-23 08:56:45,443 - WARNING - Compiled the loaded model, but the compiled metrics have yet to be built. `model.compile_metrics` will be empty until you train or evaluate the model.
+2025-09-23 08:56:46,508 - WARNING - UserWarning: Even though the `tf.config.experimental_run_functions_eagerly` option is set, this option does not apply to tf.data functions. To force eager execution of tf.data functions, please use `tf.data.experimental.enable_debug_mode()`. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\tensorflow\python\data\ops\structured_function.py, Line: 258)
+2025-09-23 08:56:48,240 - WARNING - UserWarning: Even though the `tf.config.experimental_run_functions_eagerly` option is set, this option does not apply to tf.data functions. To force eager execution of tf.data functions, please use `tf.data.experimental.enable_debug_mode()`. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\tensorflow\python\data\ops\structured_function.py, Line: 258)
+2025-09-23 08:56:55,633 - WARNING - UserWarning: Even though the `tf.config.experimental_run_functions_eagerly` option is set, this option does not apply to tf.data functions. To force eager execution of tf.data functions, please use `tf.data.experimental.enable_debug_mode()`. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\tensorflow\python\data\ops\structured_function.py, Line: 258)
+2025-09-23 08:57:05,073 - WARNING - UserWarning: Even though the `tf.config.experimental_run_functions_eagerly` option is set, this option does not apply to tf.data functions. To force eager execution of tf.data functions, please use `tf.data.experimental.enable_debug_mode()`. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\tensorflow\python\data\ops\structured_function.py, Line: 258)
+2025-09-23 08:57:12,054 - WARNING - UserWarning: Even though the `tf.config.experimental_run_functions_eagerly` option is set, this option does not apply to tf.data functions. To force eager execution of tf.data functions, please use `tf.data.experimental.enable_debug_mode()`. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\tensorflow\python\data\ops\structured_function.py, Line: 258)
+2025-09-23 08:57:19,312 - WARNING - UserWarning: Even though the `tf.config.experimental_run_functions_eagerly` option is set, this option does not apply to tf.data functions. To force eager execution of tf.data functions, please use `tf.data.experimental.enable_debug_mode()`. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\tensorflow\python\data\ops\structured_function.py, Line: 258)
+2025-09-23 08:57:23,975 - WARNING - UserWarning: Even though the `tf.config.experimental_run_functions_eagerly` option is set, this option does not apply to tf.data functions. To force eager execution of tf.data functions, please use `tf.data.experimental.enable_debug_mode()`. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\tensorflow\python\data\ops\structured_function.py, Line: 258)
+2025-09-23 08:57:28,523 - ERROR - Exception on /_dash-update-component [POST]
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1388, in _prepare_callback
+    cb = self.callback_map[output]
+         ~~~~~~~~~~~~~~~~~^^^^^^^^
+KeyError: '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1489, in dispatch
+    func = self._prepare_callback(g, body)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1422, in _prepare_callback
+    raise KeyError(f"Callback function not found for output '{output}'.") from e
+KeyError: "Callback function not found for output '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'."
+2025-09-23 08:57:28,640 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:28] "[35m[1mPOST /_dash-update-component HTTP/1.1[0m" 500 -
+2025-09-23 08:57:28,774 - ERROR - Exception on /_dash-update-component [POST]
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1388, in _prepare_callback
+    cb = self.callback_map[output]
+         ~~~~~~~~~~~~~~~~~^^^^^^^^
+KeyError: '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1489, in dispatch
+    func = self._prepare_callback(g, body)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1422, in _prepare_callback
+    raise KeyError(f"Callback function not found for output '{output}'.") from e
+KeyError: "Callback function not found for output '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'."
+2025-09-23 08:57:28,774 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:28] "[35m[1mPOST /_dash-update-component HTTP/1.1[0m" 500 -
+2025-09-23 08:57:29,720 - ERROR - Exception on /_dash-update-component [POST]
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1388, in _prepare_callback
+    cb = self.callback_map[output]
+         ~~~~~~~~~~~~~~~~~^^^^^^^^
+KeyError: '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1489, in dispatch
+    func = self._prepare_callback(g, body)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1422, in _prepare_callback
+    raise KeyError(f"Callback function not found for output '{output}'.") from e
+KeyError: "Callback function not found for output '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'."
+2025-09-23 08:57:29,730 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:29] "[35m[1mPOST /_dash-update-component HTTP/1.1[0m" 500 -
+2025-09-23 08:57:31,026 - ERROR - Exception on /_dash-update-component [POST]
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1388, in _prepare_callback
+    cb = self.callback_map[output]
+         ~~~~~~~~~~~~~~~~~^^^^^^^^
+KeyError: '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1489, in dispatch
+    func = self._prepare_callback(g, body)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1422, in _prepare_callback
+    raise KeyError(f"Callback function not found for output '{output}'.") from e
+KeyError: "Callback function not found for output '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'."
+2025-09-23 08:57:31,040 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:31] "[35m[1mPOST /_dash-update-component HTTP/1.1[0m" 500 -
+2025-09-23 08:57:31,740 - ERROR - Exception on /_dash-update-component [POST]
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1388, in _prepare_callback
+    cb = self.callback_map[output]
+         ~~~~~~~~~~~~~~~~~^^^^^^^^
+KeyError: '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1489, in dispatch
+    func = self._prepare_callback(g, body)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1422, in _prepare_callback
+    raise KeyError(f"Callback function not found for output '{output}'.") from e
+KeyError: "Callback function not found for output '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'."
+2025-09-23 08:57:31,748 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:31] "[35m[1mPOST /_dash-update-component HTTP/1.1[0m" 500 -
+2025-09-23 08:57:33,027 - ERROR - Exception on /_dash-update-component [POST]
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1388, in _prepare_callback
+    cb = self.callback_map[output]
+         ~~~~~~~~~~~~~~~~~^^^^^^^^
+KeyError: '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1489, in dispatch
+    func = self._prepare_callback(g, body)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1422, in _prepare_callback
+    raise KeyError(f"Callback function not found for output '{output}'.") from e
+KeyError: "Callback function not found for output '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'."
+2025-09-23 08:57:33,035 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:33] "[35m[1mPOST /_dash-update-component HTTP/1.1[0m" 500 -
+2025-09-23 08:57:33,694 - ERROR - Exception on /_dash-update-component [POST]
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1388, in _prepare_callback
+    cb = self.callback_map[output]
+         ~~~~~~~~~~~~~~~~~^^^^^^^^
+KeyError: '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1489, in dispatch
+    func = self._prepare_callback(g, body)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1422, in _prepare_callback
+    raise KeyError(f"Callback function not found for output '{output}'.") from e
+KeyError: "Callback function not found for output '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'."
+2025-09-23 08:57:33,697 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:33] "[35m[1mPOST /_dash-update-component HTTP/1.1[0m" 500 -
+2025-09-23 08:57:34,541 - WARNING - UserWarning: Even though the `tf.config.experimental_run_functions_eagerly` option is set, this option does not apply to tf.data functions. To force eager execution of tf.data functions, please use `tf.data.experimental.enable_debug_mode()`. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\tensorflow\python\data\ops\structured_function.py, Line: 258)
+2025-09-23 08:57:34,999 - ERROR - Exception on /_dash-update-component [POST]
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1388, in _prepare_callback
+    cb = self.callback_map[output]
+         ~~~~~~~~~~~~~~~~~^^^^^^^^
+KeyError: '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1489, in dispatch
+    func = self._prepare_callback(g, body)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1422, in _prepare_callback
+    raise KeyError(f"Callback function not found for output '{output}'.") from e
+KeyError: "Callback function not found for output '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'."
+2025-09-23 08:57:35,003 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:35] "[35m[1mPOST /_dash-update-component HTTP/1.1[0m" 500 -
+2025-09-23 08:57:35,706 - ERROR - Exception on /_dash-update-component [POST]
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1388, in _prepare_callback
+    cb = self.callback_map[output]
+         ~~~~~~~~~~~~~~~~~^^^^^^^^
+KeyError: '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1489, in dispatch
+    func = self._prepare_callback(g, body)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1422, in _prepare_callback
+    raise KeyError(f"Callback function not found for output '{output}'.") from e
+KeyError: "Callback function not found for output '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'."
+2025-09-23 08:57:35,711 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:35] "[35m[1mPOST /_dash-update-component HTTP/1.1[0m" 500 -
+2025-09-23 08:57:37,005 - ERROR - Exception on /_dash-update-component [POST]
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1388, in _prepare_callback
+    cb = self.callback_map[output]
+         ~~~~~~~~~~~~~~~~~^^^^^^^^
+KeyError: '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1489, in dispatch
+    func = self._prepare_callback(g, body)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1422, in _prepare_callback
+    raise KeyError(f"Callback function not found for output '{output}'.") from e
+KeyError: "Callback function not found for output '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'."
+2025-09-23 08:57:37,005 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:37] "[35m[1mPOST /_dash-update-component HTTP/1.1[0m" 500 -
+2025-09-23 08:57:37,705 - ERROR - Exception on /_dash-update-component [POST]
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1388, in _prepare_callback
+    cb = self.callback_map[output]
+         ~~~~~~~~~~~~~~~~~^^^^^^^^
+KeyError: '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1489, in dispatch
+    func = self._prepare_callback(g, body)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1422, in _prepare_callback
+    raise KeyError(f"Callback function not found for output '{output}'.") from e
+KeyError: "Callback function not found for output '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'."
+2025-09-23 08:57:37,707 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:37] "[35m[1mPOST /_dash-update-component HTTP/1.1[0m" 500 -
+2025-09-23 08:57:38,999 - ERROR - Exception on /_dash-update-component [POST]
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1388, in _prepare_callback
+    cb = self.callback_map[output]
+         ~~~~~~~~~~~~~~~~~^^^^^^^^
+KeyError: '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1489, in dispatch
+    func = self._prepare_callback(g, body)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1422, in _prepare_callback
+    raise KeyError(f"Callback function not found for output '{output}'.") from e
+KeyError: "Callback function not found for output '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'."
+2025-09-23 08:57:38,999 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:38] "[35m[1mPOST /_dash-update-component HTTP/1.1[0m" 500 -
+2025-09-23 08:57:39,691 - ERROR - Exception on /_dash-update-component [POST]
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1388, in _prepare_callback
+    cb = self.callback_map[output]
+         ~~~~~~~~~~~~~~~~~^^^^^^^^
+KeyError: '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1489, in dispatch
+    func = self._prepare_callback(g, body)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1422, in _prepare_callback
+    raise KeyError(f"Callback function not found for output '{output}'.") from e
+KeyError: "Callback function not found for output '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'."
+2025-09-23 08:57:39,693 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:39] "[35m[1mPOST /_dash-update-component HTTP/1.1[0m" 500 -
+2025-09-23 08:57:40,996 - ERROR - Exception on /_dash-update-component [POST]
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1388, in _prepare_callback
+    cb = self.callback_map[output]
+         ~~~~~~~~~~~~~~~~~^^^^^^^^
+KeyError: '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1489, in dispatch
+    func = self._prepare_callback(g, body)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1422, in _prepare_callback
+    raise KeyError(f"Callback function not found for output '{output}'.") from e
+KeyError: "Callback function not found for output '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'."
+2025-09-23 08:57:40,998 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:40] "[35m[1mPOST /_dash-update-component HTTP/1.1[0m" 500 -
+2025-09-23 08:57:41,702 - ERROR - Exception on /_dash-update-component [POST]
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1388, in _prepare_callback
+    cb = self.callback_map[output]
+         ~~~~~~~~~~~~~~~~~^^^^^^^^
+KeyError: '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1489, in dispatch
+    func = self._prepare_callback(g, body)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1422, in _prepare_callback
+    raise KeyError(f"Callback function not found for output '{output}'.") from e
+KeyError: "Callback function not found for output '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'."
+2025-09-23 08:57:41,705 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:41] "[35m[1mPOST /_dash-update-component HTTP/1.1[0m" 500 -
+2025-09-23 08:57:42,595 - WARNING - UserWarning: Even though the `tf.config.experimental_run_functions_eagerly` option is set, this option does not apply to tf.data functions. To force eager execution of tf.data functions, please use `tf.data.experimental.enable_debug_mode()`. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\tensorflow\python\data\ops\structured_function.py, Line: 258)
+2025-09-23 08:57:43,029 - ERROR - Exception on /_dash-update-component [POST]
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1388, in _prepare_callback
+    cb = self.callback_map[output]
+         ~~~~~~~~~~~~~~~~~^^^^^^^^
+KeyError: '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\flask\app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1489, in dispatch
+    func = self._prepare_callback(g, body)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\dash\dash.py", line 1422, in _prepare_callback
+    raise KeyError(f"Callback function not found for output '{output}'.") from e
+KeyError: "Callback function not found for output '..graphs-container.children...status-info.children...classification-results.children...port-status-panel.children...active-alerts.children..'."
+2025-09-23 08:57:43,032 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:43] "[35m[1mPOST /_dash-update-component HTTP/1.1[0m" 500 -
+2025-09-23 08:57:43,114 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:43] "GET / HTTP/1.1" 200 -
+2025-09-23 08:57:43,387 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:43] "GET /_favicon.ico?v=3.2.0 HTTP/1.1" 200 -
+2025-09-23 08:57:43,679 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:43] "GET /_dash-layout HTTP/1.1" 200 -
+2025-09-23 08:57:43,683 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:43] "GET /_dash-dependencies HTTP/1.1" 200 -
+2025-09-23 08:57:47,072 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:47] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:57:47,355 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:47] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:57:47,628 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:47] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:57:47,639 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:47] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:57:48,306 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:48] "[36mGET /_dash-component-suites/dash/dcc/async-graph.js HTTP/1.1[0m" 304 -
+2025-09-23 08:57:48,991 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:48] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:57:52,272 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:52] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:57:52,717 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:52] "[36mGET /_dash-component-suites/plotly/package_data/plotly.min.js HTTP/1.1[0m" 304 -
+2025-09-23 08:57:52,809 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:52] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:57:54,269 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:54] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:57:54,535 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:54] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:57:55,045 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:55] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:57:55,773 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:55] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:57:56,614 - INFO - 127.0.0.1 - - [23/Sep/2025 08:57:56] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:57:57,704 - WARNING - UserWarning: Even though the `tf.config.experimental_run_functions_eagerly` option is set, this option does not apply to tf.data functions. To force eager execution of tf.data functions, please use `tf.data.experimental.enable_debug_mode()`. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\tensorflow\python\data\ops\structured_function.py, Line: 258)
+2025-09-23 08:58:01,084 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:01] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:01,818 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:01] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:02,835 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:02] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:03,874 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:03] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:05,015 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:05] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:06,372 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:06] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:07,242 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:07] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:07,973 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:07] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:09,561 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:09] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:09,891 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:09] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:11,259 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:11] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:11,392 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:11] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:12,193 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:12] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:12,860 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:12] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:13,370 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:13] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:13,731 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:13] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:14,612 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:14] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:17,412 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:17] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:17,511 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:17] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:17,850 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:17] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:18,514 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:18] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:20,364 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:20] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:20,516 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:20] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:22,118 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:22] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:22,696 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:22] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:24,569 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:24] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:24,724 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:24] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:26,270 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:26] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:27,086 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:27] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:27,424 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:27] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:28,495 - WARNING - UserWarning: Even though the `tf.config.experimental_run_functions_eagerly` option is set, this option does not apply to tf.data functions. To force eager execution of tf.data functions, please use `tf.data.experimental.enable_debug_mode()`. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\tensorflow\python\data\ops\structured_function.py, Line: 258)
+2025-09-23 08:58:29,340 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:29] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:29,589 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:29] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:31,041 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:31] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:31,404 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:31] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:33,193 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:33] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:33,459 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:33] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:34,594 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:34] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:35,929 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:35] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:36,229 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:36] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:37,326 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:37] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:38,733 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:38] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:39,230 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:39] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:40,596 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:40] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:41,632 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:41] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:42,965 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:42] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:43,265 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:43] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:44,440 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:44] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:45,789 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:45] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:46,137 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:46] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:46,295 - WARNING - UserWarning: Even though the `tf.config.experimental_run_functions_eagerly` option is set, this option does not apply to tf.data functions. To force eager execution of tf.data functions, please use `tf.data.experimental.enable_debug_mode()`. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\tensorflow\python\data\ops\structured_function.py, Line: 258)
+2025-09-23 08:58:47,772 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:47] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:48,236 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:48] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:49,634 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:49] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:50,847 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:50] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:51,452 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:51] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:52,838 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:52] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:53,404 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:53] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:54,649 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:54] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:56,095 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:56] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:56,296 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:56] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:57,447 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:57] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:58,915 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:58] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:58:59,298 - INFO - 127.0.0.1 - - [23/Sep/2025 08:58:59] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:01,217 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:01] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:01,599 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:01] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:03,148 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:03] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:03,424 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:03] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:04,419 - WARNING - UserWarning: Even though the `tf.config.experimental_run_functions_eagerly` option is set, this option does not apply to tf.data functions. To force eager execution of tf.data functions, please use `tf.data.experimental.enable_debug_mode()`. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\tensorflow\python\data\ops\structured_function.py, Line: 258)
+2025-09-23 08:59:04,562 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:04] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:06,095 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:06] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:06,492 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:06] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:07,744 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:07] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:08,418 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:08] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:09,883 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:09] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:10,100 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:10] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:11,480 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:11] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:12,464 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:12] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:13,913 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:13] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:14,213 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:14] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:15,602 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:15] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:16,760 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:16] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:17,377 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:17] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:18,875 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:18] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:19,158 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:19] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:19,941 - WARNING - UserWarning: Even though the `tf.config.experimental_run_functions_eagerly` option is set, this option does not apply to tf.data functions. To force eager execution of tf.data functions, please use `tf.data.experimental.enable_debug_mode()`. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\tensorflow\python\data\ops\structured_function.py, Line: 258)
+2025-09-23 08:59:20,457 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:20] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:22,056 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:22] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:22,440 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:22] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:24,087 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:24] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:24,471 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:24] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:25,892 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:25] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:26,227 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:26] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:27,744 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:27] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:28,089 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:28] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:29,535 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:29] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:30,716 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:30] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:32,292 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:32] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:32,570 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:32] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:33,557 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:33] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:34,845 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:34] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:35,144 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:35] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:36,162 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:36] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:37,030 - WARNING - UserWarning: Even though the `tf.config.experimental_run_functions_eagerly` option is set, this option does not apply to tf.data functions. To force eager execution of tf.data functions, please use `tf.data.experimental.enable_debug_mode()`. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\tensorflow\python\data\ops\structured_function.py, Line: 258)
+2025-09-23 08:59:37,721 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:37] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:40,512 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:40] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:40,949 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:40] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:41,061 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:41] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:41,655 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:41] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:43,383 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:43] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:43,774 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:43] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:44,147 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:44] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:45,470 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:45] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:46,621 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:46] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:48,218 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:48] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:48,542 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:48] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:49,866 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:49] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:50,367 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:50] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:51,846 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:51] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:52,183 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:52] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:53,978 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:53] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:54,195 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:54] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:54,877 - WARNING - UserWarning: Even though the `tf.config.experimental_run_functions_eagerly` option is set, this option does not apply to tf.data functions. To force eager execution of tf.data functions, please use `tf.data.experimental.enable_debug_mode()`. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\tensorflow\python\data\ops\structured_function.py, Line: 258)
+2025-09-23 08:59:55,626 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:55] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:56,876 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:56] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:57,433 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:57] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:59,123 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:59] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 08:59:59,372 - INFO - 127.0.0.1 - - [23/Sep/2025 08:59:59] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:01,114 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:01] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:01,959 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:01] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:03,137 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:03] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:03,705 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:03] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:05,536 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:05] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:05,674 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:05] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:06,629 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:06] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:08,085 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:08] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:08,372 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:08] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:09,640 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:09] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:11,106 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:11] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:11,402 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:11] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:12,486 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:12] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:14,027 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:14] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:14,333 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:14] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:14,573 - WARNING - UserWarning: Even though the `tf.config.experimental_run_functions_eagerly` option is set, this option does not apply to tf.data functions. To force eager execution of tf.data functions, please use `tf.data.experimental.enable_debug_mode()`. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\tensorflow\python\data\ops\structured_function.py, Line: 258)
+2025-09-23 09:00:15,677 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:15] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:16,929 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:16] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:17,482 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:17] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:20,502 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:20] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:20,578 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:20] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:20,899 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:20] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:21,609 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:21] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:23,711 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:23] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:24,135 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:24] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:24,421 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:24] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:26,535 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:26] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:26,754 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:26] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:27,221 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:27] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:29,435 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:29] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:30,007 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:30] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:30,604 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:30] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:32,219 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:32] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:32,490 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:32] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:33,627 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:33] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:35,027 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:35] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:35,277 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:35] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:36,260 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:36] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:36,425 - WARNING - UserWarning: Even though the `tf.config.experimental_run_functions_eagerly` option is set, this option does not apply to tf.data functions. To force eager execution of tf.data functions, please use `tf.data.experimental.enable_debug_mode()`. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\tensorflow\python\data\ops\structured_function.py, Line: 258)
+2025-09-23 09:00:37,513 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:37] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:38,644 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:38] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:40,388 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:40] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:40,676 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:40] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:41,722 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:41] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:43,252 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:43] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:43,487 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:43] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:44,900 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:44] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:45,402 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:45] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:50,415 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:50] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:50,512 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:50] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:51,196 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:51] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:51,261 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:51] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:51,679 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:51] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:52,132 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:52] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:52,644 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:52] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:54,534 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:54] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:56,263 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:56] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:57,506 - WARNING - UserWarning: Even though the `tf.config.experimental_run_functions_eagerly` option is set, this option does not apply to tf.data functions. To force eager execution of tf.data functions, please use `tf.data.experimental.enable_debug_mode()`. (File: C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\tensorflow\python\data\ops\structured_function.py, Line: 258)
+2025-09-23 09:00:58,520 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:58] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:00:58,711 - INFO - 127.0.0.1 - - [23/Sep/2025 09:00:58] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:01:00,653 - INFO - 127.0.0.1 - - [23/Sep/2025 09:01:00] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:01:05,604 - INFO - 127.0.0.1 - - [23/Sep/2025 09:01:05] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:01:05,934 - INFO - 127.0.0.1 - - [23/Sep/2025 09:01:05] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:01:06,082 - INFO - 127.0.0.1 - - [23/Sep/2025 09:01:06] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:01:06,421 - INFO - 127.0.0.1 - - [23/Sep/2025 09:01:06] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:01:06,849 - INFO - 127.0.0.1 - - [23/Sep/2025 09:01:06] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:01:06,964 - INFO - 127.0.0.1 - - [23/Sep/2025 09:01:06] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:01:07,381 - INFO - 127.0.0.1 - - [23/Sep/2025 09:01:07] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:01:08,879 - INFO - 127.0.0.1 - - [23/Sep/2025 09:01:08] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:01:09,195 - INFO - 127.0.0.1 - - [23/Sep/2025 09:01:09] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:01:10,476 - INFO - 127.0.0.1 - - [23/Sep/2025 09:01:10] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:01:11,560 - INFO - 127.0.0.1 - - [23/Sep/2025 09:01:11] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:01:13,126 - INFO - 127.0.0.1 - - [23/Sep/2025 09:01:13] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:01:13,823 - INFO - 127.0.0.1 - - [23/Sep/2025 09:01:13] "POST /_dash-update-component HTTP/1.1" 200 -
+2025-09-23 09:01:17,274 - ERROR - ==================================
+Object was never used (type <class 'tensorflow.python.ops.tensor_array_ops.TensorArray'>):
+<tensorflow.python.ops.tensor_array_ops.TensorArray object at 0x000001CB9D8F5210>
+If you want to mark it as used call its "mark_used()" method.
+It was originally created here:
+  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\keras\src\backend\tensorflow\rnn.py", line 418, in <genexpr>
+    output_ta_t = tuple(  File "C:\ThesisWork\offical_approach\mth_project\.venv\Lib\site-packages\tensorflow\python\util\tf_should_use.py", line 288, in wrapped
+    return _add_should_use_warning(fn(*args, **kwargs),
+==================================

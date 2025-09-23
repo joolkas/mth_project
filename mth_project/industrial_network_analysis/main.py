@@ -33,8 +33,16 @@ print(f"Online data path: {online_data_path}")
 print(f"Initial model path: {initial_model_path}")
 
 ### 1. Load data
-print("Loading online data...")
-df_online, scalers_train, context_length, df_removed_nans_forecasting, df_removed_nans_classification, variables = get_online_data(online_data_path)
+
+program_options = ["predefined_data", "real_data"]
+program = program_options[0]  
+
+if program == "predefined_data":
+    print("Loading online data...")
+    df_online, scalers_train, context_length, df_removed_nans_forecasting, df_removed_nans_classification, variables = get_online_data(online_data_path)
+elif program == "real_data":
+    print("Loading real data...")
+    
 
 ### 2. Load initial model
 print("Loading initial model...")

@@ -8,20 +8,12 @@ import threading
 import time
 from datetime import datetime, timedelta
 from collections import deque
-import queue
 
 
 class DashRealTimePlotter:
     def __init__(self, max_points=60, update_interval=1000):
         """
-        Real-time plotter for industrial network forecasting data.
-        
-        Timing convention:
-        - Data points are 1 minute apart
-        - If current time is 06:30:00, then:
-          - Blue line (actual): shows historical values up to 06:29:00 (excludes last sample)
-          - Red line (t+1): shows predictions aligned with historical timestamps
-          - Orange line (t+6): starts from 06:29:00 and shows 06:30:00, 06:31:00, 06:32:00, 06:33:00, 06:34:00, 06:35:00
+        Simplified real-time plotter for industrial network forecasting data.
         
         Args:
             max_points: Maximum number of points to display in each plot
@@ -31,73 +23,40 @@ class DashRealTimePlotter:
         self.max_points = max_points
         self.update_interval = update_interval
         
-        # Data storage - simplified to three essential streams
-        self.data_queue = queue.Queue()
+        # Data storage - simplified to essential streams only
         self.timestamps = deque(maxlen=max_points)
-        self.actual_values = {}           # 1. Actual values (historical)
-        self.saved_predictions = {}       # 2. Saved predictions with latest t+1
-        self.temporal_predictions = {}    # 3. Temporal predictions (t+6 horizon)
+        self.actual_values = {}           # Actual values (historical)
+        self.saved_predictions = {}       # Saved predictions with latest t+1
+        self.temporal_predictions = {}    # Temporal predictions (t+6 horizon)
         self.variable_names = []
         self.current_step = 0
         self.total_steps = 0
-        self.classification_results = deque(maxlen=50)
         self.prediction_horizon = 6
         
-        # Port status tracking - NEW
-        self.port_status = {}  # Current status of each port
-        self.port_history = {}  # Historical status changes
-        self.port_names = []  # Will be populated from variable names
-        
-        # Statistics
+        # Basic statistics
         self.stats = {
             'total_predictions': 0,
-            'last_update': None,
-            'prediction_errors': {}
+            'last_update': None
         }
         
         self._setup_layout()
         self._setup_callbacks()
         
     def _setup_layout(self):
-        """Setup the Dash app layout with port status panel"""
+        """Setup simplified Dash app layout with graphs at bottom"""
         self.app.layout = html.Div([
-            # Header
+            # Simple Header
             html.Div([
-                html.H1("Industrial Network Forecasting - Real-Time Dashboard", 
-                       style={'textAlign': 'center', 'color': '#2c3e50'}),
-                html.Div(id='status-info', 
-                        style={'textAlign': 'center', 'fontSize': '16px', 'margin': '10px'})
+                html.H1("Network Traffic Forecasting Dashboard", 
+                       style={'textAlign': 'center', 'color': '#2c3e50', 'margin': '20px'})
             ]),
             
-            # Port Status Panel - NEW
-            html.Div([
-                html.H3("Network Port Status", style={'color': '#34495e', 'margin': '10px'}),
-                html.Div(id='port-status-panel', style={
-                    'display': 'flex', 
-                    'flexWrap': 'wrap', 
-                    'gap': '10px',
-                    'padding': '10px',
-                    'backgroundColor': '#f8f9fa',
-                    'border': '1px solid #dee2e6',
-                    'borderRadius': '5px'
-                })
-            ], style={'margin': '20px'}),
+            # Basic Status Info
+            html.Div(id='status-info', 
+                    style={'textAlign': 'center', 'fontSize': '14px', 'margin': '10px'}),
             
-            # Classification and Alert Panel - ENHANCED
-            html.Div([
-                html.Div([
-                    html.H3("Storm Detection Results", style={'color': '#34495e'}),
-                    html.Div(id='classification-results', style={'height': '100px', 'overflow': 'auto'})
-                ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top'}),
-                
-                html.Div([
-                    html.H3("Active Storm Alerts", style={'color': '#e74c3c'}),
-                    html.Div(id='active-alerts', style={'height': '100px', 'overflow': 'auto'})
-                ], style={'width': '48%', 'display': 'inline-block', 'verticalAlign': 'top', 'marginLeft': '4%'})
-            ], style={'margin': '20px', 'padding': '10px', 'border': '1px solid #bdc3c7'}),
-            
-            # Main content with graphs
-            html.Div(id='graphs-container'),
+            # Main visualization graphs at bottom
+            html.Div(id='graphs-container', style={'margin': '20px'}),
             
             # Auto-refresh component
             dcc.Interval(
@@ -108,26 +67,20 @@ class DashRealTimePlotter:
         ])
     
     def _setup_callbacks(self):
-        """Setup Dash callbacks for real-time updates"""
+        """Setup simplified Dash callbacks"""
         @self.app.callback(
             [Output('graphs-container', 'children'),
-             Output('status-info', 'children'),
-             Output('classification-results', 'children'),
-             Output('port-status-panel', 'children'),  # NEW
-             Output('active-alerts', 'children')],     # NEW
+             Output('status-info', 'children')],
             [Input('interval-component', 'n_intervals')]
         )
         def update_dashboard(n):
             return (
                 self._update_graphs(), 
-                self._get_status_info(), 
-                self._get_classification_display(),
-                self._get_port_status_display(),  # NEW
-                self._get_alerts_display()        # NEW
+                self._get_status_info()
             )
     
     def _update_graphs(self):
-        """Update all graphs with latest data - simplified to show three traces per variable"""
+        """Update all graphs with latest data - simplified visualization only"""
         try:
             if not self.variable_names:
                 return html.Div("Waiting for data...", style={'textAlign': 'center', 'padding': '50px'})
@@ -136,8 +89,6 @@ class DashRealTimePlotter:
             num_vars = len(self.variable_names)
             cols = 2
             rows = (num_vars + cols - 1) // cols
-            
-            # print(f"Dashboard Debug: {num_vars} variables, {cols} columns, {rows} rows")
             
             # Simple spacing
             vertical_spacing = 0.01
@@ -154,7 +105,7 @@ class DashRealTimePlotter:
                 horizontal_spacing=horizontal_spacing
             )
             
-            # Add traces for each variable - simplified to three traces only
+            # Add traces for each variable - three traces only
             for i, var in enumerate(self.variable_names):
                 row = i // cols + 1
                 col = i % cols + 1
@@ -166,10 +117,9 @@ class DashRealTimePlotter:
                     actual_data = list(self.actual_values[var])
                     data_length = min(len(actual_data), len(timestamps))
                     
-                    if data_length > 1:  # Need at least 2 points to remove last one
-                        # Remove the last sample from display
-                        recent_timestamps = timestamps[-data_length:-1]  # Exclude last timestamp
-                        recent_actual_data = actual_data[-data_length:-1]  # Exclude last actual value
+                    if data_length > 1:
+                        recent_timestamps = timestamps[-data_length:-1]
+                        recent_actual_data = actual_data[-data_length:-1]
                         
                         if len(recent_timestamps) > 0 and len(recent_actual_data) > 0:
                             fig.add_trace(
@@ -180,13 +130,12 @@ class DashRealTimePlotter:
                                     name='Actual Values',
                                     line=dict(color='blue', width=2),
                                     marker=dict(size=4),
-                                    showlegend=(i == 0),
-                                    hovertemplate='<b>Actual Values</b><br>Time: %{x}<br>Value: %{y:.4f}<extra></extra>'
+                                    showlegend=(i == 0)
                                 ),
                                 row=row, col=col
                             )
                 
-                # 2. Saved predictions (red) - no time extension
+                # 2. Saved predictions (red)
                 if var in self.saved_predictions and len(self.saved_predictions[var]) > 0:
                     saved_data = list(self.saved_predictions[var])
                     data_length = min(len(saved_data), len(timestamps))
@@ -200,31 +149,26 @@ class DashRealTimePlotter:
                                 x=recent_timestamps,
                                 y=recent_saved_data,
                                 mode='lines+markers',
-                                name='Saved Pred (t+1)',
+                                name='Predictions (t+1)',
                                 line=dict(color='red', width=2, dash='dash'),
                                 marker=dict(size=4),
-                                showlegend=(i == 0),
-                                hovertemplate='<b>Saved Pred (t+1)</b><br>Time: %{x}<br>Value: %{y:.4f}<extra></extra>'
+                                showlegend=(i == 0)
                             ),
                             row=row, col=col
                         )
                 
-                # 3. Temporal predictions - SIMPLIFIED
+                # 3. Temporal predictions (orange)
                 if var in self.temporal_predictions and len(self.temporal_predictions[var]) > 0:
                     temporal_data = list(self.temporal_predictions[var])
                     
                     if timestamps and len(temporal_data) > 0:
-                        # Use current timestamp as starting point
                         current_time = timestamps[-1] if timestamps else datetime.now()
                         
-                        # Create simple future prediction line
                         future_timestamps = []
                         future_predictions = []
                         
-                        # Get the latest temporal predictions (t+1 to t+6)
                         latest_temporal = temporal_data[-1] if temporal_data else []
                         
-                        # Start from current time (t+1) to connect smoothly with red line
                         for step in range(0, min(6, len(latest_temporal))):
                             future_time = current_time + timedelta(minutes=step)
                             future_timestamps.append(future_time)
@@ -238,21 +182,20 @@ class DashRealTimePlotter:
                                     x=future_timestamps,
                                     y=future_predictions,
                                     mode='lines+markers',
-                                    name='Future Pred (t+1 to t+6)',
+                                    name='Future Predictions (t+1 to t+6)',
                                     line=dict(color='orange', width=2, dash='dot'),
                                     marker=dict(size=3),
-                                    showlegend=(i == 0),
-                                    hovertemplate='<b>Future Predictions</b><br>Time: %{x}<br>Value: %{y:.4f}<extra></extra>'
+                                    showlegend=(i == 0)
                                 ),
                                 row=row, col=col
                             )
             
             # Simple layout
-            total_height = 800 * rows
+            total_height = 600 * rows
             
             fig.update_layout(
                 height=total_height,
-                title_text="Real-Time Forecasting Dashboard",
+                title_text="Real-Time Network Traffic Forecasting",
                 title_x=0.5,
                 showlegend=True,
                 legend=dict(
@@ -272,31 +215,155 @@ class DashRealTimePlotter:
             return dcc.Graph(figure=fig, style={'height': f'{total_height}px'})
             
         except Exception as e:
-            print(f"Error in _update_graphs: {e}")
-            import traceback
-            traceback.print_exc()
             return html.Div(f"Error updating graphs: {str(e)}", 
                           style={'textAlign': 'center', 'padding': '50px', 'color': 'red'})
     
     def _get_status_info(self):
-        """Enhanced status information including port summary"""
+        """Simple status information display"""
         progress = (self.current_step / max(self.total_steps, 1)) * 100 if self.total_steps > 0 else 0
-        
-        # Port summary
-        port_summary = ""
-        if hasattr(self, 'port_status') and self.port_status:
-            up_ports = sum(1 for p in self.port_status.values() if p['status'] == 'UP')
-            down_ports = sum(1 for p in self.port_status.values() if p['status'] == 'DOWN')
-            total_ports = len(self.port_status)
-            port_summary = f"Ports: {up_ports}↑ {down_ports}↓ ({total_ports} total) | "
         
         return html.Div([
             html.Span(f"Progress: {self.current_step}/{self.total_steps} ({progress:.1f}%) | "),
-            html.Span(port_summary),
-            html.Span(f"Total Predictions: {self.stats['total_predictions']} | "),
+            html.Span(f"Predictions: {self.stats['total_predictions']} | "),
             html.Span(f"Variables: {len(self.variable_names)} | "),
             html.Span(f"Last Update: {self.stats['last_update'] or 'Never'}")
         ])
+
+    def set_total_steps(self, total_steps):
+        """Set the total number of steps for progress tracking"""
+        self.total_steps = total_steps
+
+    def add_buffer_predictions(self, predictions, actuals, current_step, current_datetime, variable_names, 
+                             saved_prediction=None, future_prediction=None, port_statuses=None, classification_result=None):
+        """
+        Add new prediction data to the dashboard - simplified version
+        """
+        try:
+            # Initialize variable names if first time
+            if not self.variable_names:
+                self.variable_names = variable_names
+                for var in variable_names:
+                    self.actual_values[var] = deque(maxlen=self.max_points)
+                    self.saved_predictions[var] = deque(maxlen=self.max_points)
+                    self.temporal_predictions[var] = deque(maxlen=10)
+            
+            # Validate inputs
+            if not predictions or not actuals:
+                return
+            
+            if len(predictions) == 0 or len(actuals) == 0:
+                return
+                
+            # Use saved prediction if provided, otherwise use first prediction
+            pred_t1_step = saved_prediction if saved_prediction is not None else predictions[0]
+            actual_step = actuals[0]
+            
+            # Validate data lengths
+            if len(pred_t1_step) != len(variable_names) or len(actual_step) != len(variable_names):
+                return
+            
+            # Add timestamp
+            self.timestamps.append(current_datetime)
+            
+            # Add data for each variable
+            for i, var in enumerate(variable_names):
+                # 1. Actual values
+                self.actual_values[var].append(actual_step[i])
+                
+                # 2. Saved predictions (t+1)
+                self.saved_predictions[var].append(pred_t1_step[i])
+                
+                # 3. Temporal predictions
+                if predictions and len(predictions) > 0:
+                    var_predictions = []
+                    for pred_step in predictions:
+                        if i < len(pred_step):
+                            var_predictions.append(pred_step[i])
+                    
+                    if var_predictions:
+                        self.temporal_predictions[var].append(var_predictions)
+            
+            # Update statistics
+            self.current_step = current_step
+            self.stats['total_predictions'] += 1
+            self.stats['last_update'] = datetime.now().strftime("%H:%M:%S")
+            
+        except Exception as e:
+            print(f"Error in add_buffer_predictions: {e}")
+
+    def get_statistics(self):
+        """Get current statistics"""
+        return {
+            'total_predictions': self.stats['total_predictions'],
+            'total_variables': len(self.variable_names),
+            'current_step': self.current_step,
+            'total_steps': self.total_steps
+        }
+
+    def start_server(self, host='127.0.0.1', port=8050, debug=False):
+        """Start the Dash server in a separate thread"""
+        def run_server():
+            self.app.run(host=host, port=port, debug=debug, use_reloader=False)
+        
+        server_thread = threading.Thread(target=run_server, daemon=True)
+        server_thread.start()
+        return server_thread
+
+    def clear_data(self):
+        """Clear all stored data"""
+        self.timestamps.clear()
+        for var in self.variable_names:
+            if var in self.actual_values:
+                self.actual_values[var].clear()
+            if var in self.saved_predictions:
+                self.saved_predictions[var].clear()
+            if var in self.temporal_predictions:
+                self.temporal_predictions[var].clear()
+        self.stats['total_predictions'] = 0
+        self.current_step = 0
+
+
+# Simplified test function
+def test_dashboard():
+    """Test function to demonstrate the simplified dashboard"""
+    plotter = DashRealTimePlotter()
+    
+    # Start server
+    server_thread = plotter.start_server()
+    print("Dashboard started at http://localhost:8050")
+    
+    # Simulate some data
+    variables = ['bits_sent_port1', 'bits_recv_port1', 'bits_sent_port2', 'bits_recv_port2']
+    plotter.set_total_steps(100)
+    
+    for step in range(20):
+        # Generate fake predictions and actuals
+        predictions = []
+        for pred_step in range(6):  # prediction horizon of 6
+            predictions.append(np.random.randn(len(variables)) * 10 + 50 + pred_step)
+        
+        actuals = [predictions[0] + np.random.randn(len(variables)) * 2]
+        
+        timestamp = datetime.now() + timedelta(seconds=step*5)
+        
+        plotter.add_buffer_predictions(
+            predictions=predictions,
+            actuals=actuals,
+            current_step=step,
+            current_datetime=timestamp,
+            variable_names=variables,
+            saved_prediction=predictions[0]
+        )
+        
+        time.sleep(1)
+    
+    print("Test completed. Dashboard should show data.")
+    return plotter
+
+
+if __name__ == "__main__":
+    test_dashboard()
+    input("Press Enter to stop the server...")
     
     def _get_classification_display(self):
         """Get classification results display - ENHANCED"""
