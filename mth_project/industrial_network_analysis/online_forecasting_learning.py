@@ -299,17 +299,16 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
                                         dash_plotter, 
                                         variables, 
                                         prediction_horizon=6, 
-                                        classification_model_path=None,
-                                        adaptation_strategy='smart'):
+                                        classification_model_path=None):
     # Prepare model for online learning by recompiling with fresh optimizer
-    print("Preparing model for online learning...")
+    print("\n Preparing model for online learning...")
     try:
         initial_model.compile(
             optimizer=keras.optimizers.Adam(learning_rate=0.001), 
             loss='mse', 
             metrics=['mae']
         )
-        print("Model successfully prepared for online learning")
+        print("\n Model successfully prepared for online learning")
     except Exception as e:
         print(f"Warning: Could not recompile model ({e}), will try per-step recompilation")
     
@@ -340,7 +339,11 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
         
         classification_model, label_to_index, index_to_label, label_to_name = load_classification_model(classification_model_path)
         classification_enabled = True
-        print("Classification model initialized successfully")
+        
+        # Set the label_to_name dictionary in the dashboard
+        if dash_plotter is not None:
+            dash_plotter.set_label_to_name_dict(label_to_name)
+
     except Exception as e:
         print(f"Warning: Could not load classification model: {e}")
         print("   Continuing with forecasting only...")
@@ -450,7 +453,7 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
         for name, status in port_statuses_check.items():
             if status not in [None, np.nan]:
                 port_statuses[name] = status
-
+        
         if len(step_predictions_actual) > 0 and len(actuals_actual) > 0:
             predictions_actuals.append(step_predictions_actual[0])  # Only t+1
             actuals_actuals.append(actuals_actual[0])              # Only t+1
@@ -470,6 +473,14 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
                 future_prediction_t1 = step_predictions_actual[0] if len(step_predictions_actual) > 0 else None
                 
                 try:
+                    # Prepare classification result if available
+                    classification_result_data = None
+                    if classification_enabled and 'classification_result_name' in locals() and 'classification_result' in locals():
+                        classification_result_data = {
+                            'classification': classification_result_name,
+                            'confidence': float(np.max(classification_result))
+                        }
+                    
                     dash_plotter.add_buffer_predictions(
                         predictions=step_predictions_actual, 
                         actuals=actuals_actual, 
@@ -479,7 +490,7 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
                         saved_prediction=saved_prediction_t1,
                         future_prediction=future_prediction_t1,
                         port_statuses=port_statuses if len(port_statuses) > 0 else None,
-                        classification_result=label_to_name
+                        classification_result=classification_result_data
                     )
                     
                     # Add classification result if available

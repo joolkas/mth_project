@@ -45,6 +45,8 @@ dropout_rate=0.2
 
 threshold = 1000
 
+storm_threshold = 100
+
 model_description = f"Conv1D_{layer_one_units}_{layer_two_units}_Dense{dense_units}_Act{activation}_Dropout{dropout_rate}_Batch{batch_size}_Epochs{epochs}"
 results_file_name = "SW-SUPV-243-classification_results_001"
 
@@ -110,8 +112,7 @@ def encode_labels(
     """
     (docstring omitted for brevity — see previous assistant message)
     """
-    import pandas as pd
-    import numpy as np
+
 
     unique_ports = list(unique_ports)
     df_encoded = df.copy()
@@ -340,8 +341,6 @@ if __name__ == "__main__":
     ### ad 2. Encode Labels
     print("STEP 2/7: Encoding labels...")
 
-    storm_threshold = 100
-    
     mapped_ports = map_ports_to_start_from_one(unique_ports)
     df_labeled = encode_labels(df, threshold = storm_threshold, unique_ports=unique_ports)
 

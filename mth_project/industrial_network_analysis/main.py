@@ -64,9 +64,6 @@ time.sleep(3)
 # Run predictions
 
 online_condition = "learning"
-adaptation_strategy = "smart"  # Options: 'adaptive', 'conservative', 'aggressive', 'smart', 'pattern_analysis'
-
-print(f"Using adaptation strategy: {adaptation_strategy}")
 
 if online_condition == "learning":
     results = rolling_buffer_learning_prediction_with_dash(
@@ -78,8 +75,7 @@ if online_condition == "learning":
         df_removed_nans_classification=df_removed_nans_classification, 
         dash_plotter=plotter,
         variables=variables, 
-        prediction_horizon=prediction_horizon,
-        adaptation_strategy=adaptation_strategy
+        prediction_horizon=prediction_horizon
     )
 else:
     results = rolling_buffer_prediction_with_dash(

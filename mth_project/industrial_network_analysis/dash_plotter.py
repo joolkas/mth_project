@@ -32,6 +32,11 @@ class DashRealTimePlotter:
         self.current_step = 0
         self.total_steps = 0
         self.prediction_horizon = 6
+        self.classification_results = deque(maxlen=50)  # Re-added for classification display
+        self.label_to_name_dict = {}      # Store label_to_name dictionary
+        
+        # Port status tracking - Re-added
+        self.port_status = {}
         
         # Basic statistics
         self.stats = {
@@ -43,9 +48,22 @@ class DashRealTimePlotter:
         self._setup_callbacks()
         
     def _setup_layout(self):
-        """Setup simplified Dash app layout with graphs at bottom"""
+        """Setup organized Dash app layout with classification, sections, and port status"""
         self.app.layout = html.Div([
-            # Simple Header
+            # Classification results at the top
+            html.Div([
+                html.H2("Classification Results", style={'textAlign': 'center', 'color': '#e74c3c', 'margin': '10px'}),
+                html.Div(id='classification-results', style={
+                    'padding': '15px', 
+                    'backgroundColor': '#fff5f5', 
+                    'borderRadius': '5px',
+                    'border': '1px solid #e74c3c',
+                    'margin': '10px',
+                    'textAlign': 'center'
+                })
+            ]),
+            
+            # Main Header
             html.Div([
                 html.H1("Network Traffic Forecasting Dashboard", 
                        style={'textAlign': 'center', 'color': '#2c3e50', 'margin': '20px'})
@@ -53,10 +71,31 @@ class DashRealTimePlotter:
             
             # Basic Status Info
             html.Div(id='status-info', 
-                    style={'textAlign': 'center', 'fontSize': '14px', 'margin': '10px'}),
+                    style={'textAlign': 'center', 'fontSize': '14px', 'margin': '20px'}),
             
-            # Main visualization graphs at bottom
-            html.Div(id='graphs-container', style={'margin': '20px'}),
+            # System Metrics section (CPU, Memory, etc.)
+            html.Div([
+                html.H3("Numeric Metrics", style={'textAlign': 'center', 'color': '#3498db', 'margin': '30px 20px'}),
+                html.Div(id='system-graphs-container', style={'margin': '10px'})
+            ], style={'marginBottom': '40px'}),
+            
+            # Port sections (Bits Sent/Received)
+            html.Div([
+                html.H3("Port Traffic (Bits Sent/Received)", style={'textAlign': 'center', 'color': '#9b59b6', 'margin': '30px 20px'}),
+                html.Div(id='port-graphs-container', style={'margin': '20px'})
+            ], style={'marginBottom': '40px'}),
+            
+            # Port status display at the very bottom
+            html.Div([
+                html.H3("Port Status", style={'textAlign': 'center', 'color': '#27ae60', 'margin': '30px 20px'}),
+                html.Div(id='port-status-display', style={
+                    'padding': '15px', 
+                    'backgroundColor': '#f0fff4', 
+                    'borderRadius': '5px',
+                    'border': '1px solid #27ae60',
+                    'margin': '10px'
+                })
+            ]),
             
             # Auto-refresh component
             dcc.Interval(
@@ -67,35 +106,191 @@ class DashRealTimePlotter:
         ])
     
     def _setup_callbacks(self):
-        """Setup simplified Dash callbacks"""
+        """Setup organized Dash callbacks for classification, sections, and port status"""
         @self.app.callback(
-            [Output('graphs-container', 'children'),
-             Output('status-info', 'children')],
+            [Output('classification-results', 'children'),
+             Output('status-info', 'children'),
+             Output('system-graphs-container', 'children'),
+             Output('port-graphs-container', 'children'),
+             Output('port-status-display', 'children')],
             [Input('interval-component', 'n_intervals')]
         )
         def update_dashboard(n):
             return (
-                self._update_graphs(), 
-                self._get_status_info()
+                self._get_classification_results(),
+                self._get_status_info(),
+                self._update_system_graphs(),
+                self._update_port_graphs(),
+                self._get_port_status_display()
             )
     
-    def _update_graphs(self):
-        """Update all graphs with latest data - simplified visualization only"""
+    def _categorize_variables(self):
+        """Categorize variables into numeric metrics and bits sent/received by port"""
+        numeric_vars = []
+        port_bits_vars = {}
+        
+        for var in self.variable_names:
+            var_lower = var.lower()
+            
+            # Check if this is bits sent/received
+            if 'bits' in var_lower and ('sent' in var_lower or 'recv' in var_lower or 'received' in var_lower):
+                # Extract port identifier from bits variables (e.g., 1/0/1, 1/0/2, etc.)
+                port_id = self._extract_port_id_from_bits(var)
+                if port_id not in port_bits_vars:
+                    port_bits_vars[port_id] = []
+                port_bits_vars[port_id].append(var)
+            else:
+                # All other numeric values go to numeric section
+                numeric_vars.append(var)
+        
+        return numeric_vars, port_bits_vars
+    
+    def _extract_port_id_from_bits(self, variable_name):
+        """Extract port identifier from bits variable names (e.g., 1/0/1, 1/0/2)"""
+        import re
+        
+        # Look for patterns like 1/0/1, 1/0/2, etc. in variable names
+        match = re.search(r'(\d+/\d+/\d+)', variable_name)
+        if match:
+            return f"Port {match.group(1)}"
+        
+        # Look for simpler port patterns
+        match = re.search(r'port[_\-]?(\d+)|(\d+)[_\-]?port', variable_name.lower())
+        if match:
+            return f"Port {match.group(1) or match.group(2)}"
+        
+        # Look for just numbers in variable names
+        numbers = re.findall(r'\d+', variable_name)
+        if numbers:
+            return f"Port {numbers[-1]}"  # Use last number as port ID
+        
+        return f"Port {variable_name}"
+    
+    def _extract_port_id(self, variable_name):
+        """Extract port identifier from variable name"""
+        import re
+        # Look for port patterns like "port1", "Port_1", "1_port", etc.
+        match = re.search(r'port[_\-]?(\d+)|(\d+)[_\-]?port', variable_name.lower())
+        if match:
+            return f"Port {match.group(1) or match.group(2)}"
+        
+        # Look for just numbers in variable names
+        numbers = re.findall(r'\d+', variable_name)
+        if numbers:
+            return f"Port {numbers[0]}"
+        
+        return f"Port {variable_name}"
+    
+    def _get_classification_results(self):
+        """Display recent classification results and label_to_name dictionary"""
+        try:
+            content_items = []
+            
+            # Display label_to_name dictionary if available
+            if hasattr(self, 'label_to_name_dict') and self.label_to_name_dict:
+                content_items.append(
+                    html.Div([
+                        html.H4("Classification Labels:", style={'color': '#2c3e50', 'marginBottom': '10px'}),
+                        html.Div([
+                            html.Div(f"{idx}: {name}", style={'margin': '2px', 'padding': '3px', 'backgroundColor': '#f8f9fa', 'borderRadius': '3px'})
+                            for idx, name in self.label_to_name_dict.items()
+                        ], style={'display': 'flex', 'flexWrap': 'wrap', 'gap': '5px'})
+                    ], style={'marginBottom': '15px'})
+                )
+            
+            # Display recent classification results
+            if self.classification_results:
+                recent_results = list(self.classification_results)[-5:]  # Show last 5 results
+                result_items = []
+                
+                for i, result in enumerate(recent_results):
+                    timestamp = result.get('timestamp', 'N/A')
+                    classification = result.get('classification', 'Unknown')
+                    confidence = result.get('confidence', 0)
+                    
+                    color = '#e74c3c' if 'storm' in str(classification).lower() else '#27ae60'
+                    
+                    result_items.append(
+                        html.Div([
+                            html.Span(f"Time: {timestamp} | ", style={'fontWeight': 'bold'}),
+                            html.Span(f"Result: {classification} ", style={'color': color, 'fontWeight': 'bold'}),
+                            html.Span(f"(Confidence: {confidence:.2f})")
+                        ], style={'margin': '5px'})
+                    )
+                
+                content_items.append(
+                    html.Div([
+                        html.H4("Recent Results:", style={'color': '#2c3e50', 'marginBottom': '10px'}),
+                        html.Div(result_items)
+                    ])
+                )
+            
+            if not content_items:
+                return html.Div("No classification information available", 
+                              style={'textAlign': 'center', 'color': '#999'})
+            
+            return html.Div(content_items)
+        except Exception as e:
+            return html.Div(f"Error displaying classification results: {str(e)}", 
+                           style={'color': '#e74c3c'})
+    
+    def _update_system_graphs(self):
+        """Update graphs for numeric metrics (all except bits sent/received)"""
         try:
             if not self.variable_names:
                 return html.Div("Waiting for data...", style={'textAlign': 'center', 'padding': '50px'})
             
-            # Create two-column layout
-            num_vars = len(self.variable_names)
+            numeric_vars, _ = self._categorize_variables()
+            
+            if not numeric_vars:
+                return html.Div("No numeric metrics available", style={'textAlign': 'center', 'padding': '20px'})
+            
+            return self._create_section_graph(numeric_vars, "Numeric Metrics")
+        except Exception as e:
+            return html.Div(f"Error updating numeric graphs: {str(e)}", style={'color': '#e74c3c'})
+    
+    def _update_port_graphs(self):
+        """Update graphs organized by port bits (sent/received pairs)"""
+        try:
+            if not self.variable_names:
+                return html.Div("Waiting for data...", style={'textAlign': 'center', 'padding': '50px'})
+            
+            _, port_bits_vars = self._categorize_variables()
+            
+            if not port_bits_vars:
+                return html.Div("No port bits metrics available", style={'textAlign': 'center', 'padding': '20px'})
+            
+            port_sections = []
+            for port_id, variables in port_bits_vars.items():
+                section_graph = self._create_section_graph(variables, f"{port_id} - Bits Sent/Received")
+                port_sections.append(
+                    html.Div([
+                        html.H4(f"{port_id} - Bits Sent/Received", style={'textAlign': 'center', 'color': '#9b59b6', 'margin': '20px'}),
+                        section_graph
+                    ], style={'marginBottom': '30px'})
+                )
+            
+            return html.Div(port_sections)
+        except Exception as e:
+            return html.Div(f"Error updating port bits graphs: {str(e)}", style={'color': '#e74c3c'})
+    
+    def _create_section_graph(self, variables, section_title):
+        """Create a graph for a specific section of variables"""
+        try:
+            if not variables:
+                return html.Div(f"No variables for {section_title}", style={'textAlign': 'center'})
+            
+            # Create two-column layout for the section
+            num_vars = len(variables)
             cols = 2
             rows = (num_vars + cols - 1) // cols
             
-            # Simple spacing
-            vertical_spacing = 0.01
+            # Increase spacing for better visibility with more space above plots
+            vertical_spacing = 0.08  # Increased from 0.05 for more space above each plot
             horizontal_spacing = 0.03
             
             # Simple subplot titles
-            subplot_titles = [var for var in self.variable_names]
+            subplot_titles = [var for var in variables]
             
             fig = sp.make_subplots(
                 rows=rows, 
@@ -105,8 +300,8 @@ class DashRealTimePlotter:
                 horizontal_spacing=horizontal_spacing
             )
             
-            # Add traces for each variable - three traces only
-            for i, var in enumerate(self.variable_names):
+            # Add traces for each variable in this section
+            for i, var in enumerate(variables):
                 row = i // cols + 1
                 col = i % cols + 1
                 
@@ -135,88 +330,142 @@ class DashRealTimePlotter:
                                 row=row, col=col
                             )
                 
-                # 2. Saved predictions (red)
+                # 2. Saved predictions (red) - keep historical only
                 if var in self.saved_predictions and len(self.saved_predictions[var]) > 0:
-                    saved_data = list(self.saved_predictions[var])
-                    data_length = min(len(saved_data), len(timestamps))
+                    pred_data = list(self.saved_predictions[var])
+                    data_length = min(len(pred_data), len(timestamps))
                     
                     if data_length > 0:
                         recent_timestamps = timestamps[-data_length:]
-                        recent_saved_data = saved_data[-data_length:]
+                        recent_pred_data = pred_data[-data_length:]
                         
-                        fig.add_trace(
-                            go.Scatter(
-                                x=recent_timestamps,
-                                y=recent_saved_data,
-                                mode='lines+markers',
-                                name='Predictions (t+1)',
-                                line=dict(color='red', width=2, dash='dash'),
-                                marker=dict(size=4),
-                                showlegend=(i == 0)
-                            ),
-                            row=row, col=col
-                        )
+                        if len(recent_timestamps) > 0 and len(recent_pred_data) > 0:
+                            fig.add_trace(
+                                go.Scatter(
+                                    x=recent_timestamps,
+                                    y=recent_pred_data,
+                                    mode='lines+markers',
+                                    name='Saved Predictions',
+                                    line=dict(color='red', width=2, dash='dash'),
+                                    marker=dict(size=4),
+                                    showlegend=(i == 0)
+                                ),
+                                row=row, col=col
+                            )
                 
-                # 3. Temporal predictions (orange)
+                # 3. Temporal predictions (green) - Future predictions t+1 to t+6 connected to red plot
                 if var in self.temporal_predictions and len(self.temporal_predictions[var]) > 0:
                     temporal_data = list(self.temporal_predictions[var])
                     
                     if timestamps and len(temporal_data) > 0:
                         current_time = timestamps[-1] if timestamps else datetime.now()
                         
-                        future_timestamps = []
-                        future_predictions = []
-                        
+                        # Get the latest temporal prediction (should be array of 6 future values)
                         latest_temporal = temporal_data[-1] if temporal_data else []
                         
-                        for step in range(0, min(6, len(latest_temporal))):
-                            future_time = current_time + timedelta(minutes=step)
-                            future_timestamps.append(future_time)
+                        if isinstance(latest_temporal, list) and len(latest_temporal) > 0:
+                            # Start green plot from current time (t) and go through t+5
+                            future_timestamps = []
+                            future_predictions = []
                             
-                            if step < len(latest_temporal):
+                            # Add future timestamps and predictions starting from current time (t)
+                            for step in range(0, min(6, len(latest_temporal))):
+                                future_time = current_time + timedelta(minutes=step)  # t, t+1, t+2, ..., t+5
+                                future_timestamps.append(future_time)
                                 future_predictions.append(latest_temporal[step])
-                        
-                        if len(future_timestamps) > 0 and len(future_predictions) > 0:
-                            fig.add_trace(
-                                go.Scatter(
-                                    x=future_timestamps,
-                                    y=future_predictions,
-                                    mode='lines+markers',
-                                    name='Future Predictions (t+1 to t+6)',
-                                    line=dict(color='orange', width=2, dash='dot'),
-                                    marker=dict(size=3),
-                                    showlegend=(i == 0)
-                                ),
-                                row=row, col=col
-                            )
+                            
+                            if len(future_timestamps) > 0 and len(future_predictions) > 0:
+                                fig.add_trace(
+                                    go.Scatter(
+                                        x=future_timestamps,
+                                        y=future_predictions,
+                                        mode='lines+markers',
+                                        name='Future Predictions (t to t+5)',
+                                        line=dict(color='green', width=2, dash='dot'),
+                                        marker=dict(size=3),
+                                        showlegend=(i == 0)
+                                    ),
+                                    row=row, col=col
+                                )
             
-            # Simple layout
-            total_height = 600 * rows
-            
+            # Update layout with more space above plots and below legend
             fig.update_layout(
-                height=total_height,
-                title_text="Real-Time Network Traffic Forecasting",
-                title_x=0.5,
+                height=380 * rows,  # Increased height for more legend space
                 showlegend=True,
                 legend=dict(
                     orientation="h",
                     yanchor="bottom",
-                    y=-0.02,
-                    xanchor="center",
-                    x=0.5,
-                    font=dict(size=10)
-                )
+                    y=1.08,  # Moved legend even higher for more space below
+                    xanchor="right",
+                    x=1
+                ),
+                margin=dict(l=50, r=50, t=110, b=80)  # More top and bottom margins
             )
             
-            # Update axes
-            fig.update_xaxes(title_text="Time", showgrid=True, tickformat='%H:%M:%S')
-            fig.update_yaxes(title_text="Value", showgrid=True)
+            # Remove x-axis labels from all but bottom row
+            for i in range(1, rows + 1):
+                for j in range(1, cols + 1):
+                    if i < rows:
+                        fig.update_xaxes(showticklabels=False, row=i, col=j)
             
-            return dcc.Graph(figure=fig, style={'height': f'{total_height}px'})
+            return dcc.Graph(figure=fig, style={'height': f'{380 * rows}px'})  # Updated height with more legend space
             
         except Exception as e:
-            return html.Div(f"Error updating graphs: {str(e)}", 
-                          style={'textAlign': 'center', 'padding': '50px', 'color': 'red'})
+            return html.Div(f"Error creating {section_title} graph: {str(e)}", style={'color': '#e74c3c'})
+    
+    def _get_port_status_display(self):
+        """Display current port status at the bottom"""
+        try:
+            if not self.port_status:
+                return html.Div("No port status information available", 
+                              style={'textAlign': 'center', 'color': '#999'})
+            
+            status_items = []
+            for port_id, status_info in self.port_status.items():
+                status = status_info.get('status', 'Unknown')
+                last_update = status_info.get('last_update', 'N/A')
+                storm_detected = status_info.get('storm_detected', False)
+                raw_value = status_info.get('raw_value', 'N/A')
+                original_name = status_info.get('original_name', port_id)
+                
+                # Color coding based on status
+                if storm_detected:
+                    color = '#e74c3c'  # Red for storm
+                    bg_color = '#fff5f5'
+                elif status == 'Active':
+                    color = '#27ae60'  # Green for active
+                    bg_color = '#f0fff4'
+                else:
+                    color = '#f39c12'  # Orange for other states
+                    bg_color = '#fffbf0'
+                
+                status_items.append(
+                    html.Div([
+                        html.Div([
+                            html.Strong(f"{original_name}:", style={'color': color, 'fontSize': '14px'}),
+                            html.Br(),
+                            html.Span(f"Status: {status} ({raw_value})", style={'marginLeft': '5px', 'fontSize': '12px'}),
+                            html.Br(),
+                            html.Span(f"Updated: {last_update}", style={'marginLeft': '5px', 'fontSize': '11px', 'color': '#666'}),
+                            html.Br() if storm_detected else "",
+                            html.Span("⚠️ STORM DETECTED", style={'marginLeft': '5px', 'color': '#e74c3c', 'fontWeight': 'bold', 'fontSize': '11px'}) if storm_detected else ""
+                        ])
+                    ], style={
+                        'display': 'inline-block', 
+                        'margin': '8px', 
+                        'padding': '12px',
+                        'backgroundColor': bg_color,
+                        'borderRadius': '8px',
+                        'border': f'2px solid {color}',
+                        'minWidth': '180px',
+                        'maxWidth': '220px',
+                        'verticalAlign': 'top'
+                    })
+                )
+            
+            return html.Div(status_items, style={'textAlign': 'center', 'padding': '10px'})
+        except Exception as e:
+            return html.Div(f"Error displaying port status: {str(e)}", style={'color': '#e74c3c'})
     
     def _get_status_info(self):
         """Simple status information display"""
@@ -236,7 +485,7 @@ class DashRealTimePlotter:
     def add_buffer_predictions(self, predictions, actuals, current_step, current_datetime, variable_names, 
                              saved_prediction=None, future_prediction=None, port_statuses=None, classification_result=None):
         """
-        Add new prediction data to the dashboard - simplified version
+        Add new prediction data to the dashboard - enhanced with classification and port status
         """
         try:
             # Initialize variable names if first time
@@ -283,6 +532,57 @@ class DashRealTimePlotter:
                     if var_predictions:
                         self.temporal_predictions[var].append(var_predictions)
             
+            # Handle classification results
+            if classification_result is not None:
+                timestamp_str = current_datetime.strftime("%H:%M:%S")
+                
+                # If classification_result is the label_to_name dictionary, store it
+                if isinstance(classification_result, dict) and all(isinstance(k, (int, str)) and isinstance(v, str) for k, v in classification_result.items()):
+                    self.label_to_name_dict = classification_result
+                    # Don't add this as a classification result, it's just the dictionary
+                elif isinstance(classification_result, dict):
+                    # This is an actual classification result
+                    classification_entry = {
+                        'timestamp': timestamp_str,
+                        'classification': classification_result.get('classification', 'Unknown'),
+                        'confidence': classification_result.get('confidence', 0.0)
+                    }
+                    self.classification_results.append(classification_entry)
+                else:
+                    # Handle simple format
+                    classification_entry = {
+                        'timestamp': timestamp_str,
+                        'classification': str(classification_result),
+                        'confidence': 1.0
+                    }
+                    self.classification_results.append(classification_entry)
+            
+            # Handle port statuses - Show ALL ports passed in port_statuses
+            if port_statuses is not None:
+                current_time_str = current_datetime.strftime("%H:%M:%S")
+                if isinstance(port_statuses, dict):
+                    for port_name, status_value in port_statuses.items():
+                        # Use original port name for better identification
+                        port_display_name = port_name if port_name else self._extract_port_id(port_name)
+                        
+                        # Determine status based on value
+                        status_text = "Active" if status_value in [1, 1.0, True] else "Inactive"
+                        storm_detected = False
+                        
+                        # Check if this is a storm indication
+                        if classification_result and isinstance(classification_result, dict):
+                            if 'storm' in str(classification_result.get('classification', '')).lower():
+                                storm_detected = True
+                        
+                        # Store with original port name for complete information
+                        self.port_status[port_display_name] = {
+                            'status': status_text,
+                            'last_update': current_time_str,
+                            'storm_detected': storm_detected,
+                            'raw_value': status_value,
+                            'original_name': port_name
+                        }
+            
             # Update statistics
             self.current_step = current_step
             self.stats['total_predictions'] += 1
@@ -290,6 +590,12 @@ class DashRealTimePlotter:
             
         except Exception as e:
             print(f"Error in add_buffer_predictions: {e}")
+    
+    def set_label_to_name_dict(self, label_to_name_dict):
+        """Set the label_to_name dictionary for classification display"""
+        if isinstance(label_to_name_dict, dict):
+            self.label_to_name_dict = label_to_name_dict
+            print(f"Dashboard: Set label_to_name dictionary with {len(label_to_name_dict)} labels")
 
     def get_statistics(self):
         """Get current statistics"""
@@ -685,94 +991,6 @@ if __name__ == "__main__":
         """Set the total number of steps for progress tracking"""
         self.total_steps = total_steps
         print(f"Dashboard: Set total steps to {total_steps}")
-    
-    def add_buffer_predictions(self, predictions, actuals, current_step, current_datetime, variable_names, saved_prediction=None, future_prediction=None, port_statuses=None, classification_result=None):
-        """
-        Add new prediction data to the dashboard - simplified version
-        
-        Args:
-            predictions: List of prediction arrays for temporal horizon (t+1 to t+6)
-            actuals: List of actual arrays for each time step  
-            current_step: Current step number
-            current_datetime: Current timestamp
-            variable_names: List of variable names
-            saved_prediction: Single prediction array for t+1
-            future_prediction: Not used in simplified version
-            port_statuses: Array of current port status values from classification data
-            classification_result: Classification prediction result (dict with down_ports, etc.)
-        """
-        try:
-            # Initialize variable names if first time
-            if not self.variable_names:
-                self.variable_names = variable_names
-                print(f"Dashboard: Initializing {len(variable_names)} variables")
-                for var in variable_names:
-                    self.actual_values[var] = deque(maxlen=self.max_points)
-                    self.saved_predictions[var] = deque(maxlen=self.max_points)
-                    self.temporal_predictions[var] = deque(maxlen=10)  # Keep recent temporal predictions
-            
-            # Update port status when new data arrives - using direct port status data
-            if port_statuses is not None:
-                self._update_port_status_direct(port_statuses, current_datetime)
-            
-            # Store classification result
-            if classification_result is not None:
-                self.add_classification_result(classification_result, current_datetime)
-            
-            # Validate inputs
-            if not predictions or not actuals:
-                print("Dashboard: Empty predictions or actuals received")
-                return
-            
-            if len(predictions) == 0 or len(actuals) == 0:
-                print("Dashboard: No prediction or actual data")
-                return
-                
-            # Use saved prediction if provided, otherwise use first prediction
-            pred_t1_step = saved_prediction if saved_prediction is not None else predictions[0]
-            actual_step = actuals[0]
-            
-            # Validate data lengths
-            if len(pred_t1_step) != len(variable_names) or len(actual_step) != len(variable_names):
-                print(f"Dashboard: Data length mismatch. Pred: {len(pred_t1_step)}, Actual: {len(actual_step)}, Variables: {len(variable_names)}")
-                return
-            
-            # Add timestamp
-            self.timestamps.append(current_datetime)
-            
-            # Add data for each variable - SIMPLIFIED
-            for i, var in enumerate(variable_names):
-                # 1. Actual values
-                self.actual_values[var].append(actual_step[i])
-                
-                # 2. Saved predictions (t+1)
-                self.saved_predictions[var].append(pred_t1_step[i])
-                
-                # 3. Temporal predictions - SIMPLIFIED storage
-                if predictions and len(predictions) > 0:
-                    # Store the full prediction horizon for this variable
-                    var_predictions = []
-                    for pred_step in predictions:
-                        if i < len(pred_step):
-                            var_predictions.append(pred_step[i])
-                    
-                    if var_predictions:
-                        self.temporal_predictions[var].append(var_predictions)
-            
-            # Update statistics
-            self.current_step = current_step
-            self.stats['total_predictions'] += 1
-            self.stats['last_update'] = datetime.now().strftime("%H:%M:%S")
-            
-            # Debug info - simplified
-            if current_step % 10 == 0:  # Print every 10 steps
-                print(f"Dashboard: Step {current_step}, Variables: {len(variable_names)}, "
-                      f"Predictions: {len(predictions)}, Actuals: {len(actuals)}")
-            
-        except Exception as e:
-            print(f"Error in add_buffer_predictions: {e}")
-            import traceback
-            traceback.print_exc()
     
     def add_classification_result(self, classification_result, timestamp=None):
         """Add classification result to display"""
