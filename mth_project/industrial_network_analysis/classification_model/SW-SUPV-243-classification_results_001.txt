@@ -1,0 +1,4 @@
+Model Description: Model Description: Conv1D_(64,)_(128,)_Dense(64,)_Act('relu',)_Dropout0.2_Batch32_Epochs50, 
+     Test Loss: 0.0289, Test Accuracy: 0.9920 
+         Threshold for merging small classes: 1000, 
+         Amount of classes: 3

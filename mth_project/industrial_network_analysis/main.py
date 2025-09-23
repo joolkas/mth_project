@@ -36,7 +36,6 @@ print(f"Initial model path: {initial_model_path}")
 print("Loading online data...")
 df_online, scalers_train, context_length, df_removed_nans_forecasting, df_removed_nans_classification, variables = get_online_data(online_data_path)
 
-
 ### 2. Load initial model
 print("Loading initial model...")
 initial_model = get_initial_model(initial_model_path)

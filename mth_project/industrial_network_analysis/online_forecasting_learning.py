@@ -135,43 +135,6 @@ def get_classification_model_info():
         'model_summary': _classification_model.summary
     }
 
-def perform_classification(forecasted_actual, removed_nans_classification, t, classification_model):
-    # forecasted_actual shape: (1, timesteps, forecasting_features)
-    # We want: (timesteps, forecasting_features + classification_features)
-    
-    timesteps = forecasted_actual.shape[1]  # Should be 6
-    forecasting_features = forecasted_actual.shape[2]  # Number of forecasting features
-    
-    # Extract the corresponding classification data for the same time window
-    classification_start_idx = t
-    classification_end_idx = t + timesteps
-    
-    # Get classification features for the same temporal window
-    classification_data = removed_nans_classification.iloc[classification_start_idx:classification_end_idx].values
-    
-    # Reshape forecasted data: (1, timesteps, features) -> (timesteps, features)
-    forecasted_reshaped = forecasted_actual.squeeze(0)  # Remove batch dimension
-    
-    # Concatenate along feature dimension: (timesteps, forecasting_features + classification_features)
-    combined_input = np.concatenate([forecasted_reshaped, classification_data], axis=1)
-    
-    # Reshape for model input: (1, timesteps, total_features)
-    model_input = combined_input.reshape(1, timesteps, -1)
-    
-    # print(f"Classification input shape: {model_input.shape}")
-    # print(f"  - Timesteps: {timesteps}")
-    # print(f"  - Forecasting features: {forecasting_features}")
-    # print(f"  - Classification features: {classification_data.shape[1]}")
-    # print(f"  - Total features: {model_input.shape[2]}")
-
-    prediction = classification_model.predict(model_input)
-    prediction_idx = np.argmax(prediction, axis=1)[0]
-    prediction_confidence = prediction[0, prediction_idx]
-    prediction_label = _preprocessing_data['index_to_label'][prediction_idx]
-    prediction_name = _preprocessing_data['label_to_name'][prediction_label]
-
-    return prediction_name
-
 def predict_recursive_steps(model, initial_context, variables, prediction_horizon=6, context_length=60):
     context = initial_context.copy()
     predictions = []
@@ -447,25 +410,46 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
             actuals_original, 
             last_actual_values
         )
-
+ 
         # 6. Classification (Only if model is loaded), with proper temporal alignment
-        classification_result = None
         if classification_enabled and classification_model is not None:
             try:
-                timesteps = prediction_horizon
-                features = len(variables)
+                # Create classification input using historical context + first prediction
+                # Take last 5 timesteps from context + first prediction = 6 timesteps total
+                historical_part = current_context[-5:]  # Shape: (5, features)
+                
+                if len(step_predictions_original) > 0:
+                    # Add the first prediction as the 6th timestep
+                    first_prediction = np.array(step_predictions_original[0]).reshape(1, -1)  # Shape: (1, features)
+                    classification_input = np.vstack([historical_part, first_prediction])  # Shape: (6, features)
+                else:
+                    # Fallback: use last 6 timesteps from context
+                    classification_input = current_context[-6:]  # Shape: (6, features)
+                
+                # Reshape for model input: (batch_size=1, timesteps=6, features)
+                classification_input_reshaped = classification_input.reshape(1, 6, len(variables))
+                
+                # Perform classification
+                classification_result = classification_model.predict(classification_input_reshaped, verbose=0)
+                result = np.argmax(classification_result, axis=1)
+                result_to_label = index_to_label[result[0]]
 
-                step_predictions_actual_array = np.array(step_predictions_actual)
-                
-                step_predictions_actual_classification = step_predictions_actual_array.reshape(1, timesteps, features)
-                
-                # Make prediction
-                classification_result = perform_classification(step_predictions_actual_classification, df_removed_nans_classification, t, classification_model)
-                print(f"🔍 Classification prediction: {classification_result}")
-                
+                classification_result_name = label_to_name[result_to_label]
+                print(f"Classification result: {classification_result_name}")
+
             except Exception as e:
-                print(f"⚠️ Classification error: {e}")
-                classification_result = "Classification Error"
+                print(f"Classification error: {e}")
+                classification_result = None
+                result = None
+        else:
+            classification_result = None
+            result = None
+
+        port_statuses_check = df_removed_nans_classification.iloc[t]
+        port_statuses = {}
+        for name, status in port_statuses_check.items():
+            if status not in [None, np.nan]:
+                port_statuses[name] = status
 
         if len(step_predictions_actual) > 0 and len(actuals_actual) > 0:
             predictions_actuals.append(step_predictions_actual[0])  # Only t+1
@@ -493,7 +477,9 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
                         current_datetime=current_timestamp,
                         variable_names=variables,
                         saved_prediction=saved_prediction_t1,
-                        future_prediction=future_prediction_t1  # Same as saved prediction - it IS the future!
+                        future_prediction=future_prediction_t1,
+                        port_statuses=port_statuses if len(port_statuses) > 0 else None,
+                        classification_result=label_to_name
                     )
                     
                     # Add classification result if available
@@ -525,8 +511,7 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
                 training_context.reshape(1, context_length, len(variables)), 
                 target_next_step.reshape(1, len(variables)), 
                 epochs=1, 
-                batch_size=1,
-                adaptation_strategy=adaptation_strategy  # Use configurable strategy
+                batch_size=1
             )
             print(f"Model improved at step {current_step}: training to predict t+1")
         

@@ -1,28 +1,28 @@
+ICMP loss
+ICMP ping
 ICMP response time
 Switch 1 - HotSpot Temp Sensor: Temperature
 Switch 1 - Inlet Temp Sensor: Temperature
 Switch 1 - Outlet Temp Sensor: Temperature
 Switch 2 - HotSpot Temp Sensor: Temperature
+Switch 2 - Inlet Temp Sensor: Temperature
+Switch 2 - Outlet Temp Sensor: Temperature
 #11: CPU utilization
 #12: CPU utilization
 Processor: Used memory
-Interface Gi1/0/2(Valmet DNA Supervisory access): Bits received
-Interface Gi1/0/2(Valmet DNA Supervisory access): Bits sent
-Interface Gi1/0/4(Valmet DNA Supervisory access): Bits received
-Interface Gi1/0/4(Valmet DNA Supervisory access): Bits sent
-Interface Gi1/0/7(Valmet DNA Supervisory access): Bits received
-Interface Gi1/0/7(Valmet DNA Supervisory access): Bits sent
-Interface Gi1/0/8(Valmet DNA Supervisory access): Bits received
-Interface Gi1/0/8(Valmet DNA Supervisory access): Bits sent
-Interface Gi1/0/9(Valmet DNA Supervisory access): Bits received
-Interface Gi1/0/9(Valmet DNA Supervisory access): Bits sent
+Interface Gi1/0/1(Valmet DNA Supervisory access): Bits received
+Interface Gi1/0/1(Valmet DNA Supervisory access): Bits sent
+Interface Gi1/0/3(Valmet DNA Supervisory access): Bits received
+Interface Gi1/0/3(Valmet DNA Supervisory access): Bits sent
 Interface Gi1/1/1(Valmet SUPV switch connection): Bits received
 Interface Gi1/1/1(Valmet SUPV switch connection): Bits sent
 Interface Gi1/1/4(Valmet SUPV switch connection): Bits received
 Interface Gi1/1/4(Valmet SUPV switch connection): Bits sent
-Interface Gi2/0/2(Valmet DNA Supervisory access): Bits sent
-Interface Gi2/0/4(Valmet DNA Supervisory access): Bits sent
-Interface Gi2/0/8(Valmet DNA Supervisory access): Bits sent
+Interface Gi2/0/1(Valmet DNA Supervisory access): Bits received
+Interface Gi2/0/1(Valmet DNA Supervisory access): Bits sent
+Interface Gi2/0/3(Valmet DNA Supervisory access): Bits sent
+Interface Gi2/0/5(Valmet DNA Supervisory access): Bits received
+Interface Gi2/0/5(Valmet DNA Supervisory access): Bits sent
 Interface Gi2/1/1(Valmet SUPV switch connection): Bits received
 Interface Gi2/1/1(Valmet SUPV switch connection): Bits sent
 Interface Gi2/1/2(Valmet SUPV switch connection): Bits received

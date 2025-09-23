@@ -63,8 +63,8 @@ def get_data_function(device_name=device_name, data_path=data_path,
     df_status_values = df.get_column_values(df_statuses)
 
     # if numeric values are constant for longer than one day, remove them
-    one_day = 24 * 60
-    df_numeric_one_day = df_numeric_values.iloc[:one_day]
+    half_day = 12 * 60
+    df_numeric_one_day = df_numeric_values.iloc[8000:8000+half_day]
     for col in df_numeric_one_day.columns:
         if df_numeric_one_day[col].nunique() <= 1:
             print(f"Removing constant column: {col}")

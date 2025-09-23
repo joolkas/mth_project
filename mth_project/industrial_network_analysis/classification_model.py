@@ -34,7 +34,7 @@ warnings.showwarning = warning_handler_func
 
 # 0. params for model training
 
-batch_size = 16
+batch_size = 32
 epochs = 50
 
 layer_one_units = 64,
@@ -43,10 +43,10 @@ dense_units = 64,
 activation='relu',
 dropout_rate=0.2
 
-threshold = 500
+threshold = 1000
 
 model_description = f"Conv1D_{layer_one_units}_{layer_two_units}_Dense{dense_units}_Act{activation}_Dropout{dropout_rate}_Batch{batch_size}_Epochs{epochs}"
-results_file_name = "SW-SUPV-243-classification_results_model1_001"
+results_file_name = "SW-SUPV-243-classification_results_001"
 
 
 # 1. encode column names
@@ -100,88 +100,76 @@ def map_ports_to_start_from_one(unique_ports):
 
 # 2. encode labels
 
-def encode_labels(df, down_value, temperature_threshold, cpu_threshold, temp_bit, cpu_bit, mapped_ports):
-    status_columns_classification = [col for col in df.columns if "Status" in col and "interface" not in col]
-    temperature_columns = [col for col in df.columns if "temperature" in col.lower()]
-    cpu_columns = [col for col in df.columns if "cpu" in col.lower()]
+def encode_labels(
+    df,
+    threshold,
+    unique_ports,
+    start_bit=10,
+    epsilon=1e-6
+):
+    """
+    (docstring omitted for brevity — see previous assistant message)
+    """
+    import pandas as pd
+    import numpy as np
 
-    # pandas method that applies function to each row in DataFrame, one at a time
-    def create_binary_encoding(row):
-        down_ports = []
+    unique_ports = list(unique_ports)
+    df_encoded = df.copy()
 
-        for col in status_columns_classification:
-            port_num = int(col.replace('Status ',''))
-            mapped_port = mapped_ports[port_num]
-            
-            status_value = row[col]
-            if status_value == down_value:
-                down_ports.append(mapped_port)
-        
-        # encode statuses 
-        binary_value = 0
-        for port in down_ports:
+    # Precompute ratios per port and record which ports are valid
+    traffic_ratio_dict = {}
+    valid_ports = []
+    for port in unique_ports:
+        sent_col = f"Bits Sent {port}"
+        recv_col = f"Bits Received {port}"
+        if sent_col in df.columns and recv_col in df.columns:
+            sent = pd.to_numeric(df[sent_col], errors='coerce').fillna(0).astype(float)
+            recv = pd.to_numeric(df[recv_col], errors='coerce').fillna(0).astype(float)
+            ratio = recv / (sent + float(epsilon))
+            traffic_ratio_dict[port] = ratio
+            valid_ports.append(port)
+        else:
+            traffic_ratio_dict[port] = None
+            print(f"Warning: Columns for port {port} not found in dataframe")
 
-            # Initial: binary_value = 0 (00000000)
+    contributions = []
+    for i, port in enumerate(unique_ports):
+        ratio = traffic_ratio_dict.get(port)
+        bit_pos = start_bit + i
+        if ratio is None:
+            contributions.append(pd.Series(0, index=df.index, dtype=object))
+            continue
+        mask = (ratio > threshold)
+        contribution = mask.astype(object) * (1 << bit_pos)
+        contributions.append(contribution)
+        print(f"Port {port} (bit {bit_pos}) - Ratio > {threshold}: {mask.sum()}")
 
-            # Port 1 down:
-            # binary_value |= (1 << 0)  →  0 | 1  →  00000001 (decimal 1)
+    if contributions:
+        total = pd.Series(0, index=df.index, dtype=object)
+        for c in contributions:
+            total = total + c
+        df_encoded['Label'] = total
+    else:
+        df_encoded['Label'] = 0
 
-            # Port 3 down:
-            # binary_value |= (1 << 2)  →  1 | 4  →  00000101 (decimal 5)
+    return df_encoded
 
-            # Port 5 down:
-            # binary_value |= (1 << 4)  →  5 | 16 →  00010101 (decimal 21)
-            
-            binary_value |= (1 << port - 1)
-
-        # simple temperature check (OK/NOK)
-        # if either of the temperature sensors is above threshold, set bit
-        for temperature_column in temperature_columns:
-            if row[temperature_column] > temperature_threshold:
-                binary_value |= (1 << temp_bit)
-
-        for cpu_column in cpu_columns:
-            if row[cpu_column] > cpu_threshold:
-                binary_value |= (1 << cpu_bit)
-
-        return binary_value
-
-    df_labeled = df.copy()
-    df_labeled['Label'] = df.apply(create_binary_encoding, axis=1)
-    return df_labeled
 
 # 3. label decoder
 
-def decode_label(label, mapped_ports, temp_bit, cpu_bit):
-    """
-    Decodes the integer label into a dictionary indicating which ports are down,
-    and whether temperature/cpu alarms are set.
-    """
-    result = {
-        "down_ports": [],
-        "temperature_alarm": False,
-        "cpu_alarm": False
-    }
-    
-    # Create reverse mapping from mapped port numbers back to original port numbers
-    reverse_mapped_ports = {v: k for k, v in mapped_ports.items()}
-    
-    # Check each possible mapped port position
-    for mapped_port in range(1, len(mapped_ports) + 1):
-        if label & (1 << (mapped_port - 1)):
-            original_port = reverse_mapped_ports[mapped_port]
-            result["down_ports"].append(original_port)
-    
-    # Check temperature bit
-    if label & (1 << temp_bit):
-        result["temperature_alarm"] = True
-    
-    # Check cpu bit
-    if label & (1 << cpu_bit):
-        result["cpu_alarm"] = True
-    
-    return result
+def decode_label(label, unique_ports, start_bit=10):
+    ports = list(unique_ports)
+    bit_positions = [start_bit + i for i in range(len(ports))]
 
+    def decode_single(val):
+        return {port: bool((int(val) >> bit) & 1) for port, bit in zip(ports, bit_positions)}
+
+    if hasattr(label, "index"):  # pandas Series
+        decoded = [decode_single(val) for val in label]
+        return pd.DataFrame(decoded, index=label.index)
+    else:
+        return decode_single(label)
+    
 # 4. Balance Classes by Downsampling Majority Classes
 def merge_small_classes(df, label_col='label', threshold=10, other_label='other'):
     class_counts = df[label_col].value_counts()
@@ -332,7 +320,13 @@ if __name__ == "__main__":
     df_removed_nans_classification = pd.read_csv(processed_statuses_path, index_col=0, parse_dates=True)
     # to do in future: train model on input data from different dates
     # merge data
-    df = pd.merge(df_removed_nans_forecasting, df_removed_nans_classification, on=['timestamp'])
+
+    # df = pd.merge(df_removed_nans_forecasting, df_removed_nans_classification, on=['timestamp'])
+
+    # only use forecasting data for classification
+
+    df = df_removed_nans_forecasting.copy()
+
     print(f"    Merged DataFrame shape: {df.shape}")
 
     ### ad 1. Encode Column Names
@@ -346,47 +340,47 @@ if __name__ == "__main__":
     ### ad 2. Encode Labels
     print("STEP 2/7: Encoding labels...")
 
-    # down value for status columns
-    down = 2
-
-    temperature_threshold = 50
-    cpu_threshold = 10
-
-    temp_bit = 8
-    cpu_bit = 10
-
+    storm_threshold = 100
+    
     mapped_ports = map_ports_to_start_from_one(unique_ports)
-    df_labeled = encode_labels(df, down_value=down, temperature_threshold=temperature_threshold, cpu_threshold=cpu_threshold, temp_bit=temp_bit, cpu_bit=cpu_bit, mapped_ports=mapped_ports)
+    df_labeled = encode_labels(df, threshold = storm_threshold, unique_ports=unique_ports)
 
-    ### ad 3. Decode Labels
-    print("STEP 3/7: Decoding example labels...")
-    label_to_name = {}
-    labels = df_labeled['Label'].unique()
+    balancing = False
 
-    for label in labels:
-        label_to_name[label] = decode_label(label, mapped_ports, temp_bit=temp_bit, cpu_bit=cpu_bit)
-
-    print("    Example of label decoding:")
-    for idx, label in enumerate(labels):
-        example_label = labels[idx]
-        print(f"    Label {example_label}: {label_to_name[example_label]}")
-
-    ### ad 4. Balance Classes by Downsampling Majority Classes
-    print("STEP 4/7: Merging small classes...")
+    ### ad 3. Balance Classes by Downsampling Majority Classes
+    print("STEP 3/7: Merging small classes...")
     df_merged_labeled = merge_small_classes(df_labeled, label_col='Label', threshold=threshold, other_label='0000')
     print(f"    results for threshold: {threshold} = {df_merged_labeled['Label'].value_counts()}")
 
     # unify datatype for label column
     df_merged_labeled['Label'] = df_merged_labeled['Label'].astype(int)
 
-    ### ad 5. Merge Small Classes
-    print("STEP 5/7: Balancing classes...")
-    df_balanced_labeled = balance_classes(df_merged_labeled, label_col='Label', random_state=42)
-    print(f"    {df_balanced_labeled['Label'].value_counts()}")
+    if balancing:
+        ### ad 4. Merge Small Classes
+        print("STEP 4/7: Balancing classes...")
+        df_balanced_labeled = balance_classes(df_merged_labeled, label_col='Label', random_state=42)
+        print(f"    {df_balanced_labeled['Label'].value_counts()}")
+    else:
+        print("Skipping step 4: No balancing applied.")
+
+    ### ad 5. Decode Labels - AFTER merging to include all final labels
+    print("STEP 5/7: Decoding final labels...")
+    label_to_name = {}
+    #final_labels = df_balanced_labeled['Label'].unique()
+    final_labels = df_labeled['Label'].unique()
+
+    label_to_name = {}
+
+    for label in df_labeled['Label'].unique()[:5]:
+        decoded = decode_label(label, unique_ports)
+        decoded = {k: v for k, v in decoded.items() if v}  
+        label_to_name[label] = decoded
+        print(f"Label: {label} -> Decoded: {decoded}")
 
     ### ad 6. Prepare Data for Training
     print("STEP 6/7: Preparing data for training...")
-    features_scaled, labels_classification, label_to_index, unique_labels, num_classes = prepare_classification_data(df_balanced_labeled)
+    df_for_training = df_balanced_labeled if balancing else df_merged_labeled
+    features_scaled, labels_classification, label_to_index, unique_labels, num_classes = prepare_classification_data(df_for_training)
     window_size = 6
     X_train, X_test, y_train, y_test = data_split(features_scaled, labels_classification, window_size)
 
