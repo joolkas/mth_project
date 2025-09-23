@@ -34,11 +34,11 @@ use_callbacks = True
 
 # Split data for initial training and online forecasting
 
-initial_idx = 24 * 60 # first 24 hours for initial training
+initial_idx = 48 * 60 # first 48 hours for initial training
 
 
 model_description = f"Epochs: {epochs}, Batch Size: {batch_size}, Validation Split: {validation_split}, Context Length: {context_length}, First Layer Units: {first_layer_units}, Second Layer Units: {second_layer_units}, Dense Units: {dense_units}, Activation: {activation}, Dropout Rate: {dropout_rate}"
-results_file_name = "initial_model_results_24h_with_callbacks_001"
+results_file_name = "initial_model_results_48h_001"
 
 def create_online_multivariate_model(df,
                                      context_length=context_length,
@@ -75,7 +75,7 @@ def create_online_multivariate_model(df,
 
     model.compile(optimizer=keras.optimizers.Adam(learning_rate=0.001), 
                   loss='mse', 
-                  metrics=['mae'])
+                  metrics=['accuracy', 'mae'])
     
     return model
 
@@ -408,7 +408,7 @@ def get_online_data(initial_model_path):
         with open(f"{initial_model_path}\\variables.txt", 'r') as f:
             variables = [line.strip() for line in f.readlines() if line.strip()]
             
-        print(f"✓ Online data loaded from original formats at: {initial_model_path}")
+        print(f"\n Online data loaded from original formats at: {initial_model_path}")
         print(f"  - DataFrames loaded from CSV files")
         print(f"  - Scalers loaded from pickle file") 
         print(f"  - Variables loaded from text file")
