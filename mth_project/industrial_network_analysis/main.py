@@ -64,6 +64,7 @@ time.sleep(3)
 # Run predictions
 
 online_condition = "learning"
+prediction_method = "direct"
 
 if online_condition == "learning":
     results = rolling_buffer_learning_prediction_with_dash(
@@ -75,7 +76,8 @@ if online_condition == "learning":
         df_removed_nans_classification=df_removed_nans_classification, 
         dash_plotter=plotter,
         variables=variables, 
-        prediction_horizon=prediction_horizon
+        prediction_horizon=prediction_horizon,
+        prediction_method=prediction_method
     )
 else:
     results = rolling_buffer_prediction_with_dash(

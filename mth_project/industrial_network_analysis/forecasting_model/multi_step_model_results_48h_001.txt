@@ -1,0 +1,15 @@
+Multi-Step Model Training Description:
+Multi-Step Model - Epochs: 80, Batch Size: 64, Validation Split: 0.2, Context Length: 60, Prediction Horizon: 6, First Layer Units: 256, Second Layer Units: 128, Third Layer Units: 64, Dense Units: 512, Activation: relu, Dropout Rate: 0.3
+ Results:
+ MSE: 499089230.952739
+ MAE: 7979.225324
+ RMSE: 22340.305077
+ Percentage Error: 165.625686
+
+Horizon-specific performance:
+  t+1: MSE=1663227.995444, MAE=292.147041
+  t+2: MSE=1608473.554385, MAE=300.674401
+  t+3: MSE=1496009.868504, MAE=294.846542
+  t+4: MSE=1454467.621001, MAE=297.433313
+  t+5: MSE=1383272.405845, MAE=296.287620
+  t+6: MSE=1345576.677649, MAE=295.380798

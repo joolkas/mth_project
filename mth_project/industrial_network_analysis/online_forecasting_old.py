@@ -158,141 +158,7 @@ def predict_recursive_steps(model, initial_context, variables, prediction_horizo
     
     return predictions
 
-def predict_direct_multistep(model, initial_context, variables, prediction_horizon=6, context_length=60):
-    """
-    Direct multi-step prediction that predicts all horizons simultaneously.
-    Avoids error accumulation from recursive prediction.
-    
-    Note: This requires a model trained to output prediction_horizon * n_features values.
-    """
-    context_reshaped = initial_context.reshape(1, context_length, len(variables))
-    
-    # Make single prediction for all horizons
-    multistep_prediction = model.predict(context_reshaped, verbose=0)
-    
-    # Reshape output to separate each time step
-    # Expected shape: (1, prediction_horizon * n_features)
-    n_features = len(variables)
-    
-    if multistep_prediction.shape[1] == prediction_horizon * n_features:
-        # Model was trained for multi-step output
-        predictions = []
-        for step in range(prediction_horizon):
-            start_idx = step * n_features
-            end_idx = (step + 1) * n_features
-            step_pred = multistep_prediction[0, start_idx:end_idx]
-            predictions.append(step_pred)
-        return predictions
-    else:
-        # Fallback to recursive if model doesn't support multi-step
-        print("   Warning: Model not configured for multi-step, using recursive fallback")
-        return predict_recursive_steps(model, initial_context, variables, prediction_horizon, context_length)
-
-def predict_regularized_recursive(model, initial_context, variables, prediction_horizon=6, context_length=60):
-    """
-    Regularized recursive prediction with bounds checking to prevent drift.
-    """
-    context = initial_context.copy()
-    predictions = []
-    
-    # Calculate context statistics for regularization
-    context_stats = {
-        'mean': np.mean(context, axis=0),
-        'std': np.std(context, axis=0),
-        'min': np.min(context, axis=0),
-        'max': np.max(context, axis=0)
-    }
-    
-    for step in range(prediction_horizon):
-        context_reshaped = context.reshape(1, context_length, len(variables))
-        step_prediction = model.predict(context_reshaped, verbose=0)
-        
-        # Regularization: clip predictions to reasonable bounds
-        pred_flat = step_prediction.flatten()
-        
-        # Define bounds based on historical context (more lenient for later steps)
-        step_factor = 1.0 + (step * 0.2)  # Allow more deviation for later predictions
-        lower_bounds = context_stats['min'] - step_factor * context_stats['std']
-        upper_bounds = context_stats['max'] + step_factor * context_stats['std']
-        
-        # Clip predictions
-        pred_clipped = np.clip(pred_flat, lower_bounds, upper_bounds)
-        
-        predictions.append(pred_clipped)
-        
-        # Update context with clipped prediction
-        new_row = pred_clipped.reshape(1, -1)
-        context = np.vstack((context[1:], new_row))
-    
-    return predictions
-
-def extrapolate_trend(context, variables, prediction_horizon=6):
-    """
-    Simple trend extrapolation for ensemble prediction.
-    Uses linear trend from recent context window.
-    """
-    predictions = []
-    
-    # Use last 10 timesteps to calculate trend
-    recent_window = min(10, len(context))
-    recent_data = context[-recent_window:]
-    
-    # Calculate linear trend for each feature
-    trends = []
-    for feature_idx in range(len(variables)):
-        feature_data = recent_data[:, feature_idx]
-        if len(feature_data) >= 2:
-            # Simple linear regression
-            x = np.arange(len(feature_data))
-            trend = np.polyfit(x, feature_data, 1)[0]  # slope
-        else:
-            trend = 0.0
-        trends.append(trend)
-    
-    trends = np.array(trends)
-    last_values = context[-1, :]
-    
-    # Extrapolate trend
-    for step in range(1, prediction_horizon + 1):
-        predicted_values = last_values + (trends * step)
-        predictions.append(predicted_values)
-    
-    return predictions
-
-def predict_ensemble(model, initial_context, variables, prediction_horizon=6, context_length=60):
-    """
-    Ensemble prediction combining multiple strategies with adaptive weights.
-    """
-    # Get predictions from different methods
-    pred_recursive = predict_recursive_steps(model, initial_context, variables, prediction_horizon, context_length)
-    pred_regularized = predict_regularized_recursive(model, initial_context, variables, prediction_horizon, context_length)
-    pred_trend = extrapolate_trend(initial_context, variables, prediction_horizon)
-    
-    # Adaptive weights based on prediction horizon
-    ensemble_predictions = []
-    
-    for step in range(prediction_horizon):
-        # Weights that change based on prediction step
-        weight_recursive = max(0.1, 1.0 - step * 0.15)     # Strong for early steps
-        weight_regularized = min(0.8, 0.3 + step * 0.1)    # Stronger for later steps
-        weight_trend = min(0.3, step * 0.05)               # Increases with step
-        
-        # Normalize weights
-        total_weight = weight_recursive + weight_regularized + weight_trend
-        weight_recursive /= total_weight
-        weight_regularized /= total_weight
-        weight_trend /= total_weight
-        
-        # Combine predictions
-        combined_pred = (weight_recursive * pred_recursive[step] + 
-                        weight_regularized * pred_regularized[step] + 
-                        weight_trend * pred_trend[step])
-        
-        ensemble_predictions.append(combined_pred)
-    
-    return ensemble_predictions
-
-def improve_model(initial_model, training_data, target_data, prediction_error_mae, error_history_buffer=None, multistep_targets=None):
+def improve_model(initial_model, training_data, target_data, prediction_error_mae, error_history_buffer=None):
 
     debug_mode = False
 
@@ -323,6 +189,7 @@ def improve_model(initial_model, training_data, target_data, prediction_error_ma
             print("   Current target sample:", target_data_np[0])
             print("   Current prediction sample:", current_prediction_np[0])
 
+
         # Calculate per-feature errors
         per_feature_errors = np.mean(np.abs(current_prediction_np - target_data_np), axis=0)
         n_features = len(per_feature_errors)
@@ -335,6 +202,8 @@ def improve_model(initial_model, training_data, target_data, prediction_error_ma
         if error_history_buffer is None:
             error_history_buffer = {'errors': [], 'window_size': 10}
         
+        ########################## verify below
+
         # Update error history
         error_history_buffer['errors'].append(per_feature_errors.copy())
         if len(error_history_buffer['errors']) > error_history_buffer['window_size']:
@@ -394,59 +263,6 @@ def improve_model(initial_model, training_data, target_data, prediction_error_ma
             loss='mse',
             metrics=['accuracy', 'mae']
         )
-        
-        # Multi-step training if multistep targets are provided
-        if multistep_targets is not None and len(multistep_targets) > 1:
-            print(f"   → Training with multi-step targets ({len(multistep_targets)} steps)")
-            
-            # Create multi-step target by concatenating all future steps
-            multistep_target_combined = np.concatenate(multistep_targets, axis=1)
-            
-            # Train with both single-step and multi-step objectives
-            # Use smaller learning rate for multi-step training
-            multistep_lr = adaptive_lr * 0.5
-            multistep_optimizer = tf.keras.optimizers.Adam(learning_rate=multistep_lr)
-            
-            # Clone model for multi-step training
-            multistep_model = tf.keras.models.clone_model(initial_model)
-            multistep_model.set_weights(initial_model.get_weights())
-            
-            # Modify last layer for multi-step output if necessary
-            if multistep_model.output_shape[1] != multistep_target_combined.shape[1]:
-                print(f"   → Adapting model output for multi-step: {multistep_model.output_shape[1]} → {multistep_target_combined.shape[1]}")
-                # For now, continue with single-step training
-                # TODO: Implement dynamic model adaptation
-            else:
-                multistep_model.compile(
-                    optimizer=multistep_optimizer,
-                    loss='mse',
-                    metrics=['mae']
-                )
-                
-                try:
-                    # Train multi-step model
-                    multistep_history = multistep_model.fit(
-                        training_data,
-                        multistep_target_combined,
-                        epochs=max(1, epochs // 2),
-                        batch_size=batch_size,
-                        sample_weight=sample_weights,
-                        verbose=0
-                    )
-                    
-                    # Test multi-step model performance
-                    multistep_pred = multistep_model.predict(training_data, verbose=0)
-                    multistep_error = np.mean(np.abs(multistep_pred - multistep_target_combined))
-                    
-                    # If multi-step training is better, use it
-                    if multistep_error < prediction_error_mae * 1.1:  # Allow 10% tolerance
-                        print(f"   ✓ Multi-step training successful: {multistep_error:.6f}")
-                        initial_model.set_weights(multistep_model.get_weights())
-                    else:
-                        print(f"   ✗ Multi-step training not beneficial: {multistep_error:.6f}")
-                        
-                except Exception as e:
-                    print(f"   Warning: Multi-step training failed: {e}")
         
         # Train the model with sample weights for recency bias
         try:
@@ -520,6 +336,7 @@ def improve_model(initial_model, training_data, target_data, prediction_error_ma
             print(f"   Skipping training: optimizer error ({optimizer_error})")
             return initial_model
 
+
     except Exception as e:
         print(f"   Warning: Model training failed ({e})")
         print("   Continuing with original model...")
@@ -549,20 +366,7 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
                                         dash_plotter, 
                                         variables, 
                                         prediction_horizon=6, 
-                                        classification_model_path=None,
-                                        prediction_method='ensemble'):
-    """
-    Enhanced rolling buffer prediction with multiple forecasting strategies.
-    
-    Parameters:
-    -----------
-    prediction_method : str, default='ensemble'
-        Prediction strategy to use:
-        - 'recursive': Original recursive prediction
-        - 'regularized': Regularized recursive with bounds checking
-        - 'ensemble': Adaptive ensemble of multiple methods (recommended)
-        - 'direct': Direct multi-step prediction (requires compatible model)
-    """
+                                        classification_model_path=None):
     # Prepare model for online learning by recompiling with fresh optimizer
     print("\n Preparing model for online learning...")
     try:
@@ -622,25 +426,8 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
         time.sleep(1)
         current_step = t - context_length
 
-        # 1. Make predictions for next 'prediction_horizon' steps using selected method
-        try:
-            if prediction_method == 'ensemble':
-                step_predictions = predict_ensemble(model, current_context, variables=variables, prediction_horizon=prediction_horizon)
-                print(f"   Using ensemble prediction for step {current_step}")
-            elif prediction_method == 'regularized':
-                step_predictions = predict_regularized_recursive(model, current_context, variables=variables, prediction_horizon=prediction_horizon)
-                print(f"   Using regularized recursive prediction for step {current_step}")
-            elif prediction_method == 'direct':
-                step_predictions = predict_direct_multistep(model, current_context, variables=variables, prediction_horizon=prediction_horizon)
-                print(f"   Using direct multi-step prediction for step {current_step}")
-            else:  # Default to recursive
-                step_predictions = predict_recursive_steps(model, current_context, variables=variables, prediction_horizon=prediction_horizon)
-                print(f"   Using recursive prediction for step {current_step}")
-                
-        except Exception as e:
-            print(f"   {prediction_method} prediction failed ({e}), falling back to recursive")
-            # Fallback to recursive prediction if selected method fails
-            step_predictions = predict_recursive_steps(model, current_context, variables=variables, prediction_horizon=prediction_horizon)
+        # 1. Make predictions for next 'prediction_horizon' steps
+        step_predictions = predict_recursive_steps(model, current_context, variables = variables, prediction_horizon = prediction_horizon)
         
         # 2. Convert all predictions to original scale
         step_predictions_original = []
@@ -796,17 +583,13 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
             # Target: next step t+1 (ground truth)
             target_next_step = scaled_data[t + 1, :].copy()
             
-            # Prepare multi-step targets if we have enough future data
-            multistep_targets = []
-            max_steps = min(prediction_horizon, len(scaled_data) - t - 1)
-            
-            for step_ahead in range(1, max_steps + 1):
-                if t + step_ahead < len(scaled_data):
-                    future_target = scaled_data[t + step_ahead, :].copy()
-                    multistep_targets.append(future_target.reshape(1, len(variables)))
-            
-            # Train model to predict t+1 from context ending at t
+            # # Train model to predict t+1 from context ending at t
             if t + 1 < len(scaled_data):
+                # Context: up to current step t
+                training_context = np.vstack((current_context[1:], new_row))
+                # Target: next step t+1 (ground truth)
+                target_next_step = scaled_data[t + 1, :].copy()
+                
                 # Calculate current prediction error for the improve_model function
                 current_pred = model.predict(
                     training_context.reshape(1, context_length, len(variables)), 
@@ -814,16 +597,22 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
                 )
                 current_prediction_error = np.mean(np.abs(current_pred.flatten() - target_next_step))
                 
-                # Enhanced model improvement with multi-step training
                 model = improve_model(
                     model, 
                     training_context.reshape(1, context_length, len(variables)), 
                     target_next_step.reshape(1, len(variables)), 
-                    prediction_error_mae=current_prediction_error,
-                    multistep_targets=multistep_targets if len(multistep_targets) > 1 else None
+                    prediction_error_mae=current_prediction_error
                 )
 
-            print(f"Model improved at step {current_step}: training to predict t+1 (with {len(multistep_targets)} multi-step targets)")
+            # old method
+            # model = improve_model(
+            #     model, 
+            #     training_context.reshape(1, context_length, len(variables)), 
+            #     target_next_step.reshape(1, len(variables)), 
+            #     epochs=1, 
+            #     batch_size=1
+            # )
+            print(f"Model improved at step {current_step}: training to predict t+1")
         
         # Update context for next iteration
         current_context = np.vstack((current_context[1:], new_row))

@@ -241,8 +241,48 @@ def calculate_metrics(df, actuals_original, predictions_original):
     print(results_df)
     return results_df, mse, mae, rmse, percentage_error
 
-def plot_results(actuals_df, predictions_df):
-    plt.figure(figsize=(15*len(actuals_df.columns), 6*len(actuals_df.columns)))
+def plot_results(actuals_df, predictions_df, history=None):
+    
+    if history is None:
+        print("No training history provided")
+    else:
+        # plot accuracy, loss and mse
+        plt.figure(figsize=(15, 5))
+        plt.subplot(1, 3, 1)
+        plt.plot(history.history['accuracy'], label='Train Accuracy')
+        plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+
+        plt.title('Model Accuracy')
+        plt.xlabel('Epoch')
+        plt.ylabel('Accuracy')
+        plt.legend()
+
+        plt.subplot(1, 3, 2)
+        plt.plot(history.history['loss'], label='Train Loss')
+        plt.plot(history.history['val_loss'], label='Validation Loss')
+        plt.title('Model Loss')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.legend()
+
+        plt.subplot(1, 3, 3)
+        plt.plot(history.history['mae'], label='Train MAE')
+        plt.plot(history.history['val_mae'], label='Validation MAE')
+        plt.title('Model MAE')
+        plt.xlabel('Epoch')
+        plt.ylabel('MAE')
+        plt.legend()
+
+        plt.tight_layout()
+        plt.show()
+
+
+    # Create reasonable figure size: max 20 inches wide, 4 inches per subplot
+    n_columns = len(actuals_df.columns)
+    fig_width = min(20, max(12, n_columns * 2))  # Between 12-20 inches wide
+    fig_height = n_columns * 4  # 4 inches per subplot
+    
+    plt.figure(figsize=(fig_width, fig_height))
     for i, column in enumerate(actuals_df.columns):
         plt.subplot(len(actuals_df.columns), 1, i+1)
         
@@ -505,8 +545,8 @@ if __name__ == "__main__":
 
     df_actuals, df_predictions = test_initial_model(model, df_initial, X_test, y_test, scalers_test, df_removed_nans_forecasting)
     results_df, mse, mae, rmse, percentage_error = calculate_metrics(df_initial, df_actuals, df_predictions)
-    save_online_data(f"{initial_model_path}\\online_data", df_online, scalers_train, context_length, df_removed_nans_forecasting, df_removed_nans_classification, variables)
-    #plot_results(df_actuals, df_predictions)
+    # save_online_data(f"{initial_model_path}\\online_data", df_online, scalers_train, context_length, df_removed_nans_forecasting, df_removed_nans_classification, variables)
+    plot_results(df_actuals, df_predictions, history)
 
     description = f"Initial Model Training Description:\n{model_description}\n Results:\n MSE: {mse:.6f}\n MAE: {mae:.6f}\n RMSE: {rmse:.6f}\n Percentage Error: {percentage_error:.6f}\n"
     with open(f"{initial_model_path}\\{results_file_name}.txt", "w") as f:
