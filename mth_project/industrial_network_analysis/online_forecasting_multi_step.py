@@ -10,13 +10,114 @@ import os
 import pickle
 import matplotlib.pyplot as plt
 import keyboard
+import threading
 
 # Ensure TensorFlow eager execution is enabled
 tf.config.run_functions_eagerly(True)
 
+# Global stop flag for graceful shutdown
+stop_flag = threading.Event()
+
 # Global variables for classification model (loaded once)
 _classification_model = None
 _preprocessing_data = None
+
+def keyboard_listener():
+    """Run in separate thread to listen for quit command"""
+    while not stop_flag.is_set():
+        try:
+            if keyboard.is_pressed('q'):
+                print("\n🛑 Quit command detected! Initiating graceful shutdown...")
+                stop_flag.set()
+                break
+        except Exception as e:
+            # Keyboard library might fail in some environments
+            pass
+        time.sleep(0.1)  # Check every 100ms
+
+def interruptible_sleep(duration, check_interval=0.1):
+    """Sleep that can be interrupted by stop_flag"""
+    end_time = time.time() + duration
+    while time.time() < end_time:
+        if stop_flag.is_set():
+            break
+        time.sleep(min(check_interval, end_time - time.time()))
+
+def cleanup_and_create_results(final_predictions, final_actuals, final_timestamps, 
+                              predictions_actuals, actuals_actuals, variables, 
+                              context_length, current_step):
+    """Clean shutdown procedure with result saving"""
+    print("🧹 Performing graceful cleanup...")
+    
+    try:
+        # Create DataFrames from collected data
+        if len(final_predictions) > 0:
+            predictions_df = pd.DataFrame(
+                data=final_predictions,
+                columns=variables,
+                index=pd.Index(range(context_length, context_length + len(final_predictions)), name='time_index')
+            )
+            
+            actuals_df = pd.DataFrame(
+                data=final_actuals,
+                columns=variables,
+                index=pd.Index(range(context_length, context_length + len(final_actuals)), name='time_index')
+            )
+            
+            print(f"✅ Successfully created results for {len(final_predictions)} predictions")
+        else:
+            # Create empty DataFrames if no predictions were made
+            predictions_df = pd.DataFrame(columns=variables)
+            actuals_df = pd.DataFrame(columns=variables)
+            print("⚠️  No predictions were completed before shutdown")
+        
+        # Create actuals DataFrames if available
+        if len(predictions_actuals) > 0:
+            predictions_actuals_df = pd.DataFrame(
+                data=predictions_actuals,
+                columns=variables,
+                index=pd.Index(range(context_length, context_length + len(predictions_actuals)), name='time_index')
+            )
+            
+            actuals_actuals_df = pd.DataFrame(
+                data=actuals_actuals,
+                columns=variables,
+                index=pd.Index(range(context_length, context_length + len(actuals_actuals)), name='time_index')
+            )
+        else:
+            predictions_actuals_df = pd.DataFrame(columns=variables)
+            actuals_actuals_df = pd.DataFrame(columns=variables)
+        
+        print(f"📊 Results summary:")
+        print(f"   - Completed steps: {current_step}")
+        print(f"   - Predictions collected: {len(final_predictions)}")
+        print(f"   - Variables tracked: {len(variables)}")
+        
+        return predictions_df, actuals_df, predictions_actuals_df, actuals_actuals_df
+        
+    except Exception as e:
+        print(f"❌ Error during cleanup: {e}")
+        # Return empty DataFrames on error
+        empty_df = pd.DataFrame(columns=variables)
+        return empty_df, empty_df, empty_df, empty_df
+
+def clear_large_variables(*var_names):
+    """Clear large variables to free memory"""
+    import gc
+    cleared_count = 0
+    frame = sys._getframe(1)  # Get caller's frame
+    
+    for var_name in var_names:
+        if var_name in frame.f_locals:
+            try:
+                del frame.f_locals[var_name]
+                cleared_count += 1
+            except:
+                pass
+    
+    gc.collect()  # Force garbage collection
+    if cleared_count > 0:
+        print(f"🗑️  Cleared {cleared_count} large variables from memory")
 
 def load_classification_model(models_dir=None):
     global _classification_model, _preprocessing_data
@@ -97,11 +198,6 @@ def load_classification_model(models_dir=None):
             }
             print("✓ Created index_to_label mapping")
         
-        # print("✓ Classification model loaded successfully!")
-        # print(f"  - Model input shape: {_classification_model.input_shape}")
-        # print(f"  - Number of classes: {len(_preprocessing_data['label_to_index'])}")
-        # print(f"  - Available classes: {list(_preprocessing_data['label_to_name'].keys())}")
-        
         return (
             _classification_model,
             _preprocessing_data['label_to_index'],
@@ -135,149 +231,108 @@ def get_classification_model_info():
         'model_summary': _classification_model.summary
     }
 
-def predict_recursive_steps(model, initial_context, variables, prediction_horizon=6, context_length=60):
-    context = initial_context.copy()
+def predict_multistep_direct(model, context, variables, prediction_horizon=6):
+    """
+    Multi-step direct prediction - model outputs all future steps at once.
+    """
+    # Reshape context for model input
+    context_reshaped = context.reshape(1, context.shape[0], len(variables))
+    
+    # Get multi-step prediction (flattened output)
+    multistep_pred = model.predict(context_reshaped, verbose=0)
+    
+    # Reshape output to separate timesteps
+    n_features = len(variables)
     predictions = []
     
     for step in range(prediction_horizon):
-        # Reshape for model input (batch_size=1, timesteps, features)
-        context_reshaped = context.reshape(1, context_length, len(variables))
-        
-        # Make prediction for next step
-        step_prediction = model.predict(context_reshaped, verbose=0)
-        
-        # Store the prediction (flattened for compatibility)
-        predictions.append(step_prediction.flatten())
-        
-        # FIXED: Create new row directly from prediction
-        # This is the predicted next timestep
-        new_row = step_prediction[0].copy()  # Extract from batch dimension and copy
-        
-        # Slide context window: remove oldest, add new prediction
-        context = np.vstack((context[1:], new_row.reshape(1, -1)))
+        start_idx = step * n_features
+        end_idx = (step + 1) * n_features
+        step_pred = multistep_pred[0, start_idx:end_idx]
+        predictions.append(step_pred)
     
     return predictions
 
-def predict_recursive_steps_old(model, initial_context, variables, prediction_horizon=6, context_length=60):
-    context = initial_context.copy()
-    predictions = []
+def improve_model(initial_model, training_data, target_data, prediction_error_mae):
+    """
+    Simplified model improvement function for multi-step models.
+    Adapted to handle multi-step target data.
+    """
     
-    for step in range(prediction_horizon):
-        # Reshape for model input (batch_size=1, timesteps, features)
-        context_reshaped = context.reshape(1, context_length, len(variables))
-        step_prediction = model.predict(context_reshaped, verbose=0)
-        predictions.append(step_prediction.flatten())
-
-        # Recursive feedback mechanism
-        # Each prediction becomes input for the next prediction
-        new_row = context[-1].copy()  # Start with last row of context
-        
-        # Update values with predictions (true feedback loop)
-        for i in range(len(variables)):
-            new_row[i] = step_prediction[0, i]
-
-        # Slide context window - remove oldest, add new prediction
-        context = np.vstack((context[1:], new_row))
-
-    return predictions
-
-
-def improve_model(initial_model, training_data, target_data, epochs=1, batch_size=1):
     try:
-        # Calculate prediction error before training
-        current_prediction = initial_model.predict(training_data, verbose=0)
+        print(f"   Attempting multi-step model improvement (current MAE: {prediction_error_mae:.6f})")
         
-        # Ensure target_data is numpy array
+        # Store original weights for potential rollback
+        original_weights = initial_model.get_weights()
+        
+        # Convert target data to numpy for analysis
         if hasattr(target_data, 'numpy'):
             target_data_np = target_data.numpy()
         else:
             target_data_np = np.array(target_data)
-            
-        # Ensure prediction is numpy array
-        if hasattr(current_prediction, 'numpy'):
-            current_prediction_np = current_prediction.numpy()
-        else:
-            current_prediction_np = np.array(current_prediction)
-            
-        # Calculate different error metrics
-        prediction_error_mae = np.mean(np.abs(current_prediction_np - target_data_np))
-        prediction_error_mse = np.mean((current_prediction_np - target_data_np) ** 2)
-        max_error = np.max(np.abs(current_prediction_np - target_data_np))
         
-        # Analyze data patterns to choose adaptation strategy
-        data_variance = np.var(target_data_np)
-        data_range = np.max(target_data_np) - np.min(target_data_np)
-        is_constant_like = data_variance < 1e-6 or data_range < 1e-4
+        # Simple fixed hyperparameters
+        learning_rate = 0.001
+        epochs = 5
+        batch_size = 32
         
-        # Skip training if error is very small and data is constant-like
-        if is_constant_like and prediction_error_mae < 1e-3:
-            print(f"   Skipping training: constant-like data with low error ({prediction_error_mae:.6f})")
-            return initial_model
+        print(f"   → Using fixed LR: {learning_rate}, epochs: {epochs}, batch_size: {batch_size}")
         
-        # Determine training parameters based on strategy and data characteristics
-        if prediction_error_mae > 0.1:
-            learning_rate = 0.005
-            epochs = min(3, epochs * 2)
-        elif prediction_error_mae < 0.01:
-            learning_rate = 0.0001
-            epochs = 1
-        else:
-            learning_rate = 0.001
-            epochs = epochs
-        
-        # Create a copy of the model for safe training
-        original_weights = initial_model.get_weights()
-        
-        # Recompile with adaptive learning rate
+        # Compile model with fixed learning rate
+        optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
         initial_model.compile(
-            optimizer=keras.optimizers.Adam(learning_rate=learning_rate), 
-            loss='mse', 
+            optimizer=optimizer,
+            loss='mse',
             metrics=['mae']
         )
         
-        # Train the model
+        # Train the model (no sample weights)
         try:
+            time_start = time.time()
+            
             history = initial_model.fit(
                 training_data, 
                 target_data, 
                 epochs=epochs, 
-                batch_size=batch_size, 
+                batch_size=batch_size,
                 verbose=0
             )
             
-            # Validate improvement
+            # Simple improvement check - just compare global MAE
             new_prediction = initial_model.predict(training_data, verbose=0)
             if hasattr(new_prediction, 'numpy'):
                 new_prediction_np = new_prediction.numpy()
             else:
                 new_prediction_np = np.array(new_prediction)
-                
-            new_error = np.mean(np.abs(new_prediction_np - target_data_np))
-            improvement_ratio = (prediction_error_mae - new_error) / (prediction_error_mae + 1e-8)
             
-            # Accept improvement if error decreased or improvement is significant
-            if new_error < prediction_error_mae or improvement_ratio > 0.01:
-                print(f"   ✓ Model improved: {prediction_error_mae:.6f} → {new_error:.6f} (Δ{improvement_ratio*100:.1f}%)")
+            # Calculate new global error
+            new_global_error = np.mean(np.abs(new_prediction_np - target_data_np))
+            
+            time_stop = time.time()    
+            print(f"   Multi-step model training took {time_stop - time_start:.2f} seconds")  
+            
+            # Simple decision: accept if global error improved
+            if new_global_error < prediction_error_mae:
+                improvement_ratio = (prediction_error_mae - new_global_error) / (prediction_error_mae + 1e-8)
+                print(f"   ✓ Multi-step model improved: {prediction_error_mae:.6f} → {new_global_error:.6f} (Δ{improvement_ratio*100:.1f}%)")
                 return initial_model
             else:
                 # Revert to original weights if no improvement
                 initial_model.set_weights(original_weights)
-                print(f"   ✗ No improvement: {prediction_error_mae:.6f} → {new_error:.6f}, reverting weights")
+                print(f"   ✗ No improvement: {prediction_error_mae:.6f} → {new_global_error:.6f}, reverting weights")
                 return initial_model
-                
+
         except ValueError as optimizer_error:
             print(f"   Skipping training: optimizer error ({optimizer_error})")
             return initial_model
-            
-    except Exception as e:
-        print(f"   Warning: Model training failed ({e})")
-        print("   Continuing with original model...")
-        # If all training attempts fail, return the original model unchanged
-    
-    return initial_model
 
-### good inverse transform function for differenced data
+    except Exception as e:
+        print(f"   Warning: Multi-step model training failed ({e})")
+        print("   Continuing with original model...")
+        return initial_model
+
 def inverse_difference(predictions_arrays, last_actual_values):
+    """Convert differenced predictions back to actual values."""
     actual_predictions = []
     current_values = last_actual_values.copy()
     
@@ -288,9 +343,7 @@ def inverse_difference(predictions_arrays, last_actual_values):
     
     return actual_predictions
 
-# learning version is alternative that improves the model during each step 
-
-def rolling_buffer_learning_prediction_with_dash(initial_model, 
+def multistep_rolling_buffer_learning_prediction_with_dash(initial_model, 
                                         df_online, 
                                         scalers, 
                                         context_length,
@@ -299,17 +352,26 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
                                         dash_plotter, 
                                         variables, 
                                         prediction_horizon=6, 
-                                        classification_model_path=None,
-                                        adaptation_strategy='smart'):
+                                        classification_model_path=None):
+
+    # Initialize graceful shutdown system
+    global stop_flag
+    stop_flag.clear()  # Reset the flag for this run
+    
+    # Start keyboard listener in separate thread
+    print("⌨️  Starting keyboard listener (Press 'q' to quit gracefully)...")
+    keyboard_thread = threading.Thread(target=keyboard_listener, daemon=True)
+    keyboard_thread.start()
+    
     # Prepare model for online learning by recompiling with fresh optimizer
-    print("Preparing model for online learning...")
+    print("\n Preparing multi-step model for online learning...")
     try:
         initial_model.compile(
             optimizer=keras.optimizers.Adam(learning_rate=0.001), 
             loss='mse', 
             metrics=['mae']
         )
-        print("Model successfully prepared for online learning")
+        print("\n Multi-step model successfully prepared for online learning")
     except Exception as e:
         print(f"Warning: Could not recompile model ({e}), will try per-step recompilation")
     
@@ -332,6 +394,10 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
 
     current_context = scaled_data[:context_length].copy() 
     model = initial_model
+    
+    # Store previous predictions for learning from historical errors
+    previous_prediction = None
+    previous_context = None
 
     # Load classification model once at the beginning
     try:
@@ -340,25 +406,40 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
         
         classification_model, label_to_index, index_to_label, label_to_name = load_classification_model(classification_model_path)
         classification_enabled = True
-        print("Classification model initialized successfully")
+        
+        # Set the label_to_name dictionary in the dashboard
+        if dash_plotter is not None:
+            dash_plotter.set_label_to_name_dict(label_to_name)
+
     except Exception as e:
         print(f"Warning: Could not load classification model: {e}")
-        print("   Continuing with forecasting only...")
+        print("   Continuing with multi-step forecasting only...")
         classification_enabled = False
         classification_model = None
 
-    # for improved model
-    feature_states = None
-
     # Main prediction loop
     for t in range(context_length, len(scaled_data) - prediction_horizon + 1):
-        # wait 1 seconds (for demo - real data is 1 minute apart)
-        time.sleep(1)
+        # Check for quit signal at the start of each iteration
+        if stop_flag.is_set():
+            print("🛑 Graceful shutdown initiated...")
+            break
+            
         current_step = t - context_length
-
-        # 1. Make predictions for next 'prediction_horizon' steps
-        step_predictions = predict_recursive_steps(model, current_context, variables = variables, prediction_horizon = prediction_horizon)
         
+        # Interruptible sleep (can be interrupted by quit signal)
+        interruptible_sleep(1)  # wait 1 second (for demo)
+        
+        # Check again after sleep in case quit was requested
+        if stop_flag.is_set():
+            print("🛑 Graceful shutdown initiated...")
+            break
+
+        # 1. Make multi-step predictions using direct method
+        try:
+            step_predictions = predict_multistep_direct(model, current_context, variables=variables, prediction_horizon=prediction_horizon)    
+        except Exception as e:
+            print(f" Multi-step prediction failed ({e}).")
+                    
         # 2. Convert all predictions to original scale
         step_predictions_original = []
         for pred in step_predictions:
@@ -388,7 +469,7 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
                 actual_original.append(original_val)
             actuals_original.append(actual_original)
         
-        # 4. BUFFER STRATEGY: Only keep the FIRST prediction (t+1)
+        # 4. BUFFER STRATEGY: Only keep the FIRST prediction (t+1) for evaluation
         if len(step_predictions_original) > 0 and len(actuals_original) > 0:
             final_predictions.append(step_predictions_original[0])  # only t+1
             final_actuals.append(actuals_original[0])
@@ -450,7 +531,7 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
         for name, status in port_statuses_check.items():
             if status not in [None, np.nan]:
                 port_statuses[name] = status
-
+        
         if len(step_predictions_actual) > 0 and len(actuals_actual) > 0:
             predictions_actuals.append(step_predictions_actual[0])  # Only t+1
             actuals_actuals.append(actuals_actual[0])              # Only t+1
@@ -458,18 +539,21 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
         # 7. Send data to Dash plotter (all buffer predictions)
         if dash_plotter is not None:
             if len(step_predictions_actual) > 0:
-                # print("DEBUG: About to call add_buffer_predictions")
                 current_timestamp = df_online.index[t]
                 
                 # Pass the ACTUAL prediction for t+1 (already computed!)
-                # step_predictions_actual[0] is the prediction for t+1
                 saved_prediction_t1 = step_predictions_actual[0] if len(step_predictions_actual) > 0 else None
-                
-                # For the red line extension, we use the SAME prediction for t+1
-                # This IS the future prediction - no need to recompute!
                 future_prediction_t1 = step_predictions_actual[0] if len(step_predictions_actual) > 0 else None
                 
                 try:
+                    # Prepare classification result if available
+                    classification_result_data = None
+                    if classification_enabled and 'classification_result_name' in locals() and 'classification_result' in locals():
+                        classification_result_data = {
+                            'classification': classification_result_name,
+                            'confidence': float(np.max(classification_result))
+                        }
+                    
                     dash_plotter.add_buffer_predictions(
                         predictions=step_predictions_actual, 
                         actuals=actuals_actual, 
@@ -479,14 +563,14 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
                         saved_prediction=saved_prediction_t1,
                         future_prediction=future_prediction_t1,
                         port_statuses=port_statuses if len(port_statuses) > 0 else None,
-                        classification_result=label_to_name
+                        classification_result=classification_result_data
                     )
                     
                     # Add classification result if available
-                    # if classification_result is not None:
-                    #     dash_plotter.add_classification_result(classification_result)
+                    if classification_result is not None:
+                        dash_plotter.add_classification_result(classification_result)
                     
-                    # print("DEBUG: add_buffer_predictions called successfully")
+                    print("DEBUG: add_buffer_predictions called successfully")
                 except Exception as e:
                     print(f"DEBUG: Error in add_buffer_predictions: {e}")
             else:
@@ -494,74 +578,83 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
         else:
             print("DEBUG: dash_plotter is None, not calling dash plotter")
 
-        # 8. Update context and model for next iteration
+        # 8. Update context and model for next iteration - MULTI-STEP ADAPTATION
         new_row = scaled_data[t, :].copy()
         
-        # Prepare training data for model improvement
-        # Train to predict next step (t+1) using context up to current step (t)
-        if t + 1 < len(scaled_data):  # Ensure we have ground truth for t+1
-            # Context: up to current step t
-            training_context = np.vstack((current_context[1:], new_row))
-            # Target: next step t+1 (ground truth)
-            target_next_step = scaled_data[t + 1, :].copy()
+        # REALISTIC ONLINE LEARNING: Learn from historical prediction error
+        if previous_prediction is not None and previous_context is not None:
+            # The actual values that just arrived (multiple steps)
+            actual_current_steps = []
+            num_previous_steps = len(previous_prediction)
             
-            # # Train model to predict t+1 from context ending at t
-            model = improve_model(
-                model, 
-                training_context.reshape(1, context_length, len(variables)), 
-                target_next_step.reshape(1, len(variables)), 
-                epochs=1, 
-                batch_size=1
-            )
-            print(f"Model improved at step {current_step}: training to predict t+1")
+            for step in range(num_previous_steps):
+                if t + step < len(scaled_data):
+                    actual_current_steps.append(scaled_data[t + step, :].copy())
+            
+            if len(actual_current_steps) > 0:
+                # Flatten previous multi-step prediction for comparison
+                previous_pred_flattened = np.concatenate(previous_prediction, axis=0)
+                actual_steps_flattened = np.concatenate(actual_current_steps, axis=0)
+                
+                # Calculate the error from our previous multi-step prediction
+                historical_prediction_error = np.mean(np.abs(previous_pred_flattened - actual_steps_flattened))
+                
+                print(f"   Learning from multi-step historical error at step {current_step}: MAE = {historical_prediction_error:.6f}")
+                
+                # Create multi-step target for training
+                multistep_target = actual_steps_flattened.reshape(1, -1)
+                
+                # Train the model on the historical multi-step prediction error
+                model = improve_model(
+                    model, 
+                    previous_context.reshape(1, context_length, len(variables)), 
+                    multistep_target, 
+                    prediction_error_mae=historical_prediction_error
+                )
+        
+        # Prepare context for the NEXT multi-step prediction
+        updated_context = np.vstack((current_context[1:], new_row))
+        
+        # Make multi-step prediction for the NEXT steps - this will be evaluated in the next iteration
+        if t + prediction_horizon < len(scaled_data):
+            next_predictions = predict_multistep_direct(model, updated_context, variables, prediction_horizon)
+            
+            # Store this prediction and context for learning in the next iteration
+            previous_prediction = [pred.copy() for pred in next_predictions]
+            previous_context = updated_context.copy()
         
         # Update context for next iteration
-        current_context = np.vstack((current_context[1:], new_row))
-        
-        # 9. if 'Q' is pressed by user, end program and clean all variables
-        if keyboard.is_pressed('q'):
-            print("Exiting program...")
-            # Clean up variables
-            del df_online
-            del scaled_data
-            del current_context
-            del final_predictions
-            del final_actuals
-            del final_timestamps
-            del step_predictions
-            del actual_values
-            del scalers_train
-            del context_length
-            del df_removed_nans_forecasting
-            del df_removed_nans_classification
-            del variables
-            break
+        current_context = updated_context
 
+    # End of main loop - either completed naturally or stopped by user
     print("=" * 60)
-    print("Rolling prediction completed!")
-
-    predictions_df = pd.DataFrame(
-        data=final_predictions,
-        columns=variables,
-        index=pd.Index(range(context_length, context_length + len(final_predictions)), name='time_index')
-    )
-
-    actuals_df = pd.DataFrame(
-        data=final_actuals,
-        columns=variables,
-        index=pd.Index(range(context_length, context_length + len(final_actuals)), name='time_index')
-    )
-
-    predictions_actuals_df = pd.DataFrame(
-        data=predictions_actuals,
-        columns=variables,
-        index=pd.Index(range(context_length, context_length + len(predictions_actuals)), name='time_index')
-    )
-
-    actuals_actuals_df = pd.DataFrame(
-        data=actuals_actuals,
-        columns=variables,
-        index=pd.Index(range(context_length, context_length + len(actuals_actuals)), name='time_index')
-    )
+    
+    if stop_flag.is_set():
+        print("Multi-step rolling prediction stopped by user request!")
+        print(f"📈 Processed {current_step + 1} steps before stopping")
+    else:
+        print("Multi-step rolling prediction completed successfully!")
+        print(f"📈 Processed all {current_step + 1} steps")
+    
+    # Create results using graceful cleanup function
+    try:
+        predictions_df, actuals_df, predictions_actuals_df, actuals_actuals_df = cleanup_and_create_results(
+            final_predictions, final_actuals, final_timestamps,
+            predictions_actuals, actuals_actuals, variables,
+            context_length, current_step
+        )
+        
+        # Clear large variables to free memory
+        clear_large_variables('df_online', 'scaled_data', 'current_context', 
+                            'step_predictions', 'actual_values', 'model',
+                            'initial_model', 'classification_model')
+        
+        print("✅ Graceful cleanup completed successfully!")
+        
+    except Exception as e:
+        print(f"❌ Error during final cleanup: {e}")
+        # Return empty DataFrames as fallback
+        empty_df = pd.DataFrame(columns=variables)
+        predictions_df = actuals_df = predictions_actuals_df = actuals_actuals_df = empty_df
 
     return predictions_df, actuals_df, predictions_actuals_df, actuals_actuals_df

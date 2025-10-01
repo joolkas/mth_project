@@ -29,10 +29,10 @@ validation_split = 0.2
 verbose = 1
 context_length = 60    # Input window length
 prediction_horizon = 6  # Number of future steps to predict directly
-first_layer_units = 256
-second_layer_units = 128
-third_layer_units = 64  # Additional layer for multi-step complexity
-dense_units = 512       # Larger dense layer for multi-step output
+first_layer_units = 128
+second_layer_units = 64
+third_layer_units = 32  # Additional layer for multi-step complexity
+dense_units = 256       # Larger dense layer for multi-step output
 activation = 'relu'
 dropout_rate = 0.3
 
@@ -54,7 +54,7 @@ model_description = f"Initial Model - Epochs: {epochs},\n \
     Third Layer Units: {third_layer_units},\n Dense Units: {dense_units},\n Activation: {activation},\n Dropout Rate: {dropout_rate}\n \
     Initial Training Samples: {initial_idx},"
 
-results_file_name = "initial_model_results_003"
+results_file_name = "initial_model_results_006"
 
 def create_online_multistep_model(df,
                                   context_length=context_length,
@@ -505,7 +505,7 @@ def plot_results(actuals_df, predictions_df, title, history=None):
         plt.show()
 
 # save online data, needed for main program and online forecasting
-def save_online_data(initial_model_path, df_online, scalers_train, context_length, df_removed_nans_forecasting, df_removed_nans_classification):
+def save_online_data(initial_model_path, df_online, scalers_train, context_length, df_removed_nans_forecasting, df_removed_nans_classification, variables, model_mode = model_mode):
     # Create directory if it doesn't exist
     if initial_model_path is None:
         initial_model_path = "C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\forecasting_model"
@@ -524,6 +524,11 @@ def save_online_data(initial_model_path, df_online, scalers_train, context_lengt
     
     # Save simple values as numpy (these are fine as numpy)
     np.save(f"{initial_model_path}\\context_length.npy", context_length)
+    np.save(f"{initial_model_path}\\model_mode.npy", model_mode)
+    # Save variables as a text file
+    with open(f"{initial_model_path}\\variables.txt", 'w') as f:
+        for var in variables:
+            f.write(f"{var}\n")
 
     print(f"✓ Online data saved in original formats to: {initial_model_path}")
     print(f"  - DataFrames saved as CSV files")
@@ -605,6 +610,7 @@ def get_online_data(initial_model_path):
         
         # Load context length from numpy
         context_length = np.load(f"{initial_model_path}\\context_length.npy", allow_pickle=True).item()
+        model_mode = np.load(f"{initial_model_path}\\model_mode.npy", allow_pickle=True).item()
         
         # Load variables from text file
         with open(f"{initial_model_path}\\variables.txt", 'r') as f:
@@ -618,7 +624,7 @@ def get_online_data(initial_model_path):
     else:
         raise FileNotFoundError(f"No data files found at: {initial_model_path}")
 
-    return df_online, scalers_train, context_length, df_removed_nans_forecasting, df_removed_nans_classification, variables
+    return df_online, scalers_train, context_length, df_removed_nans_forecasting, df_removed_nans_classification, variables, model_mode
 
 if __name__ == "__main__":
 
@@ -645,8 +651,7 @@ if __name__ == "__main__":
 
     df_initial = df_differenced.iloc[:initial_idx].copy()
     df_online = df_differenced.iloc[initial_idx:].copy()
-    #df_online.index = original_timestamps[initial_idx + 1:]  # +1 because diff().dropna() removes first row
-
+    variables = df_initial.columns.tolist()
 
     if model_mode == "multi_step":
         model = create_online_multistep_model(df_initial, context_length=context_length,
@@ -675,7 +680,7 @@ if __name__ == "__main__":
         df_actuals, df_predictions, all_actuals, all_predictions = test_model(model, df_initial, X_test, y_test, scalers_test, df_removed_nans_forecasting, original_indices_test, test_mode="multi_step", prediction_horizon=prediction_horizon)
         results_df, mse, mae, rmse, percentage_error, horizon_metrics = calculate_metrics(df_initial, df_actuals, df_predictions, all_actuals, all_predictions, prediction_horizon, mode="multi_step")
         plot_results(df_actuals, df_predictions, title = "Multi-Step", history = history)
-        description = f"Initial Multi-Step Model Training Description:\n{model_description}\n Results:\n MSE: {mse:.6f}\n MAE: {mae:.6f}\n RMSE: {rmse:.6f}\n Percentage Error: {percentage_error:.6f}\n"
+        description = f"Initial Multi-Step Model Training Description:\n{model_description}\n Results:\n MSE: {mse:.6f}\n MAE: {mae:.6f}\n RMSE: {rmse:.6f}\n Percentage Error: {percentage_error:.6f}\n, Accuracy: {history.history['accuracy'][-1]:.6f}\n"
 
 
     elif model_mode == "one_step":
@@ -702,13 +707,13 @@ if __name__ == "__main__":
         df_actuals, df_predictions, all_actuals, all_predictions = test_model(model, df_initial, X_test, y_test, scalers_test, df_removed_nans_forecasting, original_indices_test, test_mode="one_step", prediction_horizon=prediction_horizon)
         results_df, mse, mae, rmse, percentage_error, horizon_metrics = calculate_metrics(df_initial, df_actuals, df_predictions, all_actuals, all_predictions, prediction_horizon, mode="one_step")
         plot_results(df_actuals, df_predictions, title = "One-Step", history = history)
-        description = f"Initial One-Step Model Training Description:\n{model_description}\n Results:\n MSE: {mse:.6f}\n MAE: {mae:.6f}\n RMSE: {rmse:.6f}\n Percentage Error: {percentage_error:.6f}\n"
+        description = f"Initial One-Step Model Training Description:\n{model_description}\n Results:\n MSE: {mse:.6f}\n MAE: {mae:.6f}\n RMSE: {rmse:.6f}\n Percentage Error: {percentage_error:.6f}\n, Accuracy: {history.history['accuracy'][-1]:.6f}\n"
 
     # save the trained model
     model.save(f"{initial_model_path}\\initial_model.h5")
     print(f"✓ Initial model saved to: {initial_model_path}\\initial_model.h5")
     
-    save_online_data(initial_model_path, df_online, scalers_train, context_length, df_removed_nans_forecasting, df_removed_nans_classification)
+    save_online_data(initial_model_path, df_online, scalers_train, context_length, df_removed_nans_forecasting, df_removed_nans_classification, variables = variables)
     print(f"✓ Online data saved to: {initial_model_path}")
 
     with open(f"{initial_model_path}\\{results_file_name}.txt", "w") as f:

@@ -149,7 +149,6 @@ def predict_recursive_steps(model, initial_context, variables, prediction_horizo
         # Store the prediction (flattened for compatibility)
         predictions.append(step_prediction.flatten())
         
-        # FIXED: Create new row directly from prediction
         # This is the predicted next timestep
         new_row = step_prediction[0].copy()  # Extract from batch dimension and copy
         
@@ -158,12 +157,8 @@ def predict_recursive_steps(model, initial_context, variables, prediction_horizo
     
     return predictions
 
-def improve_model(initial_model, training_data, target_data, prediction_error_mae, error_history_buffer=None):
-
-    debug_mode = False
-
+def improve_model(initial_model, training_data, target_data, prediction_error_mae):
     try:
-
         print(f"   Attempting model improvement (current MAE: {prediction_error_mae:.6f})")
         
         # Store original weights for potential rollback
@@ -174,176 +169,69 @@ def improve_model(initial_model, training_data, target_data, prediction_error_ma
             target_data_np = target_data.numpy()
         else:
             target_data_np = np.array(target_data)
-            
-        # Get current predictions for per-feature analysis
-        current_prediction = initial_model.predict(training_data, verbose=0)
-        if hasattr(current_prediction, 'numpy'):
-            current_prediction_np = current_prediction.numpy()
-        else:
-            current_prediction_np = np.array(current_prediction)
-        
-        if debug_mode:
-            print(f"Current target sample shape: {target_data_np.shape}")
-            print(f"Current prediction sample shape: {current_prediction_np.shape}")
-            
-            print("   Current target sample:", target_data_np[0])
-            print("   Current prediction sample:", current_prediction_np[0])
 
-
-        # Calculate per-feature errors
-        per_feature_errors = np.mean(np.abs(current_prediction_np - target_data_np), axis=0)
-        n_features = len(per_feature_errors)
+        # Fixed hyperparameters
+        learning_rate = 0.001
+        epochs = 5
+        batch_size = 32
         
-        if debug_mode:
-            print(f" current per_feature_error shape: {per_feature_errors.shape}")
-            print("   Current per-feature errors:", per_feature_errors)
-
-        # Initialize error history buffer if not provided
-        if error_history_buffer is None:
-            error_history_buffer = {'errors': [], 'window_size': 10}
+        print(f"   → Using fixed LR: {learning_rate}, epochs: {epochs}, batch_size: {batch_size}")
         
-        ########################## verify below
-
-        # Update error history
-        error_history_buffer['errors'].append(per_feature_errors.copy())
-        if len(error_history_buffer['errors']) > error_history_buffer['window_size']:
-            error_history_buffer['errors'].pop(0)
-        
-        # Analyze error trends (if we have enough history)
-        deteriorating_features = np.zeros(n_features, dtype=bool)
-        if len(error_history_buffer['errors']) >= 6:
-            recent_errors = np.mean(error_history_buffer['errors'][-3:], axis=0)
-            older_errors = np.mean(error_history_buffer['errors'][-6:-3], axis=0)
-            error_trend = recent_errors - older_errors
-            deteriorating_features = error_trend > (np.std(per_feature_errors) * 0.1)
-        
-        # Identify problematic features (high error or deteriorating)
-        error_threshold = np.median(per_feature_errors) + np.std(per_feature_errors)
-        problematic_features = (per_feature_errors > error_threshold) | deteriorating_features
-        n_problematic = np.sum(problematic_features)
-        
-        if n_problematic > 0:
-            print(f"   → {n_problematic}/{n_features} features need attention")
-            print(f"   → Deteriorating features: {np.sum(deteriorating_features)}")
-        
-        # Adaptive learning rate based on feature performance
-        base_lr = 0.001
-        feature_severity = per_feature_errors / (np.mean(per_feature_errors) + 1e-8)
-        
-        # Higher learning rate for worse-performing features
-        if n_problematic > n_features * 0.3:  # If >30% features are problematic
-            adaptive_lr = base_lr * 2.0
-            epochs = 15
-        elif n_problematic > 0:
-            adaptive_lr = base_lr * 1.5
-            epochs = 10
-        else:
-            adaptive_lr = base_lr
-            epochs = 5
-        
-        # Create recency weights (more recent samples get higher weight)
-        n_samples = len(training_data)
-        decay_factor = 0.1
-        time_weights = np.exp(-decay_factor * np.arange(n_samples)[::-1])
-        sample_weights = time_weights / np.sum(time_weights)
-        
-        # Determine batch size based on data size and problematic features
-        min_batch_size = max(8, min(32, len(training_data) // 4))
-        if n_problematic > n_features * 0.5:
-            batch_size = min_batch_size  # Smaller batches for focused learning
-        else:
-            batch_size = min(64, len(training_data) // 2)
-        
-        print(f"   → Using adaptive LR: {adaptive_lr:.5f}, epochs: {epochs}, batch_size: {batch_size}")
-        
-        # Compile model with adaptive learning rate
-        optimizer = tf.keras.optimizers.Adam(learning_rate=adaptive_lr)
+        # Compile model with fixed learning rate
+        optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
         initial_model.compile(
             optimizer=optimizer,
             loss='mse',
-            metrics=['accuracy', 'mae']
+            metrics=['mae']
         )
         
-        # Train the model with sample weights for recency bias
+        # Train the model (no sample weights)
         try:
             time_start = time.time()
-
+            
             history = initial_model.fit(
                 training_data, 
                 target_data, 
                 epochs=epochs, 
                 batch_size=batch_size,
-                sample_weight=sample_weights,  # Give more weight to recent samples
                 verbose=0
             )
             
-            # Validate improvement with multi-criteria assessment
+            # Simple improvement check - just compare global MAE
             new_prediction = initial_model.predict(training_data, verbose=0)
             if hasattr(new_prediction, 'numpy'):
                 new_prediction_np = new_prediction.numpy()
             else:
                 new_prediction_np = np.array(new_prediction)
             
-            # Calculate new per-feature errors
-            new_per_feature_errors = np.mean(np.abs(new_prediction_np - target_data_np), axis=0)
-            new_global_error = np.mean(new_per_feature_errors)
-            
-            # Multi-criteria improvement assessment
-            global_improvement = new_global_error < prediction_error_mae
-            worst_feature_improved = np.max(new_per_feature_errors) < np.max(per_feature_errors)
-            
-            # Check if problematic features specifically improved
-            problematic_improvement = 0
-            if n_problematic > 0:
-                old_problematic_error = np.mean(per_feature_errors[problematic_features])
-                new_problematic_error = np.mean(new_per_feature_errors[problematic_features])
-                problematic_improvement = old_problematic_error > new_problematic_error
-            
-            # Stability check (new predictions shouldn't be too volatile)
-            stability_check = np.std(new_per_feature_errors) <= np.std(per_feature_errors) * 1.2
-            
-            # Count improvement criteria met
-            criteria_met = sum([
-                global_improvement,
-                worst_feature_improved,
-                problematic_improvement,
-                stability_check
-            ])
-            
-            # Decision logic: accept if enough criteria are met
-            required_criteria = 2 if n_problematic > 0 else 2
+            # Calculate new global error
+            new_global_error = np.mean(np.abs(new_prediction_np - target_data_np))
             
             time_stop = time.time()    
-            print(f"   Model training and evaluation took {time_stop - time_start:.2f} seconds")  
+            print(f"   Model training took {time_stop - time_start:.2f} seconds")  
             
-            if criteria_met >= required_criteria:
+            # Simple decision: accept if global error improved
+            if new_global_error < prediction_error_mae:
                 improvement_ratio = (prediction_error_mae - new_global_error) / (prediction_error_mae + 1e-8)
                 print(f"   ✓ Model improved: {prediction_error_mae:.6f} → {new_global_error:.6f} (Δ{improvement_ratio*100:.1f}%)")
-                print(f"   ✓ Criteria met: {criteria_met}/4 (global:{global_improvement}, worst:{worst_feature_improved}, problematic:{problematic_improvement}, stable:{stability_check})")
-                
-                # Update error history with successful improvement
-                error_history_buffer['errors'][-1] = new_per_feature_errors
-                
                 return initial_model
             else:
-                # Revert to original weights if insufficient improvement
+                # Revert to original weights if no improvement
                 initial_model.set_weights(original_weights)
-                print(f"   ✗ Insufficient improvement: criteria {criteria_met}/{required_criteria}, reverting weights")
-                print(f"     Global: {global_improvement}, Worst: {worst_feature_improved}, Problematic: {problematic_improvement}, Stable: {stability_check}")
-                return initial_model  
+                print(f"   ✗ No improvement: {prediction_error_mae:.6f} → {new_global_error:.6f}, reverting weights")
+                return initial_model
 
         except ValueError as optimizer_error:
             print(f"   Skipping training: optimizer error ({optimizer_error})")
             return initial_model
 
-
     except Exception as e:
         print(f"   Warning: Model training failed ({e})")
         print("   Continuing with original model...")
         return initial_model
-
-
+    
 ### good inverse transform function for differenced data
+
 def inverse_difference(predictions_arrays, last_actual_values):
     actual_predictions = []
     current_values = last_actual_values.copy()
@@ -355,9 +243,7 @@ def inverse_difference(predictions_arrays, last_actual_values):
     
     return actual_predictions
 
-# learning version is alternative that improves the model during each step 
-
-def rolling_buffer_learning_prediction_with_dash(initial_model, 
+def one_step_rolling_buffer_learning_prediction_with_dash(initial_model, 
                                         df_online, 
                                         scalers, 
                                         context_length,
@@ -367,6 +253,7 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
                                         variables, 
                                         prediction_horizon=6, 
                                         classification_model_path=None):
+
     # Prepare model for online learning by recompiling with fresh optimizer
     print("\n Preparing model for online learning...")
     try:
@@ -398,6 +285,10 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
 
     current_context = scaled_data[:context_length].copy() 
     model = initial_model
+    
+    # Store previous predictions for learning from historical errors
+    previous_prediction = None
+    previous_context = None
 
     # Load classification model once at the beginning
     try:
@@ -417,8 +308,6 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
         classification_enabled = False
         classification_model = None
 
-    # for improved model
-    feature_states = None
 
     # Main prediction loop
     for t in range(context_length, len(scaled_data) - prediction_horizon + 1):
@@ -426,9 +315,12 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
         time.sleep(1)
         current_step = t - context_length
 
-        # 1. Make predictions for next 'prediction_horizon' steps
-        step_predictions = predict_recursive_steps(model, current_context, variables = variables, prediction_horizon = prediction_horizon)
-        
+        # 1. Make predictions for next 'prediction_horizon' steps using selected method
+        try:
+            step_predictions = predict_recursive_steps(model, current_context, variables=variables, prediction_horizon=prediction_horizon)    
+        except Exception as e:
+            print(f" Prediction failed ({e}).")
+                    
         # 2. Convert all predictions to original scale
         step_predictions_original = []
         for pred in step_predictions:
@@ -561,10 +453,10 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
                     )
                     
                     # Add classification result if available
-                    # if classification_result is not None:
-                    #     dash_plotter.add_classification_result(classification_result)
+                    if classification_result is not None:
+                        dash_plotter.add_classification_result(classification_result)
                     
-                    # print("DEBUG: add_buffer_predictions called successfully")
+                    print("DEBUG: add_buffer_predictions called successfully")
                 except Exception as e:
                     print(f"DEBUG: Error in add_buffer_predictions: {e}")
             else:
@@ -575,47 +467,41 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
         # 8. Update context and model for next iteration
         new_row = scaled_data[t, :].copy()
         
-        # Prepare training data for model improvement
-        # Train to predict next step (t+1) using context up to current step (t)
-        if t + 1 < len(scaled_data):  # Ensure we have ground truth for t+1
-            # Context: up to current step t
-            training_context = np.vstack((current_context[1:], new_row))
-            # Target: next step t+1 (ground truth)
-            target_next_step = scaled_data[t + 1, :].copy()
+        # learn from historical prediction error
+        if previous_prediction is not None and previous_context is not None:
+            # The actual value that just arrived (time t)
+            actual_current_step = scaled_data[t, :].copy()
             
-            # # Train model to predict t+1 from context ending at t
-            if t + 1 < len(scaled_data):
-                # Context: up to current step t
-                training_context = np.vstack((current_context[1:], new_row))
-                # Target: next step t+1 (ground truth)
-                target_next_step = scaled_data[t + 1, :].copy()
-                
-                # Calculate current prediction error for the improve_model function
-                current_pred = model.predict(
-                    training_context.reshape(1, context_length, len(variables)), 
-                    verbose=0
-                )
-                current_prediction_error = np.mean(np.abs(current_pred.flatten() - target_next_step))
-                
-                model = improve_model(
-                    model, 
-                    training_context.reshape(1, context_length, len(variables)), 
-                    target_next_step.reshape(1, len(variables)), 
-                    prediction_error_mae=current_prediction_error
-                )
-
-            # old method
-            # model = improve_model(
-            #     model, 
-            #     training_context.reshape(1, context_length, len(variables)), 
-            #     target_next_step.reshape(1, len(variables)), 
-            #     epochs=1, 
-            #     batch_size=1
-            # )
-            print(f"Model improved at step {current_step}: training to predict t+1")
+            # Calculate the error from our previous prediction
+            historical_prediction_error = np.mean(np.abs(previous_prediction.flatten() - actual_current_step))
+            
+            print(f"   Learning from historical error at step {current_step}: MAE = {historical_prediction_error:.6f}")
+            
+            # Train the model on the historical prediction error
+            # Use the context that was available when we made the previous prediction
+            model = improve_model(
+                model, 
+                previous_context.reshape(1, context_length, len(variables)), 
+                actual_current_step.reshape(1, len(variables)), 
+                prediction_error_mae=historical_prediction_error
+            )
+        
+        # Prepare context for the NEXT prediction (t+1)
+        updated_context = np.vstack((current_context[1:], new_row))
+        
+        # Make prediction for the NEXT step (t+1) - this will be evaluated in the next iteration
+        if t + 1 < len(scaled_data):
+            next_prediction = model.predict(
+                updated_context.reshape(1, context_length, len(variables)), 
+                verbose=0
+            )
+            
+            # Store this prediction and context for learning in the next iteration
+            previous_prediction = next_prediction.copy()
+            previous_context = updated_context.copy()
         
         # Update context for next iteration
-        current_context = np.vstack((current_context[1:], new_row))
+        current_context = updated_context
         
         # 9. if 'Q' is pressed by user, end program and clean all variables
         if keyboard.is_pressed('q'):
@@ -664,3 +550,4 @@ def rolling_buffer_learning_prediction_with_dash(initial_model,
     )
 
     return predictions_df, actuals_df, predictions_actuals_df, actuals_actuals_df
+
