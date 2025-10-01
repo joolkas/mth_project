@@ -1,0 +1,18 @@
+Initial One-Step Model Training Description:
+Initial Model - Epochs: 5,
+     Batch Size: 64,
+ Validation Split: 0.2,
+ Context Length: 60,
+     Prediction Horizon: 6,
+ First Layer Units: 256,
+ Second Layer Units: 128,
+     Third Layer Units: 64,
+ Dense Units: 512,
+ Activation: relu,
+ Dropout Rate: 0.3
+     Initial Training Samples: 2880,
+ Results:
+ MSE: 1233074.858936
+ MAE: 278.916015
+ RMSE: 1110.439039
+ Percentage Error: 2.581595

@@ -18,70 +18,122 @@ except ImportError:
     # Fallback for different TensorFlow versions
     from keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
 
-# model parameters that can be adjusted or changed for testing purpose
+# model mode
+
+model_mode = "multi_step"  # "one_step" or "multi_step"
+
+# model parameters
 epochs = 80
 batch_size = 64
 validation_split = 0.2
 verbose = 1
-context_length = 60    # FIXED!
+context_length = 60    # Input window length
+prediction_horizon = 6  # Number of future steps to predict directly
 first_layer_units = 256
 second_layer_units = 128
-dense_units = 256
+third_layer_units = 64  # Additional layer for multi-step complexity
+dense_units = 512       # Larger dense layer for multi-step output
 activation = 'relu'
-dropout_rate = 0.4
+dropout_rate = 0.3
 
+# for model training
 use_callbacks = True
+early_stopping_patience = 10  # More patience for complex multi-step model
+reduce_lr_factor = 0.5       # Less aggressive learning rate reduction
+reduce_lr_patience = 5       # More patience for learning rate reduction
 
 # Split data for initial training and online forecasting
-
 initial_idx = 48 * 60 # first 48 hours for initial training
+split_ratio = 0.8  # 80% training, 20% testing
 
+initial_model_path = "C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\forecasting_model" # path for model saving and loading
 
-model_description = f"Epochs: {epochs}, Batch Size: {batch_size}, Validation Split: {validation_split}, Context Length: {context_length}, First Layer Units: {first_layer_units}, Second Layer Units: {second_layer_units}, Dense Units: {dense_units}, Activation: {activation}, Dropout Rate: {dropout_rate}"
-results_file_name = "initial_model_results_48h_001"
+model_description = f"Initial Model - Epochs: {epochs},\n \
+    Batch Size: {batch_size},\n Validation Split: {validation_split},\n Context Length: {context_length},\n \
+    Prediction Horizon: {prediction_horizon},\n First Layer Units: {first_layer_units},\n Second Layer Units: {second_layer_units},\n \
+    Third Layer Units: {third_layer_units},\n Dense Units: {dense_units},\n Activation: {activation},\n Dropout Rate: {dropout_rate}\n \
+    Initial Training Samples: {initial_idx},"
 
-def create_online_multivariate_model(df,
-                                     context_length=context_length,
-                                     first_layer_units=first_layer_units,
-                                     second_layer_units=second_layer_units,
-                                     dense_units=dense_units,
-                                     activation=activation,
-                                     dropout_rate=dropout_rate):
-    """
-    Create a multivariate model optimized for online learning.
-    Clean version for Online Approach 3.
+results_file_name = "initial_model_results_003"
+
+def create_online_multistep_model(df,
+                                  context_length=context_length,
+                                  prediction_horizon=prediction_horizon,
+                                  first_layer_units=first_layer_units,
+                                  second_layer_units=second_layer_units,
+                                  third_layer_units=third_layer_units,
+                                  dense_units=dense_units,
+                                  activation=activation,
+                                  dropout_rate=dropout_rate):
     
-    Args:
-        df: DataFrame containing the data
-        context_length: Length of the context window
-        first_layer_units: Number of units in the first LSTM layer
-        second_layer_units: Number of units in the second LSTM layer
-        dense_units: Number of units in the dense layer
-        activation: Activation function
-        dropout_rate: Dropout rate
+    num_features = len(df.columns)
+    
+    # Multi-step output: prediction_horizon * num_features
+    output_size = prediction_horizon * num_features
+    
+    model = keras.models.Sequential([
+        keras.layers.LSTM(first_layer_units, return_sequences=True, input_shape=(context_length, num_features)),
+        keras.layers.Dropout(dropout_rate * 0.5),  
 
-    Returns:
-        model: Compiled Keras model
-    """
+        keras.layers.LSTM(second_layer_units, return_sequences=True),
+        keras.layers.Dropout(dropout_rate * 0.5),
+
+        keras.layers.LSTM(third_layer_units, return_sequences=False),
+        keras.layers.Dropout(dropout_rate * 0.7),
+
+        keras.layers.Dense(dense_units, activation=activation),
+        keras.layers.Dropout(dropout_rate),
+
+        keras.layers.Dense(dense_units // 2, activation=activation),
+        keras.layers.Dropout(dropout_rate * 0.5),
+
+        keras.layers.Dense(output_size, activation='linear')
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(learning_rate=0.001), 
+        loss='mse',
+        metrics=['accuracy','mse']
+    )
+    
+    return model
+
+def create_online_onestep_model(df,
+                                  context_length=context_length,
+                                  first_layer_units=first_layer_units,
+                                  second_layer_units=second_layer_units,
+                                  dense_units=dense_units,
+                                  activation=activation,
+                                  dropout_rate=dropout_rate):
+    
     num_features = len(df.columns)
     
     model = keras.models.Sequential([
         keras.layers.LSTM(first_layer_units, return_sequences=True, input_shape=(context_length, num_features)),
+        keras.layers.Dropout(dropout_rate * 0.5),  
+
         keras.layers.LSTM(second_layer_units, return_sequences=False),
+        keras.layers.Dropout(dropout_rate * 0.7),
+
         keras.layers.Dense(dense_units, activation=activation),
         keras.layers.Dropout(dropout_rate),
-        keras.layers.Dense(len(df.columns))  # Output for each target variable
+
+        keras.layers.Dense(dense_units // 2, activation=activation),
+        keras.layers.Dropout(dropout_rate * 0.5),
+
+        keras.layers.Dense(num_features, activation='linear')
     ])
 
-    model.compile(optimizer=keras.optimizers.Adam(learning_rate=0.001), 
-                  loss='mse', 
-                  metrics=['accuracy', 'mae'])
+    model.compile(
+        optimizer=keras.optimizers.Adam(learning_rate=0.001), 
+        loss='mse',
+        metrics=['accuracy', 'mse']
+    )
     
     return model
 
-
-def split_data_for_initial_model(df, context_length=context_length):
-    # create scalers dictionary to store individual scalers for each variable
+def split_data_for_multistep_model(df, context_length=context_length, prediction_horizon=prediction_horizon):
+    # store scalers for each variable
     scalers = {}
     scaled_data = np.zeros_like(df.values)
 
@@ -89,50 +141,113 @@ def split_data_for_initial_model(df, context_length=context_length):
     for i, var in enumerate(df.columns):
         scaler = StandardScaler()
         scaled_data[:, i] = scaler.fit_transform(df[var].values.reshape(-1, 1)).flatten()
-        # store the scaler for inverse transform
+        # Store the scaler for inverse transform
         scalers[var] = scaler  
 
     # convert back to DataFrame with original column names and index
-    df_initial_scaled = pd.DataFrame(
+    df_scaled = pd.DataFrame(
         data=scaled_data,
         columns=df.columns,
         index=df.index
     )
 
-    # divide data to train and test sets
-
+    # create training sequences for multi-step prediction
     X_train, y_train = [], []
+    original_indices = []
 
-    for i in range(context_length, len(df_initial_scaled)):
-        X_train.append(df_initial_scaled.iloc[i-context_length:i].values)
-        y_train.append(df_initial_scaled.iloc[i].values)
+    # we need context_length + prediction_horizon data points to create one sample
+    for i in range(context_length, len(df_scaled) - prediction_horizon + 1):
+        # Input: context_length timesteps
+        X_train.append(df_scaled.iloc[i-context_length:i].values)
+        
+        # Output: next prediction_horizon timesteps (flattened)
+        future_steps = []
+        for step in range(prediction_horizon):
+            future_steps.extend(df_scaled.iloc[i + step].values)
+        y_train.append(future_steps)
+        original_indices.append(i)
 
     X_train = np.array(X_train)
     y_train = np.array(y_train)
+    
+    print(f"Multi-step training data shapes:")
+    print(f"  X_train: {X_train.shape} (samples, context_length, features)")
+    print(f"  y_train: {y_train.shape} (samples, prediction_horizon * features)")
 
-    return X_train, y_train, scalers
+    return X_train, y_train, scalers, original_indices
 
-def train_initial_model(model, X_train, y_train, epochs = epochs, batch_size = batch_size, validation_split = validation_split, verbose = verbose, use_callbacks = False):
+def split_data_for_onestep_model(df, context_length=context_length):
+    # store scalers for each variable
+    scalers = {}
+    scaled_data = np.zeros_like(df.values)
+
+    # scale each column separately
+    for i, var in enumerate(df.columns):
+        scaler = StandardScaler()
+        scaled_data[:, i] = scaler.fit_transform(df[var].values.reshape(-1, 1)).flatten()
+        # Store the scaler for inverse transform
+        scalers[var] = scaler  
+
+    # convert back to DataFrame with original column names and index
+    df_scaled = pd.DataFrame(
+        data=scaled_data,
+        columns=df.columns,
+        index=df.index
+    )
+
+    # create training sequences for one-step prediction
+    X_train, y_train = [], []
+    original_indices = []
+
+    # we need context_length + 1 data points to create one sample
+    for i in range(context_length, len(df_scaled)):
+        # Input: context_length timesteps
+        X_train.append(df_scaled.iloc[i-context_length:i].values)
+        
+        # Output: next single timestep
+        y_train.append(df_scaled.iloc[i].values)
+        original_indices.append(i)
+
+    X_train = np.array(X_train)
+    y_train = np.array(y_train)
+    
+    print(f"One-step training data shapes:")
+    print(f"  X_train: {X_train.shape} (samples, context_length, features)")
+    print(f"  y_train: {y_train.shape} (samples, features)")
+
+    return X_train, y_train, scalers, original_indices
+
+def train_model(model, 
+                X_train,
+                y_train, 
+                epochs = epochs,
+                batch_size = batch_size,
+                validation_split = validation_split,
+                verbose = verbose,
+                use_callbacks = use_callbacks,
+                es_patience = early_stopping_patience,
+                lr_factor = reduce_lr_factor,
+                lr_patience = reduce_lr_patience,
+                model_save_path = 'C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\forecasting_model\\best_model.h5'):
     
     callback_list = []
-    
     if use_callbacks:
         callback_list = [
             EarlyStopping(
                 monitor='val_loss',
-                patience=5,
+                patience=es_patience,  # More patience for complex multi-step model
                 restore_best_weights=True,
                 verbose=1
             ),
             ReduceLROnPlateau(
                 monitor='val_loss',
-                factor=0.5,
-                patience=3,
+                factor=lr_factor,  # Less aggressive learning rate reduction
+                patience=lr_patience,
                 min_lr=1e-7,
                 verbose=1
             ),
             ModelCheckpoint(
-                'C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\forecasting_model\\best_model.h5',
+                filepath=model_save_path if model_save_path else "best_model.h5",
                 monitor='val_loss',
                 save_best_only=True,
                 verbose=1
@@ -148,21 +263,10 @@ def train_initial_model(model, X_train, y_train, epochs = epochs, batch_size = b
         callbacks=callback_list if use_callbacks else None
     )
 
-    # early stopping?
-    
-
     return history, model
 
-def filter_status_predictions(predictions_df, column_names, threshold=0.5):
-    filtered_df = predictions_df.copy()
-    
-    for col in column_names:
-        if any(keyword in col.lower() for keyword in ['status', 'operational', 'interface']):
-            filtered_df[col] = np.round(filtered_df[col])
-    
-    return filtered_df
-
 def inverse_difference(predictions_arrays, last_actual_values):
+    """Convert differenced predictions back to actual values."""
     actual_predictions = []
     current_values = last_actual_values.copy()
     
@@ -173,62 +277,156 @@ def inverse_difference(predictions_arrays, last_actual_values):
     
     return actual_predictions
 
-def test_initial_model(model, df, X_test, y_test, scalers, df_removed_nans_forecasting):
+def predict_multistep_direct(model, context, variables, prediction_horizon=prediction_horizon):
+    # Reshape context for model input
+    context_reshaped = context.reshape(1, context.shape[0], len(variables))
+    
+    # Get multi-step prediction
+    multistep_pred = model.predict(context_reshaped, verbose=0)
+    
+    # Reshape output to separate timesteps
+    n_features = len(variables)
+    predictions = []
+    
+    for step in range(prediction_horizon):
+        start_idx = step * n_features
+        end_idx = (step + 1) * n_features
+        step_pred = multistep_pred[0, start_idx:end_idx]
+        predictions.append(step_pred)
+    
+    return predictions
+
+def test_model(model, df, X_test, y_test, scalers, df_removed_nans_forecasting, 
+                        test_indices, test_mode = "multi_step", prediction_horizon=prediction_horizon):
     predictions_test = []
     actuals_test = []
+    
+    n_features = len(df.columns)
 
     for i in range(len(y_test)):
-        context = X_test[i].reshape(1, X_test.shape[1], len(df.columns))
-        prediction = model.predict(context, verbose=0)
+        # Get context for prediction
+        context = X_test[i]
         
-        # without flatten:
-        # Output: [[0.123, 0.456]] - 2D array with batch dimension
+        if test_mode == "multi_step":
+            # Make multi-step prediction
+            step_predictions = predict_multistep_direct(model, context, df.columns, prediction_horizon)
+            
+            # Convert y_test back to multi-step format for comparison
+            actual_steps = []
+            for step in range(prediction_horizon):
+                start_idx = step * n_features
+                end_idx = (step + 1) * n_features
+                actual_steps.append(y_test[i][start_idx:end_idx])
+                
+        else:  # one_step mode
+            # Make one-step prediction
+            context_reshaped = context.reshape(1, context.shape[0], n_features)
+            pred = model.predict(context_reshaped, verbose=0)
+            step_predictions = [pred[0]]  # Wrap in list for consistency
+            
+            # y_test is already in correct format for one-step (no reshaping needed)
+            actual_steps = [y_test[i]]  # Wrap in list for consistency
+        
+        predictions_test.append(step_predictions)
+        actuals_test.append(actual_steps)
 
-        # with flatten:
-        # output: [0.123, 0.456] - clean 1D array
-
-        predictions_test.append(prediction.flatten())
-        actuals_test.append(y_test[i])
-
-    predictions_test = np.array(predictions_test)
-    actuals_test = np.array(actuals_test)
+    # Convert to arrays and inverse transform
+    all_predictions = []
+    all_actuals = []
     
-    # inverse transform predictions and actuals back to original scale
-    predictions_original = np.zeros_like(predictions_test)
-    actuals_original = np.zeros_like(actuals_test)
+    for sample_idx in range(len(predictions_test)):
+        sample_preds = []
+        sample_actuals = []
+        
+        # Determine how many steps to process based on mode
+        steps_to_process = prediction_horizon if test_mode == "multi_step" else 1
+        
+        for step in range(steps_to_process):
+            # Inverse transform predictions
+            pred_original = np.zeros(n_features)
+            actual_original = np.zeros(n_features)
+            
+            for feat_idx, var in enumerate(df.columns):
+                scaler = scalers[var]
+                pred_original[feat_idx] = scaler.inverse_transform(
+                    [[predictions_test[sample_idx][step][feat_idx]]])[0, 0]
+                actual_original[feat_idx] = scaler.inverse_transform(
+                    [[actuals_test[sample_idx][step][feat_idx]]])[0, 0]
+            
+            sample_preds.append(pred_original)
+            sample_actuals.append(actual_original)
+        
+        all_predictions.append(sample_preds)
+        all_actuals.append(sample_actuals)
 
-    for i, var in enumerate(df.columns):
-        scaler = scalers[var]
-        predictions_original[:, i] = scaler.inverse_transform(predictions_test[:, i].reshape(-1, 1)).flatten()
-        actuals_original[:, i] = scaler.inverse_transform(actuals_test[:, i].reshape(-1, 1)).flatten()
+    # Use only the first step for evaluation (t+1 predictions)
+    first_step_predictions = [pred[0] for pred in all_predictions]
+    first_step_actuals = [actual[0] for actual in all_actuals]
 
-    forecasting_variables = df.columns.tolist()
-    last_actual_values = df_removed_nans_forecasting[forecasting_variables].mean().values
+    # Apply inverse differencing
+    predictions_original = []
+    actuals_original = []
+    
+    for sample_idx in range(len(first_step_predictions)):
+        # Get the original index for this test sample
+        original_idx = test_indices[sample_idx]
+        
+        # Get the baseline value from the original (non-differenced) data
+        # We need the value just before the prediction starts
+        baseline_idx = original_idx - 1  # One step back from prediction start
+        baseline_values = df_removed_nans_forecasting.iloc[baseline_idx][df.columns].values
+        
+        # Apply inverse differencing for this specific sample
+        pred_original = inverse_difference([first_step_predictions[sample_idx]], baseline_values)
+        actual_original = inverse_difference([first_step_actuals[sample_idx]], baseline_values)
+        
+        predictions_original.extend(pred_original)
+        actuals_original.extend(actual_original)
 
-    # inverse differencing
-    predictions_original = inverse_difference(predictions_original, last_actual_values)
-    actuals_original = inverse_difference(actuals_original, last_actual_values)
-
-    # back to dataframe format
-    actuals_df = pd.DataFrame(data=actuals_original,columns=df.columns)
+    # Convert to DataFrames
+    actuals_df = pd.DataFrame(data=actuals_original, columns=df.columns)
     predictions_df = pd.DataFrame(data=predictions_original, columns=df.columns)
 
-    return actuals_df, filter_status_predictions(predictions_df, df.columns)
+    return actuals_df, predictions_df, all_actuals, all_predictions
 
-
-def calculate_metrics(df, actuals_original, predictions_original):
+def calculate_metrics(df, actuals_original, predictions_original, all_actuals, all_predictions, 
+                               prediction_horizon=prediction_horizon, mode="multi_step"):
+    """
+    Calculate metrics for multi-step or one-step predictions including horizon-specific performance.
+    """
+    # Overall metrics (using first step)
     mse = mean_squared_error(actuals_original, predictions_original)
     mae = mean_absolute_error(actuals_original, predictions_original)
     rmse = np.sqrt(mse)
     percentage_error = np.mean(np.abs((actuals_original - predictions_original) / actuals_original)) * 100
 
-    print(f"\nModel Performance:")
+    model_type = "Multi-Step" if mode == "multi_step" else "One-Step"
+    print(f"\n{model_type} Model Performance (t+1 predictions):")
     print(f"MSE: {mse:.6f}")
     print(f"MAE: {mae:.6f}")
     print(f"RMSE: {rmse:.6f}")
     print(f"Percentage Error: {percentage_error:.6f}")
 
-    # Show actual vs predicted values
+    # Calculate metrics for each prediction horizon (only for multi-step)
+    horizon_metrics = []
+    if mode == "multi_step":
+        for horizon in range(prediction_horizon):
+            horizon_predictions = [pred[horizon] for pred in all_predictions]
+            horizon_actuals = [actual[horizon] for actual in all_actuals]
+            
+            horizon_mse = mean_squared_error(horizon_actuals, horizon_predictions)
+            horizon_mae = mean_absolute_error(horizon_actuals, horizon_predictions)
+            
+            horizon_metrics.append({
+                'horizon': horizon + 1,
+                'mse': horizon_mse,
+                'mae': horizon_mae,
+                'rmse': np.sqrt(horizon_mse)
+            })
+            
+            print(f"  t+{horizon+1} - MSE: {horizon_mse:.6f}, MAE: {horizon_mae:.6f}")
+
+    # Show sample results
     results_df = pd.DataFrame({
         'Variable': df.columns.tolist() * actuals_original.shape[0],
         'Sample': [i for i in range(actuals_original.shape[0]) for _ in df.columns],
@@ -237,11 +435,13 @@ def calculate_metrics(df, actuals_original, predictions_original):
         'Error': (actuals_original.values - predictions_original.values).flatten()
     })
 
-    print(f"\nSample Results:")
-    print(results_df)
-    return results_df, mse, mae, rmse, percentage_error
+    print(f"\nSample Results (t+1):")
+    print(results_df.head(20))
+    
+    # Return horizon_metrics for multi-step, empty list for one-step
+    return results_df, mse, mae, rmse, percentage_error, horizon_metrics
 
-def plot_results(actuals_df, predictions_df, history=None):
+def plot_results(actuals_df, predictions_df, title, history=None):
     
     if history is None:
         print("No training history provided")
@@ -252,7 +452,7 @@ def plot_results(actuals_df, predictions_df, history=None):
         plt.plot(history.history['accuracy'], label='Train Accuracy')
         plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
 
-        plt.title('Model Accuracy')
+        plt.title(f'Model {title} Accuracy')
         plt.xlabel('Epoch')
         plt.ylabel('Accuracy')
         plt.legend()
@@ -260,66 +460,55 @@ def plot_results(actuals_df, predictions_df, history=None):
         plt.subplot(1, 3, 2)
         plt.plot(history.history['loss'], label='Train Loss')
         plt.plot(history.history['val_loss'], label='Validation Loss')
-        plt.title('Model Loss')
+        plt.title(f'Model {title} Loss')
         plt.xlabel('Epoch')
         plt.ylabel('Loss')
         plt.legend()
 
         plt.subplot(1, 3, 3)
-        plt.plot(history.history['mae'], label='Train MAE')
-        plt.plot(history.history['val_mae'], label='Validation MAE')
-        plt.title('Model MAE')
+        plt.plot(history.history['mse'], label='Train MSE')
+        plt.plot(history.history['val_mse'], label='Validation MSE')
+        plt.title(f'Model {title} MSE')
         plt.xlabel('Epoch')
-        plt.ylabel('MAE')
+        plt.ylabel('MSE')
         plt.legend()
 
         plt.tight_layout()
         plt.show()
 
 
-    # Create reasonable figure size: max 20 inches wide, 4 inches per subplot
-    n_columns = len(actuals_df.columns)
-    fig_width = min(20, max(12, n_columns * 2))  # Between 12-20 inches wide
-    fig_height = n_columns * 4  # 4 inches per subplot
-    
-    plt.figure(figsize=(fig_width, fig_height))
-    for i, column in enumerate(actuals_df.columns):
-        plt.subplot(len(actuals_df.columns), 1, i+1)
+        # Create reasonable figure size: max 20 inches wide, 4 inches per subplot
+        n_columns = len(actuals_df.columns)
+        fig_width = min(20, max(12, n_columns * 2))  # Between 12-20 inches wide
+        fig_height = n_columns * 4  # 4 inches per subplot
         
-        # Plot actual values
-        plt.plot(actuals_df.index, actuals_df[column], 
-                label=f'Actual {column}', color='blue', linewidth=2, alpha=0.8)
-        
-        # Plot predicted values
-        plt.plot(predictions_df.index, predictions_df[column], 
-                label=f'Predicted {column}', color='red', linewidth=2, 
-                linestyle='--', alpha=0.8)
-        
-        plt.title(f'{column}: Actual vs Predicted')
-        plt.xlabel('Time Step')
-        plt.ylabel(column)
-        plt.legend()
-        plt.grid(True, alpha=0.3)
+        plt.figure(figsize=(fig_width, fig_height))
+        for i, column in enumerate(actuals_df.columns):
+            plt.subplot(len(actuals_df.columns), 1, i+1)
+            
+            # Plot actual values
+            plt.plot(actuals_df.index, actuals_df[column], 
+                    label=f'Actual {column}', color='blue', linewidth=2, alpha=0.8)
+            
+            # Plot predicted values
+            plt.plot(predictions_df.index, predictions_df[column], 
+                    label=f'Predicted {column}', color='red', linewidth=2, 
+                    linestyle='--', alpha=0.8)
+            
+            plt.title(f'{column}: Actual vs Predicted')
+            plt.xlabel('Time Step')
+            plt.ylabel(column)
+            plt.legend()
+            plt.grid(True, alpha=0.3)
 
-    plt.tight_layout()
-    plt.show()
+        plt.tight_layout()
+        plt.show()
 
 # save online data, needed for main program and online forecasting
-def save_online_data(initial_model_path, df_online, scalers_train, context_length, df_removed_nans_forecasting, df_removed_nans_classification, variables):
-    """
-    Save online data in their original formats to preserve structure and metadata.
-    
-    Args:
-        initial_model_path: Path to save the data
-        df_online: pandas DataFrame with online forecasting data
-        scalers_train: dict of sklearn scalers
-        context_length: int
-        df_removed_nans_forecasting: pandas DataFrame with forecasting data
-        df_removed_nans_classification: pandas DataFrame with classification data
-        variables: pandas Index or list of column names
-    """
-    
+def save_online_data(initial_model_path, df_online, scalers_train, context_length, df_removed_nans_forecasting, df_removed_nans_classification):
     # Create directory if it doesn't exist
+    if initial_model_path is None:
+        initial_model_path = "C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\forecasting_model"
     os.makedirs(initial_model_path, exist_ok=True)
     
     # Save DataFrames as CSV or Parquet to preserve structure
@@ -335,34 +524,19 @@ def save_online_data(initial_model_path, df_online, scalers_train, context_lengt
     
     # Save simple values as numpy (these are fine as numpy)
     np.save(f"{initial_model_path}\\context_length.npy", context_length)
-    
-    # Save variables as list (preserves column names)
-    variables_list = list(variables) if hasattr(variables, 'tolist') else list(variables)
-    with open(f"{initial_model_path}\\variables.txt", 'w') as f:
-        for var in variables_list:
-            f.write(f"{var}\n")
-    
+
     print(f"✓ Online data saved in original formats to: {initial_model_path}")
     print(f"  - DataFrames saved as CSV files")
     print(f"  - Scalers saved as pickle file")
     print(f"  - Variables saved as text file")
     print(f"  - Context length saved as numpy file")
 
-def get_initial_model(initial_model_path=None):
-    """
-    Load the trained initial model from the specified path.
-    
-    Args:
-        initial_model_path (str, optional): Path to the model directory. 
-                                           If None, uses the default path.
-    
-    Returns:
-        keras.Model: The loaded trained model
-    """
+
+def get_initial_model(initial_model_path=None, ):
     if initial_model_path is None:
         initial_model_path = "C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\forecasting_model"
     
-    model_file_path = f"{initial_model_path}\\initial_model.h5"
+    model_file_path = f"{initial_model_path}\\best_model.h5"
     
     # Check if model file exists
     if not os.path.exists(model_file_path):
@@ -415,20 +589,8 @@ def get_initial_model(initial_model_path=None):
         raise RuntimeError(f"Failed to load model from {model_file_path}: {str(e)}")
 
 def get_online_data(initial_model_path):
-    """
-    Load online data in their original formats.
-    
-    Args:
-        initial_model_path: Path to load the data from
-        
-    Returns:
-        tuple: (df_online, scalers_train, context_length, df_removed_nans_forecasting, 
-                df_removed_nans_classification, variables)
-    """
-    
     # Check if files exist and determine which format to use
     csv_format = os.path.exists(f"{initial_model_path}\\df_online.csv")
-    npy_format = os.path.exists(f"{initial_model_path}\\df_online.npy")
     
     if csv_format:
         # Load DataFrames from CSV (preserves original structure)
@@ -453,35 +615,10 @@ def get_online_data(initial_model_path):
         print(f"  - Scalers loaded from pickle file") 
         print(f"  - Variables loaded from text file")
         
-    elif npy_format:
-        # Fallback: Load from old numpy format (for backward compatibility)
-        print("⚠ Loading from legacy numpy format. Consider regenerating data for better compatibility.")
-        
-        df_forecasting_data = np.load(f"{initial_model_path}\\df_removed_nans_forecasting.npy", allow_pickle=True)
-        df_classification_data = np.load(f"{initial_model_path}\\df_removed_nans_classification.npy", allow_pickle=True)
-        
-        # Load dictionary and scalar data with .item()
-        scalers_train = np.load(f"{initial_model_path}\\scalers_train.npy", allow_pickle=True).item()
-        context_length = np.load(f"{initial_model_path}\\context_length.npy", allow_pickle=True).item()
-        
-        # Handle DataFrame loading - check if they were saved as object arrays (containing DataFrames) or regular arrays
-        if df_forecasting_data.dtype == 'object' and df_forecasting_data.ndim == 0:
-            df_removed_nans_forecasting = df_forecasting_data.item()
-        else:
-            df_removed_nans_forecasting = df_forecasting_data
-            
-        if df_classification_data.dtype == 'object' and df_classification_data.ndim == 0:
-            df_removed_nans_classification = df_classification_data.item()
-        else:
-            df_removed_nans_classification = df_classification_data
-
-        variables = np.load(f"{initial_model_path}\\variables.npy", allow_pickle=True).tolist()
-        
     else:
         raise FileNotFoundError(f"No data files found at: {initial_model_path}")
 
     return df_online, scalers_train, context_length, df_removed_nans_forecasting, df_removed_nans_classification, variables
-
 
 if __name__ == "__main__":
 
@@ -510,44 +647,72 @@ if __name__ == "__main__":
     df_online = df_differenced.iloc[initial_idx:].copy()
     #df_online.index = original_timestamps[initial_idx + 1:]  # +1 because diff().dropna() removes first row
 
-    variables = df_initial.columns
 
-    model = create_online_multivariate_model(
-        df=df_initial,
-        context_length=context_length,
-        first_layer_units=first_layer_units,
-        second_layer_units=second_layer_units,
-        dense_units=dense_units,
-        activation=activation,
-        dropout_rate=dropout_rate
-    )
+    if model_mode == "multi_step":
+        model = create_online_multistep_model(df_initial, context_length=context_length,
+                                              prediction_horizon=prediction_horizon,
+                                              first_layer_units=first_layer_units,
+                                              second_layer_units=second_layer_units,
+                                              third_layer_units=third_layer_units,
+                                              dense_units=dense_units,
+                                              activation=activation,
+                                              dropout_rate=dropout_rate)
+        
+        df_train = df_initial.iloc[:int(split_ratio * len(df_initial))]
+        df_test = df_initial.iloc[int(split_ratio * len(df_initial)):]
 
-    # split data for initial model training
+        X_train, y_train, scalers_train, original_indices_train = split_data_for_multistep_model(df_train, context_length, prediction_horizon)
+        X_test, y_test, scalers_test, original_indices_test = split_data_for_multistep_model(df_test, context_length, prediction_horizon)
 
-    split_ratio = 0.8
+        print("======================================================")
+        print("Training multi-step initial model...")
+        print("======================================================")
 
-    df_train = df_initial.iloc[:int(split_ratio * len(df_initial))]
-    df_test = df_initial.iloc[int(split_ratio * len(df_initial)):]
+        history, model = train_model(model, X_train, y_train, epochs=epochs, use_callbacks=use_callbacks)
 
-    X_train, y_train, scalers_train = split_data_for_initial_model(df_train)
-    X_test, y_test, scalers_test = split_data_for_initial_model(df_test)
+        # test model
+            # Test the model
+        df_actuals, df_predictions, all_actuals, all_predictions = test_model(model, df_initial, X_test, y_test, scalers_test, df_removed_nans_forecasting, original_indices_test, test_mode="multi_step", prediction_horizon=prediction_horizon)
+        results_df, mse, mae, rmse, percentage_error, horizon_metrics = calculate_metrics(df_initial, df_actuals, df_predictions, all_actuals, all_predictions, prediction_horizon, mode="multi_step")
+        plot_results(df_actuals, df_predictions, title = "Multi-Step", history = history)
+        description = f"Initial Multi-Step Model Training Description:\n{model_description}\n Results:\n MSE: {mse:.6f}\n MAE: {mae:.6f}\n RMSE: {rmse:.6f}\n Percentage Error: {percentage_error:.6f}\n"
 
 
-    print("======================================================")
-    print("Training initial model...")
-    print("======================================================")
+    elif model_mode == "one_step":
+        model = create_online_onestep_model(df_initial, context_length=context_length,
+                                            first_layer_units=first_layer_units,
+                                            second_layer_units=second_layer_units,
+                                            dense_units=dense_units,
+                                            activation=activation,
+                                            dropout_rate=dropout_rate)
 
-    history, initial_model = train_initial_model(model, X_train, y_train, epochs = epochs, use_callbacks = use_callbacks)
+        df_train = df_initial.iloc[:int(split_ratio * len(df_initial))]
+        df_test = df_initial.iloc[int(split_ratio * len(df_initial)):]
 
-    # save initial model
-    initial_model_path = "C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\forecasting_model"
-    initial_model.save(f"{initial_model_path}\\initial_model.h5")
+        X_train, y_train, scalers_train, original_indices_train = split_data_for_onestep_model(df_train, context_length)
+        X_test, y_test, scalers_test, original_indices_test = split_data_for_onestep_model(df_test, context_length)
 
-    df_actuals, df_predictions = test_initial_model(model, df_initial, X_test, y_test, scalers_test, df_removed_nans_forecasting)
-    results_df, mse, mae, rmse, percentage_error = calculate_metrics(df_initial, df_actuals, df_predictions)
-    # save_online_data(f"{initial_model_path}\\online_data", df_online, scalers_train, context_length, df_removed_nans_forecasting, df_removed_nans_classification, variables)
-    plot_results(df_actuals, df_predictions, history)
+        print("======================================================")
+        print("Training one-step initial model...")
+        print("======================================================")
 
-    description = f"Initial Model Training Description:\n{model_description}\n Results:\n MSE: {mse:.6f}\n MAE: {mae:.6f}\n RMSE: {rmse:.6f}\n Percentage Error: {percentage_error:.6f}\n"
+        history, model = train_model(model, X_train, y_train, epochs=epochs, use_callbacks=use_callbacks)
+        
+        # test model
+        df_actuals, df_predictions, all_actuals, all_predictions = test_model(model, df_initial, X_test, y_test, scalers_test, df_removed_nans_forecasting, original_indices_test, test_mode="one_step", prediction_horizon=prediction_horizon)
+        results_df, mse, mae, rmse, percentage_error, horizon_metrics = calculate_metrics(df_initial, df_actuals, df_predictions, all_actuals, all_predictions, prediction_horizon, mode="one_step")
+        plot_results(df_actuals, df_predictions, title = "One-Step", history = history)
+        description = f"Initial One-Step Model Training Description:\n{model_description}\n Results:\n MSE: {mse:.6f}\n MAE: {mae:.6f}\n RMSE: {rmse:.6f}\n Percentage Error: {percentage_error:.6f}\n"
+
+    # save the trained model
+    model.save(f"{initial_model_path}\\initial_model.h5")
+    print(f"✓ Initial model saved to: {initial_model_path}\\initial_model.h5")
+    
+    save_online_data(initial_model_path, df_online, scalers_train, context_length, df_removed_nans_forecasting, df_removed_nans_classification)
+    print(f"✓ Online data saved to: {initial_model_path}")
+
     with open(f"{initial_model_path}\\{results_file_name}.txt", "w") as f:
         f.write(description)
+
+        
+
