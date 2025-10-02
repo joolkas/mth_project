@@ -17,27 +17,40 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# Detect Linux distribution and install dependencies
-echo -e "${BLUE}📦 Installing dependencies...${NC}"
+# Check if dependencies are already installed
+echo -e "${BLUE}📦 Checking dependencies...${NC}"
 
-if command -v apt >/dev/null 2>&1; then
+if command -v python3 >/dev/null 2>&1 && command -v pip3 >/dev/null 2>&1 && command -v git >/dev/null 2>&1; then
+    echo "✅ Dependencies already installed (python3, pip3, git)"
+else
+    echo "Installing missing dependencies..."
+    
+    if command -v apt >/dev/null 2>&1; then
     # Debian/Ubuntu
     echo "Detected Debian/Ubuntu system"
     apt update
     apt install -y python3 python3-pip git
+elif command -v dnf >/dev/null 2>&1; then
+    # RHEL 9/CentOS Stream 9/Rocky Linux 9/Fedora
+    echo "Detected system with dnf (RHEL 9/CentOS/Rocky/Fedora)"
+    
+    # Check if RHEL and enable EPEL correctly
+    if grep -q "Red Hat Enterprise Linux" /etc/os-release; then
+        echo "RHEL detected - enabling EPEL..."
+        dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm 2>/dev/null || true
+    fi
+    
+    dnf install -y python3 python3-pip git
 elif command -v yum >/dev/null 2>&1; then
-    # CentOS/RHEL 7
-    echo "Detected CentOS/RHEL system"
+    # Legacy CentOS/RHEL 7
+    echo "Detected legacy CentOS/RHEL 7 system"
     yum install -y epel-release
     yum install -y python3 python3-pip git
-elif command -v dnf >/dev/null 2>&1; then
-    # CentOS/RHEL 8+/Fedora
-    echo "Detected system with dnf"
-    dnf install -y python3 python3-pip git
-else
-    echo -e "${RED}❌ Unsupported Linux distribution${NC}"
-    echo "Please install manually: python3, python3-pip, git"
-    exit 1
+    else
+        echo -e "${RED}❌ Unsupported Linux distribution${NC}"
+        echo "Please install manually: python3, python3-pip, git"
+        exit 1
+    fi
 fi
 
 # Install Python packages
