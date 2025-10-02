@@ -17,10 +17,28 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# Install dependencies
+# Detect Linux distribution and install dependencies
 echo -e "${BLUE}📦 Installing dependencies...${NC}"
-apt update
-apt install -y python3 python3-pip git
+
+if command -v apt >/dev/null 2>&1; then
+    # Debian/Ubuntu
+    echo "Detected Debian/Ubuntu system"
+    apt update
+    apt install -y python3 python3-pip git
+elif command -v yum >/dev/null 2>&1; then
+    # CentOS/RHEL 7
+    echo "Detected CentOS/RHEL system"
+    yum install -y epel-release
+    yum install -y python3 python3-pip git
+elif command -v dnf >/dev/null 2>&1; then
+    # CentOS/RHEL 8+/Fedora
+    echo "Detected system with dnf"
+    dnf install -y python3 python3-pip git
+else
+    echo -e "${RED}❌ Unsupported Linux distribution${NC}"
+    echo "Please install manually: python3, python3-pip, git"
+    exit 1
+fi
 
 # Install Python packages
 pip3 install -r requirements.txt
