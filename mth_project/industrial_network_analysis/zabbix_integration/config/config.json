@@ -1,0 +1,16 @@
+{
+  "zabbix": {
+    "url": "http://your-zabbix-server/zabbix",
+    "user": "Admin",
+    "password": "your-password"
+  },
+  "models": {
+    "forecasting_model_path": "/opt/anomaly_detection/models/forecasting_model"
+  },
+  "monitoring": {
+    "update_interval": 60
+  },
+  "industrial_filters": {
+    "device_groups": ["Industrial", "SCADA", "PLC", "HMI", "Network"]
+  }
+}
