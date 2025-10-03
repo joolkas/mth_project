@@ -5,10 +5,12 @@
     "password": "your-password"
   },
   "models": {
-    "forecasting_model_path": "/opt/anomaly_detection/models/forecasting_model"
+    "forecasting_model_path": "C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\forecasting_model"
   },
   "monitoring": {
-    "update_interval": 60
+    "context_length": 60,
+    "update_interval": 60,
+    "prediction_horizon": 6
   },
   "industrial_filters": {
     "device_groups": ["Industrial", "SCADA", "PLC", "HMI", "Network"]
