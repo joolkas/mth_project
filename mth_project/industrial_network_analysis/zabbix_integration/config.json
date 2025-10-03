@@ -5,7 +5,7 @@
     "password": "zabbix"
   },
   "models": {
-    "forecasting_model_path": "../forecasting_model"
+    "forecasting_model_path": "/opt/anomaly_detection/models/"
   },
   "monitoring": {
     "context_length": 60,

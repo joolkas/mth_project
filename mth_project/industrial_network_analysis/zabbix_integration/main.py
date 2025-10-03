@@ -326,7 +326,7 @@ class OptimizedZabbixConnector:
         model_path = self.config.get('models', {}).get('forecasting_model_path')
         if model_path and not os.path.isabs(model_path):
             # Convert relative path to absolute path from current file location
-            model_path = os.path.join(os.path.dirname(__file__), model_path)
+            model_path = os.path.abspath(os.path.join(os.path.dirname(__file__), model_path))
         scalers_file = os.path.join(model_path, 'scalers_train.pkl') if model_path else None
         
         if scalers_file and os.path.exists(scalers_file):
@@ -356,7 +356,10 @@ class OptimizedZabbixConnector:
             model_path = self.config.get('models', {}).get('forecasting_model_path')
             if model_path and not os.path.isabs(model_path):
                 # Convert relative path to absolute path from current file location
-                model_path = os.path.join(os.path.dirname(__file__), model_path)
+                model_path = os.path.abspath(os.path.join(os.path.dirname(__file__), model_path))
+            
+            self.logger.info(f"🔍 Looking for model at: {model_path}")
+            self.logger.info(f"🔍 Directory contents: {os.listdir(model_path) if os.path.exists(model_path) else 'Directory not found'}")
             
             if not model_path or not os.path.exists(model_path):
                 raise FileNotFoundError(f"Model not found: {model_path}")
