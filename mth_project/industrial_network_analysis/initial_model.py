@@ -513,21 +513,21 @@ def save_online_data(initial_model_path, df_online, scalers_train, context_lengt
     os.makedirs(initial_model_path, exist_ok=True)
     
     # Save DataFrames as CSV or Parquet to preserve structure
-    df_online.to_csv(f"{initial_model_path}\\df_online.csv", index=True)
+    df_online.to_csv(os.path.join(initial_model_path, "df_online.csv"), index=True)
     
-    df_removed_nans_forecasting.to_csv(f"{initial_model_path}\\df_removed_nans_forecasting.csv", index=True)
-    df_removed_nans_classification.to_csv(f"{initial_model_path}\\df_removed_nans_classification.csv", index=True)
+    df_removed_nans_forecasting.to_csv(os.path.join(initial_model_path, "df_removed_nans_forecasting.csv"), index=True)
+    df_removed_nans_classification.to_csv(os.path.join(initial_model_path, "df_removed_nans_classification.csv"), index=True)
     
     # Save scalers dictionary using pickle (preserves sklearn objects)
     import pickle
-    with open(f"{initial_model_path}\\scalers_train.pkl", 'wb') as f:
+    with open(os.path.join(initial_model_path, "scalers_train.pkl"), 'wb') as f:
         pickle.dump(scalers_train, f)
     
     # Save simple values as numpy (these are fine as numpy)
-    np.save(f"{initial_model_path}\\context_length.npy", context_length)
-    np.save(f"{initial_model_path}\\model_mode.npy", model_mode)
+    np.save(os.path.join(initial_model_path, "context_length.npy"), context_length)
+    np.save(os.path.join(initial_model_path, "model_mode.npy"), model_mode)
     # Save variables as a text file
-    with open(f"{initial_model_path}\\variables.txt", 'w') as f:
+    with open(os.path.join(initial_model_path, "variables.txt"), 'w') as f:
         for var in variables:
             f.write(f"{var}\n")
 
@@ -542,7 +542,7 @@ def get_initial_model(initial_model_path=None, ):
     if initial_model_path is None:
         initial_model_path = os.path.join(os.path.dirname(__file__), "forecasting_model")
     
-    model_file_path = f"{initial_model_path}\\best_model.h5"
+    model_file_path = os.path.join(initial_model_path, "best_model.h5")
     
     # Check if model file exists
     if not os.path.exists(model_file_path):
@@ -596,25 +596,25 @@ def get_initial_model(initial_model_path=None, ):
 
 def get_online_data(initial_model_path):
     # Check if files exist and determine which format to use
-    csv_format = os.path.exists(f"{initial_model_path}\\df_online.csv")
+    csv_format = os.path.exists(os.path.join(initial_model_path, "df_online.csv"))
     
     if csv_format:
         # Load DataFrames from CSV (preserves original structure)
-        df_online = pd.read_csv(f"{initial_model_path}\\df_online.csv", index_col=0, parse_dates=True)
-        df_removed_nans_forecasting = pd.read_csv(f"{initial_model_path}\\df_removed_nans_forecasting.csv", index_col=0, parse_dates=True)
-        df_removed_nans_classification = pd.read_csv(f"{initial_model_path}\\df_removed_nans_classification.csv", index_col=0, parse_dates=True)
+        df_online = pd.read_csv(os.path.join(initial_model_path, "df_online.csv"), index_col=0, parse_dates=True)
+        df_removed_nans_forecasting = pd.read_csv(os.path.join(initial_model_path, "df_removed_nans_forecasting.csv"), index_col=0, parse_dates=True)
+        df_removed_nans_classification = pd.read_csv(os.path.join(initial_model_path, "df_removed_nans_classification.csv"), index_col=0, parse_dates=True)
         
         # Load scalers from pickle (preserves sklearn objects)
         import pickle
-        with open(f"{initial_model_path}\\scalers_train.pkl", 'rb') as f:
+        with open(os.path.join(initial_model_path, "scalers_train.pkl"), 'rb') as f:
             scalers_train = pickle.load(f)
         
         # Load context length from numpy
-        context_length = np.load(f"{initial_model_path}\\context_length.npy", allow_pickle=True).item()
-        model_mode = np.load(f"{initial_model_path}\\model_mode.npy", allow_pickle=True).item()
+        context_length = np.load(os.path.join(initial_model_path, "context_length.npy"), allow_pickle=True).item()
+        model_mode = np.load(os.path.join(initial_model_path, "model_mode.npy"), allow_pickle=True).item()
         
         # Load variables from text file
-        with open(f"{initial_model_path}\\variables.txt", 'r') as f:
+        with open(os.path.join(initial_model_path, "variables.txt"), 'r') as f:
             variables = [line.strip() for line in f.readlines() if line.strip()]
             
         print(f"\n Online data loaded from original formats at: {initial_model_path}")
@@ -711,13 +711,13 @@ if __name__ == "__main__":
         description = f"Initial One-Step Model Training Description:\n{model_description}\n Results:\n MSE: {mse:.6f}\n MAE: {mae:.6f}\n RMSE: {rmse:.6f}\n Percentage Error: {percentage_error:.6f}\n, Accuracy: {history.history['accuracy'][-1]:.6f}\n"
 
     # save the trained model
-    model.save(f"{initial_model_path}\\initial_model.h5")
-    print(f"✓ Initial model saved to: {initial_model_path}\\initial_model.h5")
+    model.save(os.path.join(initial_model_path, "initial_model.h5"))
+    print(f"✓ Initial model saved to: {os.path.join(initial_model_path, 'initial_model.h5')}")
     
     save_online_data(initial_model_path, df_online, scalers_train, context_length, df_removed_nans_forecasting, df_removed_nans_classification, variables = variables)
     print(f"✓ Online data saved to: {initial_model_path}")
 
-    with open(f"{initial_model_path}\\{results_file_name}.txt", "w") as f:
+    with open(os.path.join(initial_model_path, f"{results_file_name}.txt"), "w") as f:
         f.write(description)
 
         
