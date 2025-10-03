@@ -545,9 +545,71 @@ class OptimizedZabbixConnector:
                             time.sleep(self.update_interval)
                             continue
                         
-                        # Continue with current data (model predictions may be inaccurate)
-                        self.logger.warning("⚠️  Continuing with mismatched features - predictions may be inaccurate")
-                        self.logger.info("   🎯 Recommendation: Retrain model with updated variables.txt")
+                        # AUTO-SELECT features to match model input shape
+                        if num_features > expected_features:
+                            self.logger.info(f"🔧 Auto-selecting {expected_features} most important features from {num_features} available...")
+                            
+                            # Select features based on variance and importance
+                            # Priority: Universal metrics that work across device types
+                            priority_keywords = [
+                                # Memory metrics (servers, VMs, devices)
+                                'memory', 'Memory', 'swap', 'Swap', 'RAM',
+                                # CPU/Processing (servers, VMs, industrial controllers)
+                                'CPU', 'cpu', 'utilization', 'processes', 'load', 'processor',
+                                # Network metrics (switches, servers, VMs, industrial)
+                                'Interface', 'Bits', 'packets', 'network', 'traffic', 'bandwidth',
+                                'received', 'sent', 'Inbound', 'Outbound', 'discarded', 'errors',
+                                # Storage metrics (servers, VMs)
+                                'Space:', 'Available', 'Used', 'Total', 'disk', 'filesystem', 'FS',
+                                # System metrics (universal)
+                                'Queue', 'uptime', 'logged', 'users', 'temperature', 'temp',
+                                # Industrial specific (SCADA, PLC, sensors)
+                                'Temperature', 'Pressure', 'Flow', 'Level', 'Status', 'Alarm',
+                                'sensor', 'Sensor', 'analog', 'digital', 'I/O', 'valve', 'motor',
+                                # Zabbix/monitoring specific
+                                'agent', 'ping', 'response', 'time', 'availability', 'operational'
+                            ]
+                            
+                            # Score variables by priority keywords
+                            scored_vars = []
+                            for i, var in enumerate(variables):
+                                score = 0
+                                for keyword in priority_keywords:
+                                    if keyword in var:
+                                        score += 1
+                                scored_vars.append((score, i, var))
+                            
+                            # Sort by score (descending) and take top features
+                            scored_vars.sort(key=lambda x: -x[0])
+                            selected_indices = [x[1] for x in scored_vars[:expected_features]]
+                            selected_variables = [variables[i] for i in selected_indices]
+                            
+                            # Update DataFrame to only include selected features
+                            df_online = df_online.iloc[:, selected_indices]
+                            df_removed_nans_forecasting = df_removed_nans_forecasting.iloc[:, selected_indices]
+                            
+                            # Update scalers to match selected features
+                            selected_scalers = {}
+                            for i, orig_i in enumerate(selected_indices):
+                                if orig_i < len(scalers):
+                                    selected_scalers[i] = scalers[orig_i]
+                            scalers = selected_scalers
+                            
+                            # Update variables list
+                            variables = selected_variables
+                            num_features = len(variables)
+                            
+                            self.logger.info(f"✅ Selected {num_features} features for model compatibility:")
+                            for i, var in enumerate(selected_variables[:5]):
+                                self.logger.info(f"   {i+1}. {var}")
+                            if len(selected_variables) > 5:
+                                self.logger.info(f"   ... and {len(selected_variables)-5} more")
+                        
+                        elif num_features < expected_features:
+                            self.logger.error(f"❌ Too few features: model needs {expected_features}, only {num_features} available")
+                            self.logger.info("   🔧 Need to retrain model with fewer features or add more data sources")
+                            time.sleep(self.update_interval)
+                            continue
                     
                     if len(df_online) < context_length:
                         self.logger.warning(f"⚠️  Insufficient data: need {context_length}, have {len(df_online)}")
