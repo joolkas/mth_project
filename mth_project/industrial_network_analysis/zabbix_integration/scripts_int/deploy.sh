@@ -72,7 +72,7 @@ echo "Expected: $INSTALL_DIR/models/forecasting_model/"
 echo ""
 
 # Get configuration
-#read -p "Enter Zabbix server URL: " ZABBIX_URL
+read -p "Enter Zabbix server URL: " ZABBIX_URL
 read -p "Enter Zabbix username: " ZABBIX_USER
 read -s -p "Enter Zabbix password: " ZABBIX_PASSWORD
 echo ""
