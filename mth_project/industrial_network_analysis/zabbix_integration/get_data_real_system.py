@@ -1,9 +1,12 @@
+import sys
+import os
+# Add parent directory to path for imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from data_preprocessing import Dataset
 from data_utils import *
 import warnings
 import logging
-import sys
-import os
 import json
 import time
 from typing import Dict, List, Optional
@@ -27,14 +30,15 @@ warnings.showwarning = warning_handler_func
 
 def get_path_and_device_name():
     device_name="SW-SUPV-243"
-    data_path="C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\Data082025\\"
+    # Updated path to go up one level from zabbix_integration folder
+    data_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "Data082025")
     return device_name, data_path
 
 def get_processed_path():
     device_name, data_path = get_path_and_device_name()
-    processed_data_path = f"{data_path}processed\\"
-    processed_forecasting_path = f"{processed_data_path}{device_name}_forecasting.csv"
-    processed_statuses_path = f"{processed_data_path}{device_name}_statuses.csv"
+    processed_data_path = os.path.join(data_path, "processed")
+    processed_forecasting_path = os.path.join(processed_data_path, f"{device_name}_forecasting.csv")
+    processed_statuses_path = os.path.join(processed_data_path, f"{device_name}_statuses.csv")
     return processed_forecasting_path, processed_statuses_path
 
 def get_column_names_exclude(df, search_keyword, exclude_keyword):
@@ -53,7 +57,8 @@ def get_data_function_original(device_name=device_name, data_path=data_path,
               numeric_names=["ICMP response time", "temperature", "cpu", "used memory", "bits"], status_names = [": operational status"], numeric_exclude ="status", status_exclude="unused"):
     """Original function for CSV data - kept for reference"""
     
-    df = Dataset(f'{data_path}{device_name}.csv')
+    csv_path = os.path.join(data_path, f"{device_name}.csv")
+    df = Dataset(csv_path)
 
     df_numerics = []
     df_statuses = []
@@ -63,7 +68,6 @@ def get_data_function_original(device_name=device_name, data_path=data_path,
     
     for status_name in status_names:
         df_statuses += get_column_names_exclude(df, status_name, status_exclude)
-
 
     print("Getting values...")
     df_numeric_values = df.get_column_values(df_numerics)
@@ -76,7 +80,6 @@ def get_data_function_original(device_name=device_name, data_path=data_path,
         if df_numeric_one_day[col].nunique() <= 1:
             print(f"Removing constant column: {col}")
             df_numeric_values.drop(columns=[col], inplace=True)
-
 
     print(f"Numeric columns: {df_numeric_values.shape}")
     print(f"Status columns: {df_status_values.shape}")
@@ -96,6 +99,9 @@ def get_data_function_original(device_name=device_name, data_path=data_path,
     df_removed_outliers_statuses = remove_outliers(df_classification, 1000)
     df_removed_nans_statuses = df_removed_outliers_statuses.dropna(axis=1, how="all")
 
+    # Ensure processed directory exists
+    os.makedirs(os.path.dirname(processed_forecasting_path), exist_ok=True)
+    
     # save as csv
     df_removed_nans_forecasting.to_csv(processed_forecasting_path)
     df_removed_nans_statuses.to_csv(processed_statuses_path)
@@ -117,8 +123,8 @@ def get_data_function(use_zabbix=True, device_name=device_name, data_path=data_p
 def get_data_from_zabbix():
     """Get real data from Zabbix using the same approach as online loop"""
     
-    # Load configuration
-    config_path = os.path.join(os.path.dirname(__file__), 'zabbix_integration', 'config.json')
+    # Load configuration - now in same directory
+    config_path = os.path.join(os.path.dirname(__file__), 'config.json')
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Config file not found: {config_path}")
     
@@ -147,6 +153,9 @@ def get_data_from_zabbix():
         
         # Process the data to match expected format
         df_forecasting, df_classification = process_zabbix_data_for_training(df_raw)
+        
+        # Ensure processed directory exists
+        os.makedirs(os.path.dirname(processed_forecasting_path), exist_ok=True)
         
         # Save processed data
         df_forecasting.to_csv(processed_forecasting_path)
