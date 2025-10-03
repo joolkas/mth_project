@@ -34,6 +34,52 @@ def auto_train_model(config_path="config.json"):
     print(f"✅ Data collected: {df_forecasting.shape}")
     print("=" * 50)
     
+    # Step 1.5: Fix the get_data.py paths for Linux environment
+    print("🔧 Step 1.5: Fixing paths for Linux environment...")
+    try:
+        parent_dir = os.path.dirname(os.path.dirname(__file__))
+        get_data_path = os.path.join(parent_dir, "get_data.py")
+        
+        # Create a temporary fixed version of get_data.py
+        with open(get_data_path, 'r') as f:
+            content = f.read()
+        
+        # Replace Windows paths with Linux paths
+        fixed_content = content.replace(
+            'data_path="C:\\\\ThesisWork\\\\offical_approach\\\\mth_project\\\\mth_project\\\\industrial_network_analysis\\\\Data082025\\\\"',
+            f'data_path="{os.path.join(parent_dir, "RealData")}"'
+        ).replace(
+            'device_name="SW-SUPV-243"',
+            'device_name="DEMO"'
+        ).replace(
+            'processed_data_path = f"{data_path}processed\\\\"',
+            'processed_data_path = os.path.join(data_path, "processed")'
+        ).replace(
+            'processed_forecasting_path = f"{processed_data_path}{device_name}_forecasting.csv"',
+            'processed_forecasting_path = os.path.join(processed_data_path, f"{device_name}_forecasting.csv")'
+        ).replace(
+            'processed_statuses_path = f"{processed_data_path}{device_name}_statuses.csv"',
+            'processed_statuses_path = os.path.join(processed_data_path, f"{device_name}_statuses.csv")'
+        )
+        
+        # Add import os if not present
+        if 'import os' not in fixed_content:
+            fixed_content = 'import os\n' + fixed_content
+        
+        # Write the fixed version
+        get_data_backup = get_data_path + ".backup"
+        os.rename(get_data_path, get_data_backup)  # Backup original
+        
+        with open(get_data_path, 'w') as f:
+            f.write(fixed_content)
+        
+        print("✅ Fixed get_data.py paths for Linux")
+        
+    except Exception as e:
+        print(f"⚠️ Could not fix get_data.py paths: {e}")
+    
+    print("=" * 50)
+    
     # Step 2: Train the model automatically
     print("🧠 Step 2: Training the model...")
     
@@ -88,6 +134,18 @@ def auto_train_model(config_path="config.json"):
     except Exception as e:
         print(f"❌ Model deployment error: {e}")
         return False
+    
+    # Restore original get_data.py
+    try:
+        parent_dir = os.path.dirname(os.path.dirname(__file__))
+        get_data_path = os.path.join(parent_dir, "get_data.py")
+        get_data_backup = get_data_path + ".backup"
+        
+        if os.path.exists(get_data_backup):
+            os.rename(get_data_backup, get_data_path)
+            print("🔄 Restored original get_data.py")
+    except Exception as e:
+        print(f"⚠️ Could not restore get_data.py: {e}")
     
     print("=" * 50)
     

@@ -23,15 +23,15 @@ sudo ./simple_deploy.sh
 python3 /opt/anomaly_detection/main.py --test
 ```
 
-### 3. Auto-Train Model (NEW!)
+### 3. Direct Train Model (NEW!)
 ```bash
-python3 /opt/anomaly_detection/auto_train.py
+python3 /opt/anomaly_detection/direct_train.py
 ```
 This automatically:
 - ✅ Collects 7 days of Zabbix data
-- ✅ Trains the model with current features  
-- ✅ Deploys the trained model
-- ✅ Sets up variables for monitoring
+- ✅ Trains LSTM model from scratch with current features
+- ✅ No dependency on old file paths or formats
+- ✅ Creates model, scalers, and variables automatically
 
 ### 4. Start Monitoring
 ```bash
@@ -134,8 +134,8 @@ sudo systemctl restart zabbix-monitoring
 
 ### Quick Retrain
 ```bash
-# Retrain model with fresh data
-python3 /opt/anomaly_detection/auto_train.py --quick
+# Retrain model with fresh data (self-contained)
+python3 /opt/anomaly_detection/direct_train.py
 ```
 
 ### Manual Data Collection Only
