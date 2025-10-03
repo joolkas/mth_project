@@ -324,6 +324,9 @@ class OptimizedZabbixConnector:
     def _load_or_create_scalers(self, df: pd.DataFrame, variables: List[str]) -> Dict:
         """Load scalers from trained model or create new ones"""
         model_path = self.config.get('models', {}).get('forecasting_model_path')
+        if model_path and not os.path.isabs(model_path):
+            # Convert relative path to absolute path from current file location
+            model_path = os.path.join(os.path.dirname(__file__), model_path)
         scalers_file = os.path.join(model_path, 'scalers_train.pkl') if model_path else None
         
         if scalers_file and os.path.exists(scalers_file):
@@ -351,6 +354,10 @@ class OptimizedZabbixConnector:
             
             # Load trained model
             model_path = self.config.get('models', {}).get('forecasting_model_path')
+            if model_path and not os.path.isabs(model_path):
+                # Convert relative path to absolute path from current file location
+                model_path = os.path.join(os.path.dirname(__file__), model_path)
+            
             if not model_path or not os.path.exists(model_path):
                 raise FileNotFoundError(f"Model not found: {model_path}")
             

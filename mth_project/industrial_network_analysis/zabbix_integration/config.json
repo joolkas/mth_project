@@ -5,7 +5,7 @@
     "password": "zabbix"
   },
   "models": {
-    "forecasting_model_path": "C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\forecasting_model"
+    "forecasting_model_path": "../forecasting_model"
   },
   "monitoring": {
     "context_length": 60,
