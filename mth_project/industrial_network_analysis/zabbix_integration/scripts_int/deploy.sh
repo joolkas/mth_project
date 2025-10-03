@@ -72,15 +72,15 @@ echo "Expected: $INSTALL_DIR/models/forecasting_model/"
 echo ""
 
 # Get configuration
-read -p "Enter Zabbix server URL: " ZABBIX_URL
-read -p "Enter Zabbix username: " ZABBIX_USER
-read -s -p "Enter Zabbix password: " ZABBIX_PASSWORD
+# read -p "Enter Zabbix server URL: " ZABBIX_URL
+# read -p "Enter Zabbix username: " ZABBIX_USER
+# read -s -p "Enter Zabbix password: " ZABBIX_PASSWORD
 echo ""
 
 # Update config
-sed -i "s|your-zabbix-server|${ZABBIX_URL#https://}|g" $INSTALL_DIR/config.json
-sed -i "s|Admin|$ZABBIX_USER|g" $INSTALL_DIR/config.json
-sed -i "s|your-password|$ZABBIX_PASSWORD|g" $INSTALL_DIR/config.json
+# sed -i "s|your-zabbix-server|${ZABBIX_URL#https://}|g" $INSTALL_DIR/config.json
+# sed -i "s|Admin|$ZABBIX_USER|g" $INSTALL_DIR/config.json
+# sed -i "s|your-password|$ZABBIX_PASSWORD|g" $INSTALL_DIR/config.json
 
 cp ../data_utils.py $INSTALL_DIR/
 cp ../initial_model.py $INSTALL_DIR/  
