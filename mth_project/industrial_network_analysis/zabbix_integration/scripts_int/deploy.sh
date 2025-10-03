@@ -87,6 +87,7 @@ cp ../initial_model.py $INSTALL_DIR/
 cp ../online_forecasting_multi_step.py $INSTALL_DIR/
 cp ../dash_plotter.py $INSTALL_DIR/
 cp ../get_data.py $INSTALL_DIR/
+cp ../data_preprocessing.py $INSTALL_DIR/
 cp -r ../forecasting_model $INSTALL_DIR/models/ 2>/dev/null || echo "Manual model copy needed"
 
 # Create systemd service
