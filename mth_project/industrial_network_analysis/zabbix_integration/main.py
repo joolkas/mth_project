@@ -56,15 +56,8 @@ class OptimizedZabbixConnector:
         self.processed_forecasting_file = os.path.join(self.temp_data_dir, "zabbix_forecasting.csv")
         self.processed_classification_file = os.path.join(self.temp_data_dir, "zabbix_classification.csv")
         
-        # Variable mappings based on your training data patterns
-        # These should match the patterns from your actual training data
-        self.variable_mappings = {
-            'ICMP response time': ['icmpping', 'icmppingsec', 'ping'],
-            'temperature': ['sensor.temp', 'temp', 'temperature'],
-            'cpu': ['system.cpu.util', 'cpu.util', 'cpu'],
-            'used memory': ['vm.memory.util', 'memory.util', 'memory'],
-            'bits': ['net.if.in', 'net.if.out', 'ifInOctets', 'ifOutOctets', 'bits']
-        }
+        # No variable mappings - collect ALL items same as get_data_real_system.py
+        # This ensures perfect compatibility with training data
         
         # Initialize connection
         self._connect_to_zabbix()
@@ -120,7 +113,7 @@ class OptimizedZabbixConnector:
             raise ConnectionError(f"Zabbix connection failed: {e}")
 
     def collect_and_save_raw_data(self, hours_back: int = 2):
-        """Collect raw data from Zabbix and save in training-compatible format"""
+        """Collect raw data from Zabbix using SAME method as get_data_real_system.py"""
         try:
             # Get industrial hosts
             hosts = self.get_industrial_hosts()
@@ -129,63 +122,79 @@ class OptimizedZabbixConnector:
             
             self.logger.info(f"🔄 Collecting raw data from {len(hosts)} hosts...")
             
-            # Collect all raw data in training format (name, timestamp, value)
-            all_raw_records = []
-            
             # Calculate time range
             time_till = int(time.time())
             time_from = time_till - (hours_back * 3600)
             
+            # Collect all raw data in training format (name, timestamp, value) - SAME AS get_data_real_system.py
+            all_data = []
+            
             for host in hosts:
-                # Get all active items for this host
+                host_name = host['host']
+                host_id = host['hostid']
+                
+                self.logger.info(f"🔍 Processing host: {host_name}")
+                
+                # Get items for this host
                 items = self.zabbix_api.item.get(
-                    hostids=[host['hostid']],
-                    output=['itemid', 'key_', 'name'],
-                    filter={'status': 0}
+                    hostids=[host_id],
+                    output=['itemid', 'key_', 'name', 'value_type'],
+                    monitored=True
                 )
                 
                 if not items:
+                    self.logger.warning(f"⚠️ No monitored items found for host {host_name}")
                     continue
                 
-                # Filter items based on our variable mappings
+                # COLLECT ALL ITEMS - same as get_data_real_system.py (no filtering!)
                 relevant_items = {}
                 for item in items:
-                    for var_name, possible_keys in self.variable_mappings.items():
-                        if any(key in item['key_'] for key in possible_keys):
-                            # Create unique name combining host and variable type
-                            item_name = f"{host['host']} - {var_name} - {item['name']}"
-                            relevant_items[item['itemid']] = item_name
-                            break
+                    # Create descriptive names that match training data format
+                    item_name = f"{host_name} - {item['name']}"
+                    relevant_items[item['itemid']] = item_name
                 
                 if not relevant_items:
+                    self.logger.warning(f"⚠️ No relevant items found for host {host_name}")
                     continue
                 
-                # Fetch historical data
-                history = self.zabbix_api.history.get(
-                    itemids=list(relevant_items.keys()),
-                    time_from=time_from,
-                    time_till=time_till,
-                    output=['itemid', 'clock', 'value'],
-                    sortfield='clock'
-                )
+                # Get history for ALL relevant items (same format as training data)
+                all_records = []
                 
-                # Convert to training format
-                for record in history:
-                    if record['itemid'] in relevant_items:
-                        all_raw_records.append({
-                            'name': relevant_items[record['itemid']],
-                            'timestamp': pd.to_datetime(int(record['clock']), unit='s'),
-                            'value': float(record['value'])
-                        })
+                # Fetch history for all items at once
+                if relevant_items:
+                    history = self.zabbix_api.history.get(
+                        itemids=list(relevant_items.keys()),
+                        time_from=time_from,
+                        time_till=time_till,
+                        output='extend',
+                        sortfield='clock',
+                        sortorder='ASC'
+                    )
+                    
+                    # Convert to training data format (name, timestamp, value)
+                    for record in history:
+                        if record['itemid'] in relevant_items:
+                            all_records.append({
+                                'name': relevant_items[record['itemid']],
+                                'timestamp': pd.to_datetime(int(record['clock']), unit='s'),
+                                'value': float(record['value'])
+                            })
+                    
+                    self.logger.info(f"✅ Collected {len(all_records)} records from {host_name}")
+                    all_data.extend(all_records)
             
-            if not all_raw_records:
+            if not all_data:
                 raise ValueError("No data retrieved from any host")
             
-            # Create DataFrame and save in training format
-            raw_df = pd.DataFrame(all_raw_records)
-            raw_df.to_csv(self.raw_data_file, index=False)
+            # Create DataFrame in training format - SAME AS get_data_real_system.py
+            raw_df = pd.DataFrame(all_data)
+            self.logger.info(f"📊 Total combined records: {len(raw_df)}")
+            self.logger.info(f"📊 Unique items: {raw_df['name'].nunique()}")
             
-            self.logger.info(f"✅ Raw data saved: {len(all_raw_records)} records to {self.raw_data_file}")
+            # Save in training format
+            raw_df.to_csv(self.raw_data_file, index=False)
+            self.logger.info(f"✅ Raw data saved: {len(all_data)} records to {self.raw_data_file}")
+            
             return raw_df
             
         except Exception as e:
@@ -193,7 +202,7 @@ class OptimizedZabbixConnector:
             raise
 
     def apply_training_preprocessing(self, raw_df: pd.DataFrame = None):
-        """Apply the exact same preprocessing as in training pipeline"""
+        """Apply EXACT same preprocessing as get_data_real_system.py"""
         try:
             # If no raw_df provided, try to load from file
             if raw_df is None:
@@ -203,38 +212,27 @@ class OptimizedZabbixConnector:
             
             self.logger.info("🔧 Applying training-compatible preprocessing...")
             
+            # SAME preprocessing as get_data_real_system.py
             # Create a temporary Dataset-like structure
-            # Save raw data in training format for Dataset class
             temp_file = os.path.join(self.temp_data_dir, "temp_dataset.csv")
             raw_df[['name', 'timestamp', 'value']].to_csv(temp_file, index=False)
             
-            # Use the same Dataset preprocessing as in training
+            # Use the same Dataset preprocessing as in get_data_real_system.py
             dataset = Dataset(temp_file)
-            df_preprocessed = dataset.preprocessing()
             
-            if df_preprocessed is None or df_preprocessed.empty:
-                raise ValueError("Preprocessing failed - no data returned")
+            # Remove outliers - SAME as get_data_real_system.py
+            dataset.remove_outliers()
             
-            # Apply same filtering as in get_data.py
-            # Select only numeric columns (same as training)
-            df_numeric = df_preprocessed.select_dtypes(include=[np.number])
+            # Get the final dataframe - SAME as get_data_real_system.py
+            df_processed = dataset.df.copy()
             
-            # Remove constant columns (same logic as training)
-            cols_to_remove = []
-            for col in df_numeric.columns:
-                if df_numeric[col].nunique() <= 1:
-                    cols_to_remove.append(col)
-            
-            if cols_to_remove:
-                self.logger.info(f"Removing constant columns: {cols_to_remove}")
-                df_numeric = df_numeric.drop(columns=cols_to_remove)
-            
-            # Apply outlier removal (same as training)
-            df_removed_outliers_forecasting = remove_outliers(df_numeric, threshold=1000)
+            # Apply same outlier removal as get_data_real_system.py
+            df_removed_outliers_forecasting = remove_outliers(df_processed, 1000)
             df_removed_nans_forecasting = df_removed_outliers_forecasting.dropna(axis=1, how="all")
             
-            # For classification (same data in this case)
-            df_removed_nans_classification = df_removed_nans_forecasting.copy()
+            # Remove outliers for classification - SAME as get_data_real_system.py
+            df_removed_outliers_statuses = remove_outliers(df_processed, 1000)
+            df_removed_nans_classification = df_removed_outliers_statuses.dropna(axis=1, how="all")
             
             # Save processed data (same format as training)
             df_removed_nans_forecasting.to_csv(self.processed_forecasting_file)
@@ -242,10 +240,12 @@ class OptimizedZabbixConnector:
             
             self.logger.info(f"✅ Preprocessing completed:")
             self.logger.info(f"   📊 Forecasting data shape: {df_removed_nans_forecasting.shape}")
+            self.logger.info(f"   📊 Classification data shape: {df_removed_nans_classification.shape}")
             self.logger.info(f"   💾 Saved to: {self.processed_forecasting_file}")
             
             # Clean up temp file
-            os.remove(temp_file)
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
             
             return df_removed_nans_forecasting, df_removed_nans_classification
             
@@ -415,9 +415,18 @@ class OptimizedZabbixConnector:
                     num_features = len(variables)
                     expected_features = initial_model.input_shape[2] if len(initial_model.input_shape) == 3 else num_features
                     
+                    self.logger.info(f"🔍 Data validation:")
+                    self.logger.info(f"   📊 Model expects: {expected_features} features")
+                    self.logger.info(f"   📊 Data provides: {num_features} features")
+                    self.logger.info(f"   🏷️  Sample variables: {variables[:5] if len(variables) > 5 else variables}")
+                    
                     if num_features != expected_features:
                         self.logger.error(f"❌ Feature mismatch: model expects {expected_features}, data has {num_features}")
-                        self.logger.info(f"   Data variables: {variables}")
+                        self.logger.info(f"   📋 All variables: {variables}")
+                        self.logger.info("   🔧 This usually means:")
+                        self.logger.info("      1. Model was trained on different data")
+                        self.logger.info("      2. Different hosts/items available now")
+                        self.logger.info("      3. Need to retrain model with current data")
                         self.logger.info("   Skipping this cycle...")
                         time.sleep(self.update_interval)
                         continue
