@@ -50,7 +50,12 @@ Edit `config.json`:
 
 # Or if installed system-wide
 sudo python3 /opt/anomaly_detection/zabbix_monitor.py --test
+
+# For detailed connection testing
+sudo python3 /opt/anomaly_detection/test_zabbix.py
 ```
+
+**💡 If connection fails**: See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for detailed debugging steps.
 
 ### 4. Start Monitoring
 ```bash

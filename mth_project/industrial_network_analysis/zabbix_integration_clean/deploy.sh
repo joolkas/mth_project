@@ -27,11 +27,13 @@ pip3 install -r requirements.txt
 # Copy main files
 echo "📋 Installing system files..."
 cp zabbix_monitor.py $INSTALL_DIR/
+cp test_zabbix.py $INSTALL_DIR/
 cp config.json $INSTALL_DIR/
 cp requirements.txt $INSTALL_DIR/
 
 # Make executable
 chmod +x $INSTALL_DIR/zabbix_monitor.py
+chmod +x $INSTALL_DIR/test_zabbix.py
 
 # Copy model if it exists
 if [ -d "../forecasting_model" ]; then

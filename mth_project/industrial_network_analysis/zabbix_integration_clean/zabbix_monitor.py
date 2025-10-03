@@ -108,16 +108,31 @@ class ZabbixAnomalyMonitor:
         """Connect to Zabbix API"""
         try:
             zabbix_config = self.config['zabbix']
+            print(f"🔗 Attempting to connect to: {zabbix_config['url']}")
+            print(f"👤 Using user: {zabbix_config['user']}")
+            
             self.zabbix_api = ZabbixAPI(zabbix_config['url'])
             self.zabbix_api.session.verify = False  # For internal networks
+            
+            print("🔐 Attempting login...")
             self.zabbix_api.login(zabbix_config['user'], zabbix_config['password'])
             
             # Test connection
+            print("📡 Testing API connection...")
             version = self.zabbix_api.apiinfo.version()
+            print(f"✅ Connected to Zabbix {version}")
             self.logger.info(f"✅ Connected to Zabbix {version}")
             return True
             
         except Exception as e:
+            print(f"❌ Zabbix connection failed: {e}")
+            print(f"   URL: {zabbix_config.get('url', 'Not set')}")
+            print(f"   User: {zabbix_config.get('user', 'Not set')}")
+            print("   Please check:")
+            print("   1. Zabbix server is running and accessible")
+            print("   2. URL is correct (http://<server>/zabbix)")
+            print("   3. Username and password are correct")
+            print("   4. User has API access permissions")
             self.logger.error(f"❌ Zabbix connection failed: {e}")
             return False
     
@@ -391,23 +406,34 @@ def main():
     
     if args.test:
         print("🧪 Testing connections...")
+        print("=" * 50)
+        
+        print("\n1️⃣ Testing Zabbix Connection...")
         zabbix_ok = monitor.connect_zabbix()
+        
+        print("\n2️⃣ Testing Model Loading...")
         models_ok = monitor.load_models()
         
         if zabbix_ok and models_ok:
-            print("✅ All systems ready!")
-            
+            print("\n3️⃣ Testing Data Collection...")
             # Test data collection
             data = monitor.get_industrial_data(hours_back=1)
             if data is not None:
-                print(f"📊 Sample data: {data.shape}")
-                print(f"🏷️ Variables: {list(data.columns)[:5]}...")
+                print(f"📊 Sample data collected: {data.shape}")
+                print(f"🏷️ Sample variables: {list(data.columns)[:5]}...")
+                print("✅ All systems ready!")
             else:
-                print("⚠️ No data collected")
+                print("⚠️ No data collected - check host groups and monitored items")
+                print(f"   Configured host groups: {monitor.config['monitoring']['host_groups']}")
                 
         else:
-            print("❌ System not ready")
+            print("\n❌ System not ready:")
+            if not zabbix_ok:
+                print("   - Zabbix connection failed")
+            if not models_ok:
+                print("   - Model loading failed")
         
+        print("=" * 50)
         return
     
     # Run monitoring
