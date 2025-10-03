@@ -26,13 +26,15 @@ try:
     from initial_model import get_initial_model
     from online_forecasting_multi_step import multistep_rolling_buffer_learning_prediction_with_dash
     from dash_plotter import DashRealTimePlotter
+    from data_utils import remove_outliers
+    from data_preprocessing import Dataset
 except ImportError as e:
     print(f"⚠️  Warning: Could not import project modules: {e}")
     print("Ensure you're running from the correct directory")
 
 
 class OptimizedZabbixConnector:
-    """Simplified Zabbix connector for industrial anomaly detection"""
+    """Zabbix connector with same preprocessing as initial model training"""
     
     def __init__(self, config_path: str = "config.json"):
         """Initialize the connector with minimal configuration"""
@@ -42,23 +44,31 @@ class OptimizedZabbixConnector:
         
         # Core settings from config
         self.context_length = self.config.get('monitoring', {}).get('context_length', 60)
-        self.update_interval = self.config.get('monitoring', {}).get('update_interval', 60)
+        self.update_interval = self.config.get('monitoring', {}).get('update_interval', 60)  # 1 minute cycle
         self.prediction_horizon = self.config.get('monitoring', {}).get('prediction_horizon', 6)
         
-        # Variable mappings (simplified from your training data)
+        # Data storage paths - same structure as training
+        self.temp_data_dir = os.path.join(os.path.dirname(__file__), "temp_data")
+        os.makedirs(self.temp_data_dir, exist_ok=True)
+        
+        # Filenames for temporary storage (CSV format like training data)
+        self.raw_data_file = os.path.join(self.temp_data_dir, "zabbix_raw_data.csv")
+        self.processed_forecasting_file = os.path.join(self.temp_data_dir, "zabbix_forecasting.csv")
+        self.processed_classification_file = os.path.join(self.temp_data_dir, "zabbix_classification.csv")
+        
+        # Variable mappings based on your training data patterns
+        # These should match the patterns from your actual training data
         self.variable_mappings = {
-            'ICMP response time': ['icmpping', 'icmppingsec'],
-            'Switch 1 - Temperature': ['sensor.temp.1', 'temp.1', 'temperature.1'],
-            'Switch 2 - Temperature': ['sensor.temp.2', 'temp.2', 'temperature.2'],
-            'CPU utilization': ['system.cpu.util', 'cpu.util'],
-            'Memory utilization': ['vm.memory.util', 'memory.util'],
-            'Interface Bits received': ['net.if.in'],
-            'Interface Bits sent': ['net.if.out']
+            'ICMP response time': ['icmpping', 'icmppingsec', 'ping'],
+            'temperature': ['sensor.temp', 'temp', 'temperature'],
+            'cpu': ['system.cpu.util', 'cpu.util', 'cpu'],
+            'used memory': ['vm.memory.util', 'memory.util', 'memory'],
+            'bits': ['net.if.in', 'net.if.out', 'ifInOctets', 'ifOutOctets', 'bits']
         }
         
         # Initialize connection
         self._connect_to_zabbix()
-        self.logger.info("🏭 Optimized Zabbix Connector initialized")
+        self.logger.info("🏭 Zabbix Connector initialized with training-compatible preprocessing")
 
     def _load_config(self, config_path: str) -> Dict:
         """Load and validate configuration"""
@@ -109,6 +119,140 @@ class OptimizedZabbixConnector:
             self.logger.error(f"❌ Failed to connect to Zabbix: {e}")
             raise ConnectionError(f"Zabbix connection failed: {e}")
 
+    def collect_and_save_raw_data(self, hours_back: int = 2):
+        """Collect raw data from Zabbix and save in training-compatible format"""
+        try:
+            # Get industrial hosts
+            hosts = self.get_industrial_hosts()
+            if not hosts:
+                raise ValueError("No industrial hosts available")
+            
+            self.logger.info(f"🔄 Collecting raw data from {len(hosts)} hosts...")
+            
+            # Collect all raw data in training format (name, timestamp, value)
+            all_raw_records = []
+            
+            # Calculate time range
+            time_till = int(time.time())
+            time_from = time_till - (hours_back * 3600)
+            
+            for host in hosts:
+                # Get all active items for this host
+                items = self.zabbix_api.item.get(
+                    hostids=[host['hostid']],
+                    output=['itemid', 'key_', 'name'],
+                    filter={'status': 0}
+                )
+                
+                if not items:
+                    continue
+                
+                # Filter items based on our variable mappings
+                relevant_items = {}
+                for item in items:
+                    for var_name, possible_keys in self.variable_mappings.items():
+                        if any(key in item['key_'] for key in possible_keys):
+                            # Create unique name combining host and variable type
+                            item_name = f"{host['host']} - {var_name} - {item['name']}"
+                            relevant_items[item['itemid']] = item_name
+                            break
+                
+                if not relevant_items:
+                    continue
+                
+                # Fetch historical data
+                history = self.zabbix_api.history.get(
+                    itemids=list(relevant_items.keys()),
+                    time_from=time_from,
+                    time_till=time_till,
+                    output=['itemid', 'clock', 'value'],
+                    sortfield='clock'
+                )
+                
+                # Convert to training format
+                for record in history:
+                    if record['itemid'] in relevant_items:
+                        all_raw_records.append({
+                            'name': relevant_items[record['itemid']],
+                            'timestamp': pd.to_datetime(int(record['clock']), unit='s'),
+                            'value': float(record['value'])
+                        })
+            
+            if not all_raw_records:
+                raise ValueError("No data retrieved from any host")
+            
+            # Create DataFrame and save in training format
+            raw_df = pd.DataFrame(all_raw_records)
+            raw_df.to_csv(self.raw_data_file, index=False)
+            
+            self.logger.info(f"✅ Raw data saved: {len(all_raw_records)} records to {self.raw_data_file}")
+            return raw_df
+            
+        except Exception as e:
+            self.logger.error(f"❌ Raw data collection failed: {e}")
+            raise
+
+    def apply_training_preprocessing(self, raw_df: pd.DataFrame = None):
+        """Apply the exact same preprocessing as in training pipeline"""
+        try:
+            # If no raw_df provided, try to load from file
+            if raw_df is None:
+                if not os.path.exists(self.raw_data_file):
+                    raise FileNotFoundError("No raw data file found")
+                raw_df = pd.read_csv(self.raw_data_file, parse_dates=['timestamp'])
+            
+            self.logger.info("🔧 Applying training-compatible preprocessing...")
+            
+            # Create a temporary Dataset-like structure
+            # Save raw data in training format for Dataset class
+            temp_file = os.path.join(self.temp_data_dir, "temp_dataset.csv")
+            raw_df[['name', 'timestamp', 'value']].to_csv(temp_file, index=False)
+            
+            # Use the same Dataset preprocessing as in training
+            dataset = Dataset(temp_file)
+            df_preprocessed = dataset.preprocessing()
+            
+            if df_preprocessed is None or df_preprocessed.empty:
+                raise ValueError("Preprocessing failed - no data returned")
+            
+            # Apply same filtering as in get_data.py
+            # Select only numeric columns (same as training)
+            df_numeric = df_preprocessed.select_dtypes(include=[np.number])
+            
+            # Remove constant columns (same logic as training)
+            cols_to_remove = []
+            for col in df_numeric.columns:
+                if df_numeric[col].nunique() <= 1:
+                    cols_to_remove.append(col)
+            
+            if cols_to_remove:
+                self.logger.info(f"Removing constant columns: {cols_to_remove}")
+                df_numeric = df_numeric.drop(columns=cols_to_remove)
+            
+            # Apply outlier removal (same as training)
+            df_removed_outliers_forecasting = remove_outliers(df_numeric, threshold=1000)
+            df_removed_nans_forecasting = df_removed_outliers_forecasting.dropna(axis=1, how="all")
+            
+            # For classification (same data in this case)
+            df_removed_nans_classification = df_removed_nans_forecasting.copy()
+            
+            # Save processed data (same format as training)
+            df_removed_nans_forecasting.to_csv(self.processed_forecasting_file)
+            df_removed_nans_classification.to_csv(self.processed_classification_file)
+            
+            self.logger.info(f"✅ Preprocessing completed:")
+            self.logger.info(f"   📊 Forecasting data shape: {df_removed_nans_forecasting.shape}")
+            self.logger.info(f"   💾 Saved to: {self.processed_forecasting_file}")
+            
+            # Clean up temp file
+            os.remove(temp_file)
+            
+            return df_removed_nans_forecasting, df_removed_nans_classification
+            
+        except Exception as e:
+            self.logger.error(f"❌ Preprocessing failed: {e}")
+            raise
+
     def get_industrial_hosts(self) -> List[Dict]:
         """Get industrial devices from configured host groups"""
         try:
@@ -142,121 +286,39 @@ class OptimizedZabbixConnector:
             self.logger.error(f"❌ Host discovery failed: {e}")
             return []
 
-    def fetch_host_metrics(self, host_id: str, hours_back: int = 2) -> pd.DataFrame:
-        """Fetch metrics for a single host and map to training variables"""
-        try:
-            # Calculate time range
-            time_till = int(time.time())
-            time_from = time_till - (hours_back * 3600)
-            
-            # Get all active items for this host
-            items = self.zabbix_api.item.get(
-                hostids=[host_id],
-                output=['itemid', 'key_', 'name'],
-                filter={'status': 0}
-            )
-            
-            if not items:
-                return pd.DataFrame()
-            
-            # Map items to training variables
-            item_mapping = {}
-            for item in items:
-                for var_name, possible_keys in self.variable_mappings.items():
-                    if any(key in item['key_'] for key in possible_keys):
-                        item_mapping[item['itemid']] = var_name
-                        break
-            
-            if not item_mapping:
-                return pd.DataFrame()
-            
-            # Fetch historical data
-            history = self.zabbix_api.history.get(
-                itemids=list(item_mapping.keys()),
-                time_from=time_from,
-                time_till=time_till,
-                output=['itemid', 'clock', 'value'],
-                sortfield='clock'
-            )
-            
-            if not history:
-                return pd.DataFrame()
-            
-            # Convert to DataFrame
-            records = []
-            for record in history:
-                if record['itemid'] in item_mapping:
-                    records.append({
-                        'timestamp': pd.to_datetime(int(record['clock']), unit='s'),
-                        'variable': item_mapping[record['itemid']],
-                        'value': float(record['value'])
-                    })
-            
-            if not records:
-                return pd.DataFrame()
-            
-            # Pivot and resample
-            df = pd.DataFrame(records)
-            df_pivot = df.pivot_table(
-                index='timestamp',
-                columns='variable',
-                values='value',
-                aggfunc='first'
-            )
-            
-            # Resample to 1-minute intervals and fill missing values
-            df_resampled = df_pivot.resample('1T').mean()
-            df_resampled = df_resampled.fillna(method='ffill').fillna(method='bfill')
-            
-            return df_resampled
-            
-        except Exception as e:
-            self.logger.error(f"❌ Failed to fetch metrics for host {host_id}: {e}")
-            return pd.DataFrame()
-
-    def get_training_data_format(self, hours_back: int = 2) -> Tuple[pd.DataFrame, Dict, int, List[str]]:
+    def get_training_data_format(self, hours_back: int = 2) -> Tuple[pd.DataFrame, pd.DataFrame, Dict, int, List[str]]:
         """
-        Get data in the exact format expected by your training pipeline
-        Returns: (df_online, scalers, context_length, variables)
+        Get data in the exact format expected by your training pipeline using same preprocessing
+        Returns: (df_online, df_removed_nans_forecasting, scalers, context_length, variables)
         """
         try:
-            # Get industrial hosts
-            hosts = self.get_industrial_hosts()
-            if not hosts:
-                raise ValueError("No industrial hosts available")
+            self.logger.info(f"🔄 Collecting and preprocessing {hours_back} hours of data...")
             
-            self.logger.info(f"🔄 Fetching {hours_back} hours of data from {len(hosts)} hosts...")
+            # Step 1: Collect raw data from Zabbix (same format as training CSV)
+            raw_df = self.collect_and_save_raw_data(hours_back)
             
-            # Collect data from all hosts
-            host_dataframes = []
-            for host in hosts:
-                host_data = self.fetch_host_metrics(host['hostid'], hours_back)
-                if not host_data.empty:
-                    # Add host prefix to distinguish variables from different hosts
-                    host_data.columns = [f"{host['host']}_{col}" for col in host_data.columns]
-                    host_dataframes.append(host_data)
+            # Step 2: Apply the exact same preprocessing as in training
+            df_removed_nans_forecasting, df_removed_nans_classification = self.apply_training_preprocessing(raw_df)
             
-            if not host_dataframes:
-                raise ValueError("No data retrieved from any host")
+            # Step 3: Apply differencing (same as initial_model.py)
+            df_differenced = df_removed_nans_forecasting.diff().dropna()
             
-            # Combine all host data
-            df_combined = pd.concat(host_dataframes, axis=1, sort=True)
+            # Step 4: Create df_online from the processed data (same as training)
+            df_online = df_differenced.copy()
+            variables = df_online.columns.tolist()
             
-            # Ensure 1-minute intervals and handle missing data
-            df_final = df_combined.resample('1T').mean()
-            df_final = df_final.fillna(method='ffill').fillna(method='bfill')
+            # Step 5: Load or create scalers (same approach as training)
+            scalers = self._load_or_create_scalers(df_online, variables)
             
-            # Get variable list
-            variables = list(df_final.columns)
+            self.logger.info(f"✅ Data processed with training pipeline:")
+            self.logger.info(f"   📊 df_online shape: {df_online.shape}")
+            self.logger.info(f"   🏷️  Variables: {len(variables)}")
+            self.logger.info(f"   📅 Time range: {df_online.index.min()} to {df_online.index.max()}")
             
-            # Load or create scalers
-            scalers = self._load_or_create_scalers(df_final, variables)
-            
-            self.logger.info(f"✅ Retrieved {len(df_final)} data points, {len(variables)} variables")
-            return df_final, scalers, self.context_length, variables
+            return df_online, df_removed_nans_forecasting, scalers, self.context_length, variables
             
         except Exception as e:
-            self.logger.error(f"❌ Data retrieval failed: {e}")
+            self.logger.error(f"❌ Data processing failed: {e}")
             raise
 
     def _load_or_create_scalers(self, df: pd.DataFrame, variables: List[str]) -> Dict:
@@ -309,7 +371,7 @@ class OptimizedZabbixConnector:
                     self.logger.info(f"🔄 Starting monitoring cycle #{cycle_count}")
                     
                     # Get fresh data from Zabbix
-                    df_online, scalers, context_length, variables = self.get_training_data_format()
+                    df_online, df_removed_nans_forecasting, scalers, context_length, variables = self.get_training_data_format()
                     
                     if df_online.empty:
                         self.logger.warning("⚠️  No data received, skipping cycle...")
@@ -317,8 +379,7 @@ class OptimizedZabbixConnector:
                         continue
                     
                     # Prepare data structures for your existing forecasting function
-                    df_removed_nans_forecasting = df_online.copy()
-                    df_removed_nans_classification = df_online.copy()
+                    df_removed_nans_classification = df_removed_nans_forecasting.copy()
                     
                     # Run forecasting using your existing pipeline
                     self.logger.info(f"🎯 Running forecasting on {len(df_online)} data points...")
@@ -360,7 +421,7 @@ class OptimizedZabbixConnector:
             self.logger.info("🧪 Testing Zabbix connection...")
             
             # Test data retrieval
-            df_online, scalers, context_length, variables = self.get_training_data_format(hours_back=1)
+            df_online, df_removed_nans_forecasting, scalers, context_length, variables = self.get_training_data_format(hours_back=1)
             
             print(f"✅ Connection test successful!")
             print(f"   📊 Data shape: {df_online.shape}")
