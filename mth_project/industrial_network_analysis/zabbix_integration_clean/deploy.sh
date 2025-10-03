@@ -57,11 +57,14 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=$INSTALL_DIR
+Environment=PYTHONPATH=$INSTALL_DIR:$INSTALL_DIR/../industrial_network_analysis
+Environment=PYTHONUNBUFFERED=1
 ExecStart=/usr/bin/python3 $INSTALL_DIR/zabbix_monitor.py
 Restart=always
 RestartSec=10
 StandardOutput=journal
 StandardError=journal
+TimeoutStartSec=120
 
 [Install]
 WantedBy=multi-user.target
