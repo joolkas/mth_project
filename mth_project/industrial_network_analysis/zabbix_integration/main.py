@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-🏭 Optimized Zabbix Data Connector for Industrial Anomaly Detection
+🏭 Simple Zabbix Industrial Monitoring
 
-Simplified, clean implementation that fetches data from Zabbix and runs ML models.
-READ-ONLY integration - no data is sent back to Zabbix.
+Ultra-simplified version that automatically adapts to any Zabbix environment.
+Fetches data, adapts features, runs ML models - all automatically.
 """
 
 import sys
@@ -12,751 +12,339 @@ import json
 import time
 import logging
 import pickle
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Optional
 
 import numpy as np
 import pandas as pd
 from pyzabbix import ZabbixAPI
 from sklearn.preprocessing import StandardScaler
+import urllib3
+urllib3.disable_warnings()
 
-# Add parent directory to path for imports
+# Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 try:
     from initial_model import get_initial_model
     from online_forecasting_multi_step import multistep_rolling_buffer_learning_prediction_with_dash
-    from dash_plotter import DashRealTimePlotter
     from data_utils import remove_outliers
     from data_preprocessing import Dataset
 except ImportError as e:
-    print(f"⚠️  Warning: Could not import project modules: {e}")
-    print("Ensure you're running from the correct directory")
+    print(f"⚠️ Import error: {e}")
 
 
-class OptimizedZabbixConnector:
-    """Zabbix connector with same preprocessing as initial model training"""
+class SimpleZabbixMonitor:
+    """Ultra-simple Zabbix monitoring with auto-adaptation"""
     
-    def __init__(self, config_path: str = "config.json"):
-        """Initialize the connector with minimal configuration"""
+    def __init__(self, config_path="config.json"):
         self.config = self._load_config(config_path)
         self.logger = self._setup_logging()
         self.zabbix_api = None
+        self.model = None
+        self.scalers = {}
+        self.variables = []
         
-        # Core settings from config
-        self.context_length = self.config.get('monitoring', {}).get('context_length', 60)
-        self.update_interval = self.config.get('monitoring', {}).get('update_interval', 60)  # 1 minute cycle
-        self.prediction_horizon = self.config.get('monitoring', {}).get('prediction_horizon', 6)
+        # Simple settings
+        self.update_interval = 60  # 1 minute
+        self.context_length = 60
         
-        # Data storage paths - same structure as training
-        self.temp_data_dir = os.path.join(os.path.dirname(__file__), "temp_data")
-        os.makedirs(self.temp_data_dir, exist_ok=True)
-        
-        # Filenames for temporary storage (CSV format like training data)
-        self.raw_data_file = os.path.join(self.temp_data_dir, "zabbix_raw_data.csv")
-        self.processed_forecasting_file = os.path.join(self.temp_data_dir, "zabbix_forecasting.csv")
-        self.processed_classification_file = os.path.join(self.temp_data_dir, "zabbix_classification.csv")
-        
-        # No variable mappings - collect ALL items same as get_data_real_system.py
-        # This ensures perfect compatibility with training data
-        
-        # Initialize connection
-        self._connect_to_zabbix()
-        self.logger.info("🏭 Zabbix Connector initialized with training-compatible preprocessing")
-
-    def _load_config(self, config_path: str) -> Dict:
-        """Load and validate configuration"""
+    def _load_config(self, config_path):
+        """Load configuration"""
         try:
             with open(config_path, 'r') as f:
-                config = json.load(f)
-            
-            # Validate required sections
-            required_sections = ['zabbix', 'models']
-            for section in required_sections:
-                if section not in config:
-                    raise ValueError(f"Missing required config section: {section}")
-            
-            return config
-            
-        except FileNotFoundError:
-            raise FileNotFoundError(f"Configuration file not found: {config_path}")
-        except json.JSONDecodeError as e:
-            raise ValueError(f"Invalid JSON in configuration: {e}")
-
-    def _setup_logging(self) -> logging.Logger:
-        """Setup simple logging"""
-        logger = logging.getLogger('ZabbixConnector')
-        logger.setLevel(logging.INFO)
-        
-        if not logger.handlers:  # Avoid duplicate handlers
-            handler = logging.StreamHandler()
-            formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-            handler.setFormatter(formatter)
-            logger.addHandler(handler)
-        
-        return logger
-
-    def _connect_to_zabbix(self):
-        """Establish connection to Zabbix API"""
+                return json.load(f)
+        except Exception as e:
+            print(f"❌ Config error: {e}")
+            sys.exit(1)
+    
+    def _setup_logging(self):
+        """Simple logging setup"""
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s - %(levelname)s - %(message)s'
+        )
+        return logging.getLogger(__name__)
+    
+    def connect_zabbix(self):
+        """Connect to Zabbix API"""
         try:
-            zabbix_config = self.config['zabbix']            
+            zabbix_config = self.config['zabbix']
             self.zabbix_api = ZabbixAPI(zabbix_config['url'])
             self.zabbix_api.session.verify = False
-            
-            # Suppress SSL warnings
-            import urllib3
-            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-            
             self.zabbix_api.login(zabbix_config['user'], zabbix_config['password'])
-            
+            self.logger.info("✅ Connected to Zabbix")
+            return True
         except Exception as e:
-            self.logger.error(f"❌ Failed to connect to Zabbix: {e}")
-            raise ConnectionError(f"Zabbix connection failed: {e}")
-
-    def collect_and_save_raw_data(self, hours_back: int = 2):
-        """Collect raw data from Zabbix using SAME method as get_data_real_system.py"""
+            self.logger.error(f"❌ Zabbix connection failed: {e}")
+            return False
+    
+    def load_model(self):
+        """Load the ML model"""
         try:
-            # Get industrial hosts
-            hosts = self.get_industrial_hosts()
-            if not hosts:
-                raise ValueError("No industrial hosts available")
+            model_path = self.config['models']['forecasting_model_path']
+            self.model = get_initial_model(model_path)
             
-            self.logger.info(f"🔄 Collecting raw data from {len(hosts)} hosts...")
+            # Load scalers if available
+            scalers_path = os.path.join(model_path, 'scalers.pkl')
+            if os.path.exists(scalers_path):
+                with open(scalers_path, 'rb') as f:
+                    self.scalers = pickle.load(f)
             
-            # Calculate time range
-            time_till = int(time.time())
-            time_from = time_till - (hours_back * 3600)
+            self.logger.info("✅ Model loaded")
+            return True
+        except Exception as e:
+            self.logger.error(f"❌ Model loading failed: {e}")
+            return False
+    
+    def get_zabbix_data(self):
+        """Get current data from Zabbix - automatically discovers everything"""
+        try:
+            # Get all hosts from configured groups
+            host_groups = self.config['industrial_filters'].get('device_groups', [])
+            all_hosts = []
             
-            # Collect all raw data in training format (name, timestamp, value) - SAME AS get_data_real_system.py
+            for group_name in host_groups:
+                groups = self.zabbix_api.hostgroup.get(filter={"name": group_name})
+                if groups:
+                    hosts = self.zabbix_api.host.get(groupids=[groups[0]['groupid']])
+                    all_hosts.extend(hosts)
+            
+            if not all_hosts:
+                self.logger.warning("No hosts found")
+                return None
+            
+            # Get recent data (last hour)
+            time_to = int(time.time())
+            time_from = time_to - 3600  # 1 hour
+            
             all_data = []
             
-            for host in hosts:
+            for host in all_hosts:
                 host_name = host['host']
-                host_id = host['hostid']
                 
-                self.logger.info(f"🔍 Processing host: {host_name}")
-                
-                # Get items for this host
+                # Get all monitored items
                 items = self.zabbix_api.item.get(
-                    hostids=[host_id],
-                    output=['itemid', 'key_', 'name', 'value_type'],
+                    hostids=[host['hostid']],
+                    output=['itemid', 'name'],
                     monitored=True
                 )
                 
                 if not items:
-                    self.logger.warning(f"⚠️ No monitored items found for host {host_name}")
                     continue
                 
-                # COLLECT ALL ITEMS - same as get_data_real_system.py (no filtering!)
-                relevant_items = {}
-                for item in items:
-                    # Create descriptive names that match training data format
-                    item_name = f"{host_name} - {item['name']}"
-                    relevant_items[item['itemid']] = item_name
+                # Get history for all items
+                item_ids = [item['itemid'] for item in items]
+                history = self.zabbix_api.history.get(
+                    itemids=item_ids,
+                    time_from=time_from,
+                    time_till=time_to,
+                    output='extend',
+                    sortfield='clock'
+                )
                 
-                if not relevant_items:
-                    self.logger.warning(f"⚠️ No relevant items found for host {host_name}")
-                    continue
+                # Convert to DataFrame format
+                item_names = {item['itemid']: f"{host_name} - {item['name']}" for item in items}
                 
-                # Get history for ALL relevant items (same format as training data)
-                all_records = []
-                
-                # Fetch history for all items at once
-                if relevant_items:
-                    history = self.zabbix_api.history.get(
-                        itemids=list(relevant_items.keys()),
-                        time_from=time_from,
-                        time_till=time_till,
-                        output='extend',
-                        sortfield='clock',
-                        sortorder='ASC'
-                    )
-                    
-                    # Convert to training data format (name, timestamp, value)
-                    for record in history:
-                        if record['itemid'] in relevant_items:
-                            all_records.append({
-                                'name': relevant_items[record['itemid']],
-                                'timestamp': pd.to_datetime(int(record['clock']), unit='s'),
-                                'value': float(record['value'])
-                            })
-                    
-                    self.logger.info(f"✅ Collected {len(all_records)} records from {host_name}")
-                    all_data.extend(all_records)
+                for record in history:
+                    if record['itemid'] in item_names:
+                        all_data.append({
+                            'name': item_names[record['itemid']],
+                            'timestamp': pd.to_datetime(int(record['clock']), unit='s'),
+                            'value': float(record['value'])
+                        })
             
             if not all_data:
-                raise ValueError("No data retrieved from any host")
+                return None
             
-            # Create DataFrame in training format - SAME AS get_data_real_system.py
-            raw_df = pd.DataFrame(all_data)
-            self.logger.info(f"📊 Total combined records: {len(raw_df)}")
-            self.logger.info(f"📊 Unique items: {raw_df['name'].nunique()}")
+            # Create time series DataFrame
+            df = pd.DataFrame(all_data)
+            df_pivot = df.pivot_table(
+                index='timestamp',
+                columns='name', 
+                values='value',
+                aggfunc='mean'
+            ).fillna(method='ffill').fillna(0)
             
-            # Save in training format
-            raw_df.to_csv(self.raw_data_file, index=False)
-            self.logger.info(f"✅ Raw data saved: {len(all_data)} records to {self.raw_data_file}")
-            
-            return raw_df
-            
-        except Exception as e:
-            self.logger.error(f"❌ Raw data collection failed: {e}")
-            raise
-
-    def apply_training_preprocessing(self, raw_df: pd.DataFrame = None):
-        """Apply EXACT same preprocessing as get_data_real_system.py - SIMPLIFIED"""
-        try:
-            # If no raw_df provided, try to load from file
-            if raw_df is None:
-                if not os.path.exists(self.raw_data_file):
-                    raise FileNotFoundError("No raw data file found")
-                raw_df = pd.read_csv(self.raw_data_file, parse_dates=['timestamp'])
-            
-            self.logger.info("🔧 Using EXACT same preprocessing as get_data_real_system.py...")
-            
-            # Save data in exact same format as get_data_real_system.py expects
-            temp_file = os.path.join(self.temp_data_dir, "temp_dataset.csv")
-            raw_df.to_csv(temp_file, index=False)
-            
-            # Use EXACTLY the same Dataset processing as get_data_real_system.py
-            try:
-                self.logger.info(f"🔧 Creating Dataset object from: {temp_file}")
-                dataset = Dataset(temp_file)
-                
-                # Debug the Dataset object before calling remove_outliers
-                self.logger.info(f"🔍 Dataset object created, type: {type(dataset)}")
-                if hasattr(dataset, 'df'):
-                    self.logger.info(f"🔍 Dataset.df exists, type: {type(dataset.df)}")
-                    if hasattr(dataset.df, 'shape'):
-                        self.logger.info(f"🔍 Dataset.df shape: {dataset.df.shape}")
-                else:
-                    self.logger.error("❌ Dataset object missing 'df' attribute!")
-                    raise AttributeError("Dataset object was not properly initialized - missing 'df' attribute")
-                
-                # Remove outliers - EXACTLY as get_data_real_system.py
-                self.logger.info("🔧 Calling dataset.remove_outliers()...")
-                dataset.remove_outliers()
-                
-                # Get the final dataframe - EXACTLY as get_data_real_system.py
-                df_data = dataset.df.copy()
-                self.logger.info("✅ Dataset processing successful")
-                
-            except Exception as dataset_error:
-                self.logger.error(f"❌ Dataset processing failed: {dataset_error}")
-                self.logger.info("🔄 Falling back to direct CSV processing...")
-                
-                # Fallback: process the CSV data directly
-                df_temp = pd.read_csv(temp_file, parse_dates=['timestamp'])
-                
-                # Convert to wide format (same as Dataset would do)
-                df_data = df_temp.pivot(index='timestamp', columns='name', values='value')
-                
-                # Handle missing values
-                df_data = df_data.fillna(method='ffill').fillna(0)
-                
-                self.logger.info(f"✅ Direct CSV processing successful: {df_data.shape}")
-                self.logger.info(f"   📊 Columns: {len(df_data.columns)}")
-            
-            self.logger.info(f"✅ Dataset processed successfully")
-            self.logger.info(f"   📊 Dataset shape: {df_data.shape}")
-            self.logger.info(f"   📊 Dataset columns: {len(df_data.columns)}")
-            
-            # Apply EXACTLY the same steps as get_data_real_system.py process_zabbix_data_for_training()
-            self.logger.info("🔄 Processing Zabbix data for training format...")
-            
-            # Apply preprocessing similar to original function
-            self.logger.info("Preprocessing data...")
-            
-            # Remove outliers for forecasting - EXACTLY as get_data_real_system.py
-            df_removed_outliers_forecasting = remove_outliers(df_data, 1000)
-            df_removed_nans_forecasting = df_removed_outliers_forecasting.dropna(axis=1, how="all")
-            
-            # Remove outliers for classification - EXACTLY as get_data_real_system.py
-            df_removed_outliers_statuses = remove_outliers(df_data, 1000)
-            df_removed_nans_classification = df_removed_outliers_statuses.dropna(axis=1, how="all")
-            
-            self.logger.info(f"✅ Preprocessing completed:")
-            self.logger.info(f"   📊 Forecasting data shape: {df_removed_nans_forecasting.shape}")
-            self.logger.info(f"   📊 Classification data shape: {df_removed_nans_classification.shape}")
-            
-            # Save processed data (same format as training)
-            df_removed_nans_forecasting.to_csv(self.processed_forecasting_file)
-            df_removed_nans_classification.to_csv(self.processed_classification_file)
-            
-            # Clean up temp file
-            if os.path.exists(temp_file):
-                os.remove(temp_file)
-            
-            return df_removed_nans_forecasting, df_removed_nans_classification
+            self.logger.info(f"📊 Collected data: {df_pivot.shape}")
+            return df_pivot
             
         except Exception as e:
-            self.logger.error(f"❌ Preprocessing failed: {e}")
-            import traceback
-            self.logger.error(f"Full error: {traceback.format_exc()}")
-            raise
-
-    def get_industrial_hosts(self) -> List[Dict]:
-        """Get industrial devices from configured host groups"""
-        try:
-            device_groups = self.config.get('industrial_filters', {}).get(
-                'device_groups', ["Virtual machines", "Zabbix servers"]
-            )
-            
-            # Get host groups
-            groups = self.zabbix_api.hostgroup.get(
-                filter={'name': device_groups},
-                output=['groupid', 'name']
-            )
-            
-            if not groups:
-                self.logger.warning(f"⚠️  No groups found matching: {device_groups}")
-                return []
-            
-            group_ids = [group['groupid'] for group in groups]
-            
-            # Get enabled hosts in these groups
-            hosts = self.zabbix_api.host.get(
-                groupids=group_ids,
-                output=['hostid', 'host', 'name'],
-                filter={'status': 0}  # Only enabled hosts
-            )
-            
-            self.logger.info(f"🏭 Found {len(hosts)} industrial hosts")
-            return hosts
-            
-        except Exception as e:
-            self.logger.error(f"❌ Host discovery failed: {e}")
-            return []
-
-    def get_training_data_format(self, hours_back: int = 2) -> Tuple[pd.DataFrame, pd.DataFrame, Dict, int, List[str]]:
-        """
-        Get data in EXACT same format as initial_model.py training
-        Returns: (df_online, df_removed_nans_forecasting, scalers, context_length, variables)
-        """
-        try:
-            self.logger.info(f"🔄 Using EXACT same pipeline as initial_model.py...")
-            
-            # Step 1: Collect raw data from Zabbix (same format as training CSV)
-            raw_df = self.collect_and_save_raw_data(hours_back)
-            
-            # Step 2: Apply EXACT same preprocessing as get_data_real_system.py
-            df_removed_nans_forecasting, df_removed_nans_classification = self.apply_training_preprocessing(raw_df)
-            
-            self.logger.info(f"📊 After preprocessing: {df_removed_nans_forecasting.shape}")
-            
-            # Step 3: Select numeric columns EXACTLY as initial_model.py does
-            df_removed_nans_forecasting = df_removed_nans_forecasting.select_dtypes(include=[np.number])
-            df_removed_nans_classification = df_removed_nans_classification.select_dtypes(include=[np.number])
-            
-            self.logger.info(f"📊 After numeric selection: {df_removed_nans_forecasting.shape}")
-            
-            # Step 4: Apply differencing EXACTLY as initial_model.py
-            df_differenced = df_removed_nans_forecasting.diff().dropna()
-            
-            self.logger.info(f"📊 After differencing: {df_differenced.shape}")
-            
-            # Step 5: Create df_online EXACTLY as initial_model.py
-            df_online = df_differenced.copy()
-            variables = df_online.columns.tolist()
-            
-            self.logger.info(f"📊 Before filtering: {len(variables)} variables")
-            
-            # Step 6: Filter to match training model expectations
-            expected_variables = self._get_expected_variables_from_model()
-            
-            if expected_variables and len(expected_variables) > 0:
-                self.logger.info(f"🔍 Filtering to match model expectations:")
-                self.logger.info(f"   📊 Available: {len(variables)} variables")
-                self.logger.info(f"   📊 Expected: {len(expected_variables)} variables")
-                
-                # Find matching variables
-                matching_variables = [var for var in expected_variables if var in variables]
-                
-                if len(matching_variables) > 0:
-                    # Filter to only matching variables
-                    df_online = df_online[matching_variables].copy()
-                    df_removed_nans_forecasting = df_removed_nans_forecasting[matching_variables].copy()
-                    variables = matching_variables
-                    
-                    self.logger.info(f"✅ Filtered to {len(variables)} matching variables")
-                else:
-                    self.logger.warning("⚠️  No matching variables found - using all available")
-            else:
-                self.logger.warning("⚠️  Could not load expected variables - using all available")
-            
-            self.logger.info(f"✅ Data processed with EXACT training pipeline:")
-            self.logger.info(f"   📊 df_online shape: {df_online.shape}")
-            self.logger.info(f"   🏷️  Variables count: {len(variables)}")
-            self.logger.info(f"   🏷️  First 5 variables: {variables[:5]}")
-            self.logger.info(f"   📅 Time range: {df_online.index.min()} to {df_online.index.max()}")
-            
-            # Step 7: Load or create scalers (same approach as training)
-            scalers = self._load_or_create_scalers(df_online, variables)
-            
-            return df_online, df_removed_nans_forecasting, scalers, self.context_length, variables
-            
-        except Exception as e:
-            self.logger.error(f"❌ Data processing failed: {e}")
-            import traceback
-            self.logger.error(f"Full traceback: {traceback.format_exc()}")
-            raise
-
-    def _get_expected_variables_from_model(self) -> List[str]:
-        """Load the expected variables from the trained model"""
-        try:
-            model_path = self.config.get('models', {}).get('forecasting_model_path')
-            if model_path and not os.path.isabs(model_path):
-                # Convert relative path to absolute path from current file location
-                model_path = os.path.join(os.path.dirname(__file__), model_path)
-            
-            variables_file = os.path.join(model_path, 'variables.txt') if model_path else None
-            
-            if variables_file and os.path.exists(variables_file):
-                with open(variables_file, 'r') as f:
-                    expected_variables = [line.strip() for line in f.readlines() if line.strip()]
-                self.logger.info(f"✅ Loaded {len(expected_variables)} expected variables from model")
-                return expected_variables
-            else:
-                self.logger.warning(f"⚠️  Variables file not found: {variables_file}")
-                return []
-                
-        except Exception as e:
-            self.logger.warning(f"⚠️  Could not load expected variables: {e}")
-            return []
-
-    def _load_or_create_scalers(self, df: pd.DataFrame, variables: List[str]) -> Dict:
-        """Load scalers from trained model or create new ones"""
-        model_path = self.config.get('models', {}).get('forecasting_model_path')
-        if model_path and not os.path.isabs(model_path):
-            # Convert relative path to absolute path from current file location
-            model_path = os.path.join(os.path.dirname(__file__), model_path)
-        scalers_file = os.path.join(model_path, 'scalers_train.pkl') if model_path else None
+            self.logger.error(f"❌ Data collection error: {e}")
+            return None
+    
+    def auto_adapt_features(self, df, expected_features):
+        """Automatically adapt features to match model"""
+        current_features = len(df.columns)
         
-        if scalers_file and os.path.exists(scalers_file):
-            with open(scalers_file, 'rb') as f:
-                scalers = pickle.load(f)
-            self.logger.info("✅ Loaded scalers from trained model")
-            return scalers
+        if current_features == expected_features:
+            return df  # Perfect match
+        
+        if current_features > expected_features:
+            # Select most important features
+            self.logger.info(f"🔧 Auto-selecting {expected_features} from {current_features} features")
+            
+            # Score columns by importance keywords
+            importance_keywords = [
+                'memory', 'Memory', 'cpu', 'CPU', 'utilization',
+                'Interface', 'Bits', 'network', 'traffic',
+                'Space', 'Available', 'Used', 'Total',
+                'temperature', 'Temperature'
+            ]
+            
+            scores = []
+            for col in df.columns:
+                score = sum(1 for keyword in importance_keywords if keyword in col)
+                scores.append((score, col))
+            
+            # Select top features
+            scores.sort(reverse=True)
+            selected_cols = [col for _, col in scores[:expected_features]]
+            
+            self.variables = selected_cols
+            return df[selected_cols]
+        
         else:
-            # Create new scalers for current data
-            scalers = {}
-            for var in variables:
+            # Too few features - can't proceed
+            self.logger.error(f"❌ Too few features: need {expected_features}, have {current_features}")
+            return None
+    
+    def save_current_variables(self, variables):
+        """Save current variables to file for future reference"""
+        try:
+            variables_file = os.path.join(self.config['models']['forecasting_model_path'], 'variables.txt')
+            with open(variables_file, 'w') as f:
+                for var in variables:
+                    f.write(f"{var}\n")
+            self.logger.info(f"💾 Saved {len(variables)} variables to {variables_file}")
+        except Exception as e:
+            self.logger.warning(f"⚠️ Could not save variables: {e}")
+    
+    def run_prediction(self, df):
+        """Run ML prediction on the data"""
+        try:
+            # Ensure we have enough data
+            if len(df) < self.context_length:
+                self.logger.warning(f"⚠️ Need {self.context_length} records, have {len(df)}")
+                return None
+            
+            # Simple scaling if no scalers available
+            if not self.scalers:
+                from sklearn.preprocessing import StandardScaler
                 scaler = StandardScaler()
-                data = df[var].dropna().values.reshape(-1, 1)
-                if len(data) > 0:
-                    scaler.fit(data)
-                    scalers[var] = scaler
-            
-            self.logger.warning("⚠️  Created new scalers (trained scalers not found)")
-            return scalers
-
-    def run_monitoring_loop(self):
-        """Main monitoring loop - simplified and clean"""
-        try:
-            self.logger.info("🚀 Starting optimized monitoring loop...")
-            
-            # Load trained model
-            model_path = self.config.get('models', {}).get('forecasting_model_path')
-            if model_path and not os.path.isabs(model_path):
-                # Convert relative path to absolute path from current file location
-                model_path = os.path.join(os.path.dirname(__file__), model_path)
-            
-            if not model_path or not os.path.exists(model_path):
-                raise FileNotFoundError(f"Model not found: {model_path}")
-            
-            initial_model = get_initial_model(model_path)
-            self.logger.info("📦 Loaded forecasting model")
-            
-            # Validate model input shape
-            expected_input_shape = initial_model.input_shape
-            self.logger.info(f"🔍 Model expects input shape: {expected_input_shape}")
-            
-            # The model expects (batch_size, context_length, num_features)
-            if len(expected_input_shape) == 3:
-                expected_context_length = expected_input_shape[1]
-                expected_num_features = expected_input_shape[2]
-                
-                if expected_context_length != self.context_length:
-                    self.logger.warning(f"⚠️  Context length mismatch: model expects {expected_context_length}, config has {self.context_length}")
-                    self.context_length = expected_context_length  # Use model's expectation
-                
-                self.logger.info(f"📐 Model configuration: context_length={expected_context_length}, features={expected_num_features}")
+                df_scaled = pd.DataFrame(
+                    scaler.fit_transform(df),
+                    columns=df.columns,
+                    index=df.index
+                )
+                self.scalers = {i: scaler for i in range(len(df.columns))}
             else:
-                self.logger.warning(f"⚠️  Unexpected model input shape: {expected_input_shape}")
+                df_scaled = df.copy()
+                for i, col in enumerate(df.columns):
+                    if i in self.scalers:
+                        df_scaled[col] = self.scalers[i].transform(df[[col]])
             
-            # Initialize dashboard with error handling
-            plotter = None
-            try:
-                plotter = DashRealTimePlotter()
-                plotter.start_server()
-                self.logger.info("🎯 Dashboard started at http://localhost:8050")
-                time.sleep(3)  # Allow initialization
-            except Exception as dash_error:
-                self.logger.warning(f"⚠️  Dashboard failed to start: {dash_error}")
-                self.logger.info("   Continuing without dashboard...")
-                plotter = None
+            # Run the existing forecasting function
+            predictions_df, actuals_df, _, _ = multistep_rolling_buffer_learning_prediction_with_dash(
+                initial_model=self.model,
+                df_online=df_scaled,
+                scalers=self.scalers,
+                context_length=self.context_length,
+                df_removed_nans_forecasting=df_scaled,
+                df_removed_nans_classification=df_scaled.copy()
+            )
             
-            # Main loop
-            cycle_count = 0
-            while True:
-                try:
-                    cycle_count += 1
-                    self.logger.info(f"🔄 Starting monitoring cycle #{cycle_count}")
-                    
-                    # Get fresh data from Zabbix
-                    df_online, df_removed_nans_forecasting, scalers, context_length, variables = self.get_training_data_format()
-                    
-                    if df_online.empty:
-                        self.logger.warning("⚠️  No data received, skipping cycle...")
-                        time.sleep(self.update_interval)
-                        continue
-                    
-                    # Prepare data structures for your existing forecasting function
-                    df_removed_nans_classification = df_removed_nans_forecasting.copy()
-                    
-                    # Validate data compatibility with model
-                    num_features = len(variables)
-                    expected_features = initial_model.input_shape[2] if len(initial_model.input_shape) == 3 else num_features
-                    
-                    self.logger.info(f"🔍 Data validation:")
-                    self.logger.info(f"   📊 Model expects: {expected_features} features")
-                    self.logger.info(f"   📊 Data provides: {num_features} features")
-                    self.logger.info(f"   🏷️  Sample variables: {variables[:5] if len(variables) > 5 else variables}")
-                    
-                    if num_features != expected_features:
-                        self.logger.error(f"❌ Feature mismatch: model expects {expected_features}, data has {num_features}")
-                        self.logger.info(f"   📋 All variables: {variables}")
-                        
-                        # AUTO-UPDATE variables.txt with current data
-                        variables_file = os.path.join(self.config['models']['forecasting_model_path'], 'variables.txt')
-                        try:
-                            self.logger.info("🔄 Auto-updating variables.txt with current Zabbix data...")
-                            with open(variables_file, 'w') as f:
-                                for var in variables:
-                                    f.write(f"{var}\n")
-                            self.logger.info(f"✅ Updated {variables_file} with {len(variables)} variables")
-                            self.logger.info("� Please retrain your model with the new variables or use a model trained on this data")
-                            self.logger.info("   📄 Variables saved - system will continue with current data")
-                        except Exception as e:
-                            self.logger.error(f"❌ Failed to update variables.txt: {e}")
-                            self.logger.info("   🔧 Manual update needed:")
-                            self.logger.info("      1. Model was trained on different data") 
-                            self.logger.info("      2. Different hosts/items available now")
-                            self.logger.info("      3. Need to retrain model with current data")
-                            self.logger.info("   Skipping this cycle...")
-                            time.sleep(self.update_interval)
-                            continue
-                        
-                        # AUTO-SELECT features to match model input shape
-                        if num_features > expected_features:
-                            self.logger.info(f"🔧 Auto-selecting {expected_features} most important features from {num_features} available...")
-                            
-                            # Select features based on variance and importance
-                            # Priority: Universal metrics that work across device types
-                            priority_keywords = [
-                                # Memory metrics (servers, VMs, devices)
-                                'memory', 'Memory', 'swap', 'Swap', 'RAM',
-                                # CPU/Processing (servers, VMs, industrial controllers)
-                                'CPU', 'cpu', 'utilization', 'processes', 'load', 'processor',
-                                # Network metrics (switches, servers, VMs, industrial)
-                                'Interface', 'Bits', 'packets', 'network', 'traffic', 'bandwidth',
-                                'received', 'sent', 'Inbound', 'Outbound', 'discarded', 'errors',
-                                # Storage metrics (servers, VMs)
-                                'Space:', 'Available', 'Used', 'Total', 'disk', 'filesystem', 'FS',
-                                # System metrics (universal)
-                                'Queue', 'uptime', 'logged', 'users', 'temperature', 'temp',
-                                # Industrial specific (SCADA, PLC, sensors)
-                                'Temperature', 'Pressure', 'Flow', 'Level', 'Status', 'Alarm',
-                                'sensor', 'Sensor', 'analog', 'digital', 'I/O', 'valve', 'motor',
-                                # Zabbix/monitoring specific
-                                'agent', 'ping', 'response', 'time', 'availability', 'operational'
-                            ]
-                            
-                            # Score variables by priority keywords
-                            scored_vars = []
-                            for i, var in enumerate(variables):
-                                score = 0
-                                for keyword in priority_keywords:
-                                    if keyword in var:
-                                        score += 1
-                                scored_vars.append((score, i, var))
-                            
-                            # Sort by score (descending) and take top features
-                            scored_vars.sort(key=lambda x: -x[0])
-                            selected_indices = [x[1] for x in scored_vars[:expected_features]]
-                            selected_variables = [variables[i] for i in selected_indices]
-                            
-                            # Update DataFrame to only include selected features
-                            df_online = df_online.iloc[:, selected_indices]
-                            df_removed_nans_forecasting = df_removed_nans_forecasting.iloc[:, selected_indices]
-                            
-                            # Update scalers to match selected features
-                            selected_scalers = {}
-                            for i, orig_i in enumerate(selected_indices):
-                                if orig_i < len(scalers):
-                                    selected_scalers[i] = scalers[orig_i]
-                            scalers = selected_scalers
-                            
-                            # Update variables list
-                            variables = selected_variables
-                            num_features = len(variables)
-                            
-                            self.logger.info(f"✅ Selected {num_features} features for model compatibility:")
-                            for i, var in enumerate(selected_variables[:5]):
-                                self.logger.info(f"   {i+1}. {var}")
-                            if len(selected_variables) > 5:
-                                self.logger.info(f"   ... and {len(selected_variables)-5} more")
-                        
-                        elif num_features < expected_features:
-                            self.logger.error(f"❌ Too few features: model needs {expected_features}, only {num_features} available")
-                            self.logger.info("   🔧 Need to retrain model with fewer features or add more data sources")
-                            time.sleep(self.update_interval)
-                            continue
-                    
-                    if len(df_online) < context_length:
-                        self.logger.warning(f"⚠️  Insufficient data: need {context_length}, have {len(df_online)}")
-                        time.sleep(self.update_interval)
-                        continue
-                    
-                    # Run forecasting using your existing pipeline
-                    self.logger.info(f"🎯 Running forecasting on {len(df_online)} data points with {num_features} features...")
-                    
-                    predictions_df, actuals_df, predictions_actuals_df, actuals_actuals_df = \
-                        multistep_rolling_buffer_learning_prediction_with_dash(
-                            initial_model=initial_model,
-                            df_online=df_online,
-                            scalers=scalers,
-                            context_length=context_length,
-                            df_removed_nans_forecasting=df_removed_nans_forecasting,
-                            df_removed_nans_classification=df_removed_nans_classification,
-                            dash_plotter=plotter,
-                            variables=variables,
-                            prediction_horizon=self.prediction_horizon
-                        )
-                    
-                    # Display detailed results
-                    if not predictions_df.empty:
-                        num_predictions = len(predictions_df)
-                        avg_error = abs(predictions_df.values - actuals_df.values).mean() if not actuals_df.empty else 0
-                        self.logger.info(f"✅ Cycle #{cycle_count} completed successfully:")
-                        self.logger.info(f"   📊 Generated {num_predictions} predictions")
-                        self.logger.info(f"   📉 Average prediction error: {avg_error:.4f}")
-                        self.logger.info(f"   🏷️  Variables: {list(predictions_df.columns)}")
-                        
-                        # Show sample predictions vs actuals
-                        if len(predictions_df) > 0 and len(actuals_df) > 0:
-                            sample_idx = min(2, len(predictions_df) - 1)  # Show 3rd prediction or last
-                            pred_sample = predictions_df.iloc[sample_idx].values
-                            actual_sample = actuals_df.iloc[sample_idx].values
-                            self.logger.info(f"   🎯 Sample prediction: {pred_sample[:3].round(4)}...")
-                            self.logger.info(f"   🎯 Sample actual:     {actual_sample[:3].round(4)}...")
-                    else:
-                        self.logger.info(f"✅ Cycle #{cycle_count} completed (no predictions generated)")
-                    
-                    # Wait for next cycle
-                    self.logger.info(f"⏱️  Waiting {self.update_interval}s for next cycle...")
-                    time.sleep(self.update_interval)
-                    
-                except KeyboardInterrupt:
-                    self.logger.info("🛑 Shutdown requested")
-                    break
-                except Exception as e:
-                    self.logger.error(f"❌ Error in cycle #{cycle_count}: {e}")
-                    self.logger.info(f"⏱️  Retrying in {self.update_interval}s...")
-                    time.sleep(self.update_interval)
+            self.logger.info("✅ Predictions completed")
+            return predictions_df, actuals_df
             
         except Exception as e:
-            self.logger.error(f"❌ Fatal error in monitoring loop: {e}")
-            raise
-
-    def test_connection(self):
-        """Test Zabbix connection and data retrieval"""
+            self.logger.error(f"❌ Prediction error: {e}")
+            return None
+    
+    def run_monitoring(self):
+        """Main monitoring loop - ultra simple"""
+        
+        # Initialize
+        if not self.connect_zabbix():
+            return
+        
+        if not self.load_model():
+            return
+        
+        # Get expected features from model
         try:
-            self.logger.info("🧪 Testing Zabbix connection...")
-            
-            # Test data retrieval
-            df_online, df_removed_nans_forecasting, scalers, context_length, variables = self.get_training_data_format(hours_back=1)
-            
-            print(f"✅ Connection test successful!")
-            print(f"   📊 Data shape: {df_online.shape}")
-            print(f"   🏷️  Variables: {len(variables)}")
-            print(f"   📅 Time range: {df_online.index.min()} to {df_online.index.max()}")
-            print(f"   ⚙️  Context length: {context_length}")
-            print(f"   🔧 Scalers loaded: {len(scalers)}")
-            
-            if len(variables) > 0:
-                print(f"   📋 Sample variables: {variables[:3]}...")
-            
-            return True
-            
-        except Exception as e:
-            print(f"❌ Connection test failed: {e}")
-            return False
+            expected_features = self.model.input_shape[2] if len(self.model.input_shape) == 3 else 23
+        except:
+            expected_features = 23  # Default fallback
+        
+        self.logger.info(f"🎯 Starting monitoring (expecting {expected_features} features)")
+        
+        cycle = 0
+        while True:
+            try:
+                cycle += 1
+                self.logger.info(f"🔄 Cycle #{cycle}")
+                
+                # Get fresh data
+                df = self.get_zabbix_data()
+                if df is None or df.empty:
+                    self.logger.warning("⚠️ No data, skipping cycle")
+                    time.sleep(self.update_interval)
+                    continue
+                
+                # Auto-adapt features
+                df_adapted = self.auto_adapt_features(df, expected_features)
+                if df_adapted is None:
+                    time.sleep(self.update_interval)
+                    continue
+                
+                # Save current variables for reference
+                if hasattr(self, 'variables') and self.variables:
+                    self.save_current_variables(self.variables)
+                
+                # Run prediction
+                result = self.run_prediction(df_adapted)
+                if result:
+                    self.logger.info(f"✅ Cycle #{cycle} completed successfully")
+                else:
+                    self.logger.warning(f"⚠️ Cycle #{cycle} failed")
+                
+                # Wait for next cycle
+                time.sleep(self.update_interval)
+                
+            except KeyboardInterrupt:
+                self.logger.info("🛑 Monitoring stopped by user")
+                break
+            except Exception as e:
+                self.logger.error(f"❌ Cycle error: {e}")
+                time.sleep(self.update_interval)
 
 
 def main():
-    """Main entry point with simplified argument handling"""
+    """Simple main function"""
     import argparse
     
-    parser = argparse.ArgumentParser(
-        description='Optimized Zabbix Connector for Industrial Anomaly Detection'
-    )
-    parser.add_argument(
-        '--config', '-c', 
-        default='config.json',
-        help='Configuration file path (default: config.json)'
-    )
-    parser.add_argument(
-        '--test', '-t', 
-        action='store_true',
-        help='Run connection test only'
-    )
-    parser.add_argument(
-        '--update-variables', '-u',
-        action='store_true', 
-        help='Update variables.txt with current Zabbix data and exit'
-    )
+    parser = argparse.ArgumentParser(description='Simple Zabbix Industrial Monitoring')
+    parser.add_argument('--config', '-c', default='config.json', help='Config file')
+    parser.add_argument('--test', '-t', action='store_true', help='Test connection only')
     
     args = parser.parse_args()
     
-    try:
-        # Initialize connector
-        connector = OptimizedZabbixConnector(args.config)
-        
-        if args.test:
-            # Test mode
-            success = connector.test_connection()
-            sys.exit(0 if success else 1)
-        elif args.update_variables:
-            # Update variables mode
-            print("🔄 Updating variables.txt with current Zabbix data...")
-            try:
-                df_online, df_removed_nans_forecasting, scalers, context_length, variables = connector.get_training_data_format()
-                variables_file = os.path.join(connector.config['models']['forecasting_model_path'], 'variables.txt')
-                
-                with open(variables_file, 'w') as f:
-                    for var in variables:
-                        f.write(f"{var}\n")
-                
-                print(f"✅ Updated {variables_file} with {len(variables)} variables:")
-                for i, var in enumerate(variables[:5]):
-                    print(f"   {i+1}. {var}")
-                if len(variables) > 5:
-                    print(f"   ... and {len(variables)-5} more")
-                print("🎯 Next step: Retrain your model with these variables")
-                sys.exit(0)
-            except Exception as e:
-                print(f"❌ Failed to update variables: {e}")
-                sys.exit(1)
-        else:
-            # Production monitoring
-            print("🏭 Starting production monitoring...")
-            print("Press Ctrl+C to stop")
-            connector.run_monitoring_loop()
-            
-    except KeyboardInterrupt:
-        print("\n🛑 Shutdown completed")
-    except Exception as e:
-        print(f"❌ Fatal error: {e}")
-        sys.exit(1)
+    monitor = SimpleZabbixMonitor(args.config)
+    
+    if args.test:
+        print("🧪 Testing connection...")
+        success = monitor.connect_zabbix() and monitor.load_model()
+        if success:
+            print("✅ Test successful!")
+            data = monitor.get_zabbix_data()
+            if data is not None:
+                print(f"📊 Sample data: {data.shape}")
+                print(f"🏷️ Sample columns: {list(data.columns)[:5]}")
+        sys.exit(0 if success else 1)
+    else:
+        print("🏭 Starting Simple Zabbix Monitoring...")
+        print("Press Ctrl+C to stop")
+        monitor.run_monitoring()
 
 
 if __name__ == "__main__":

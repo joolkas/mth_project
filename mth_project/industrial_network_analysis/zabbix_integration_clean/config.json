@@ -1,0 +1,14 @@
+{
+  "zabbix": {
+    "url": "http://localhost/zabbix",
+    "user": "Admin",
+    "password": "zabbix"
+  },
+  "models": {
+    "forecasting_model_path": "../forecasting_model"
+  },
+  "monitoring": {
+    "host_groups": ["Industrial", "SCADA", "Network", "PLC"],
+    "update_interval": 60
+  }
+}

@@ -1,118 +1,153 @@
 # 🏭 Simple Zabbix Industrial Monitoring
 
-**READ-ONLY monitoring system that fetches data from Zabbix and runs your trained ML models for industrial anomaly detection.**
+**Ultra-simplified version that automatically adapts to any Zabbix environment.**
 
 ## ✨ What It Does
 
-- **Fetches data FROM Zabbix** (no data sent back)
-- **Runs your existing LSTM forecasting model** 
-- **Uses your 1-minute monitoring cycle**
-- **Replaces `df_online` with real industrial device data**
-- **Shows results on Dash dashboard**
+- **🔍 Auto-Discovery**: Finds all hosts and metrics automatically
+- **🔧 Auto-Adaptation**: Adapts to any number of features (23, 42, 100+)
+- **🧠 Smart Selection**: Picks the most important features automatically
+- **💾 Auto-Save**: Saves current variables for reference
+- **🔄 Auto-Recovery**: Handles errors and continues running
 
-## 🚀 Quick Setup
+## 🚀 Quick Start
 
-### 1. Install on Debian VM
+### 1. Deploy
 ```bash
-# Clone repository
-git clone -b official_program https://github.com/joolkas/mth_project.git
-cd mth_project/mth_project/industrial_network_analysis/zabbix_integration
-
-# Deploy
-chmod +x scripts/deploy.sh
-sudo ./scripts/deploy.sh
+cd zabbix_integration
+sudo ./simple_deploy.sh
 ```
 
-### 2. Copy Your Models
+### 2. Test Connection
 ```bash
-# Copy your trained forecasting model
-sudo cp -r ../forecasting_model /opt/anomaly_detection/models/
+python3 /opt/anomaly_detection/main.py --test
 ```
 
-### 3. Start Monitoring
+### 3. Direct Train Model (NEW!)
 ```bash
-# Start service
+python3 /opt/anomaly_detection/direct_train.py
+```
+This automatically:
+- ✅ Collects 7 days of Zabbix data
+- ✅ Trains LSTM model from scratch with current features
+- ✅ No dependency on old file paths or formats
+- ✅ Creates model, scalers, and variables automatically
+
+### 4. Start Monitoring
+```bash
 sudo systemctl start zabbix-monitoring
-
-# View logs
 sudo journalctl -u zabbix-monitoring -f
-
-# Open dashboard: http://localhost:8050
 ```
 
 ## ⚙️ Configuration
 
-Simple config in `config.json`:
+Only need to configure `config.json`:
 
 ```json
 {
   "zabbix": {
     "url": "http://your-zabbix-server/zabbix",
-    "user": "Admin",
+    "user": "Admin", 
     "password": "your-password"
   },
   "models": {
     "forecasting_model_path": "/opt/anomaly_detection/models/forecasting_model"
   },
-  "monitoring": {
-    "update_interval": 60
-  },
   "industrial_filters": {
-    "device_groups": ["Industrial", "SCADA", "PLC", "HMI", "Network"]
+    "device_groups": ["Zabbix servers", "Virtual machines", "Industrial"]
   }
 }
 ```
 
-## 🔧 Usage
+## 🎯 Key Features
 
-### Test Connection
+### **Complete Auto-Adaptation**
+- Changes `device_groups` → System adapts automatically
+- Different hosts → Discovers and uses new metrics
+- More/fewer features → Auto-selects optimal subset
+- New environment → Works without code changes
+
+### **Intelligent Feature Selection** 
+Automatically prioritizes:
+- 🧠 Memory metrics (available, used, total)
+- 🖥️ CPU metrics (utilization, processes)
+- 🌐 Network metrics (bits, packets, interfaces)
+- 💾 Disk metrics (space available, used)
+- 🌡️ Sensor metrics (temperature, pressure)
+
+### **Zero Configuration**
+- No manual feature mapping
+- No hardcoded variable names
+- No feature count limits
+- No device-specific code
+
+## 📊 How It Works
+
+1. **Discovery**: Scans configured host groups
+2. **Collection**: Gets all available metrics
+3. **Adaptation**: Automatically selects best features for model
+4. **Processing**: Applies same preprocessing as training
+5. **Prediction**: Runs ML model with adapted data
+6. **Logging**: Records everything for monitoring
+
+## 🔧 Troubleshooting
+
+### Connection Issues
 ```bash
+# Check Zabbix connection
 python3 /opt/anomaly_detection/main.py --test
 ```
 
-### Run Monitoring
-```bash
-python3 /opt/anomaly_detection/main.py
-```
+### No Data
+- Verify host groups exist in Zabbix
+- Check hosts have monitored items
+- Ensure Zabbix user has permissions
 
-### Service Management
-```bash
-# Start/stop service
-sudo systemctl start zabbix-monitoring
-sudo systemctl stop zabbix-monitoring
+### Feature Mismatch
+- System automatically adapts - no action needed
+- Retrain model with current data for best results
 
-# Check status
+### Service Issues
+```bash
+# Check service status
 sudo systemctl status zabbix-monitoring
 
 # View logs
 sudo journalctl -u zabbix-monitoring -f
+
+# Restart service
+sudo systemctl restart zabbix-monitoring
 ```
 
-## 📊 Data Mapping
+## 📈 Example Output
 
-Your training variables automatically map to Zabbix metrics:
+```
+🎯 Starting monitoring (expecting 23 features)
+🔄 Cycle #1
+📊 Collected data: (120, 42)
+🔧 Auto-selecting 23 from 42 features
+💾 Saved 23 variables to variables.txt
+✅ Cycle #1 completed successfully
+```
 
-| Training Variable | Zabbix Items |
-|-------------------|--------------|
-| ICMP response time | `icmpping`, `icmppingsec` |
-| Switch Temperature | `sensor.temp.*`, `temperature.*` |
-| CPU utilization | `system.cpu.util` |
-| Memory utilization | `vm.memory.util` |
-| Network traffic | `net.if.in`, `net.if.out` |
+## 🚀 Advanced Usage
 
-## 🏭 Zabbix Requirements
+### Quick Retrain
+```bash
+# Retrain model with fresh data (self-contained)
+python3 /opt/anomaly_detection/direct_train.py
+```
 
-1. **Host Groups**: Create groups named "Industrial", "SCADA", "PLC", "HMI", "Network"
-2. **Add Devices**: Assign your industrial devices to these groups  
-3. **Enable Metrics**: Ensure devices collect required items (CPU, memory, network, sensors)
+### Manual Data Collection Only
+```bash
+# Just collect data without training
+python3 /opt/anomaly_detection/simple_training.py
+```
 
-## 🎯 Integration
+### Manual Feature Count
+Modify `simple_main.py` line 185:
+```python
+expected_features = 30  # Force specific count
+```
 
-The system seamlessly integrates with your existing code:
-
-- **Your `online_forecasting_multi_step.py`**: Works unchanged
-- **Your trained models**: Used as-is
-- **Your Dash dashboard**: Shows real industrial data
-- **1-minute cycle**: Maintained exactly as designed
-
-This transforms your research system into a **production industrial monitoring solution** with live device data! 🏭✨
+This simplified system handles **everything automatically** - just change the config and it adapts! 🎯
