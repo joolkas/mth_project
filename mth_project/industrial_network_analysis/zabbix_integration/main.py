@@ -217,13 +217,43 @@ class OptimizedZabbixConnector:
             raw_df.to_csv(temp_file, index=False)
             
             # Use EXACTLY the same Dataset processing as get_data_real_system.py
-            dataset = Dataset(temp_file)
-            
-            # Remove outliers - EXACTLY as get_data_real_system.py
-            dataset.remove_outliers()
-            
-            # Get the final dataframe - EXACTLY as get_data_real_system.py
-            df_data = dataset.df.copy()
+            try:
+                self.logger.info(f"🔧 Creating Dataset object from: {temp_file}")
+                dataset = Dataset(temp_file)
+                
+                # Debug the Dataset object before calling remove_outliers
+                self.logger.info(f"🔍 Dataset object created, type: {type(dataset)}")
+                if hasattr(dataset, 'df'):
+                    self.logger.info(f"🔍 Dataset.df exists, type: {type(dataset.df)}")
+                    if hasattr(dataset.df, 'shape'):
+                        self.logger.info(f"🔍 Dataset.df shape: {dataset.df.shape}")
+                else:
+                    self.logger.error("❌ Dataset object missing 'df' attribute!")
+                    raise AttributeError("Dataset object was not properly initialized - missing 'df' attribute")
+                
+                # Remove outliers - EXACTLY as get_data_real_system.py
+                self.logger.info("🔧 Calling dataset.remove_outliers()...")
+                dataset.remove_outliers()
+                
+                # Get the final dataframe - EXACTLY as get_data_real_system.py
+                df_data = dataset.df.copy()
+                self.logger.info("✅ Dataset processing successful")
+                
+            except Exception as dataset_error:
+                self.logger.error(f"❌ Dataset processing failed: {dataset_error}")
+                self.logger.info("🔄 Falling back to direct CSV processing...")
+                
+                # Fallback: process the CSV data directly
+                df_temp = pd.read_csv(temp_file, parse_dates=['timestamp'])
+                
+                # Convert to wide format (same as Dataset would do)
+                df_data = df_temp.pivot(index='timestamp', columns='name', values='value')
+                
+                # Handle missing values
+                df_data = df_data.fillna(method='ffill').fillna(0)
+                
+                self.logger.info(f"✅ Direct CSV processing successful: {df_data.shape}")
+                self.logger.info(f"   📊 Columns: {len(df_data.columns)}")
             
             self.logger.info(f"✅ Dataset processed successfully")
             self.logger.info(f"   📊 Dataset shape: {df_data.shape}")
