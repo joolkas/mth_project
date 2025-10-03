@@ -5,7 +5,7 @@
     "password": "zabbix"
   },
   "models": {
-    "forecasting_model_path": "models/forecasting_model/best_model.h5"
+    "forecasting_model_path": "../forecasting_model"
   },
   "monitoring": {
     "context_length": 60,
