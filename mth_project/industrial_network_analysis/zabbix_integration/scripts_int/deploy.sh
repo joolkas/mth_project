@@ -78,7 +78,7 @@ read -s -p "Enter Zabbix password: " ZABBIX_PASSWORD
 echo ""
 
 # Update config
-sed -i "s|your-zabbix-server|${ZABBIX_URL#http://}|g" $INSTALL_DIR/config.json
+sed -i "s|your-zabbix-server|${ZABBIX_URL#https://}|g" $INSTALL_DIR/config.json
 sed -i "s|Admin|$ZABBIX_USER|g" $INSTALL_DIR/config.json
 sed -i "s|your-password|$ZABBIX_PASSWORD|g" $INSTALL_DIR/config.json
 
@@ -86,6 +86,7 @@ cp ../data_utils.py $INSTALL_DIR/
 cp ../initial_model.py $INSTALL_DIR/  
 cp ../online_forecasting_multi_step.py $INSTALL_DIR/
 cp ../dash_plotter.py $INSTALL_DIR/
+cp ../get_data.py $INSTALL_DIR/
 cp -r ../forecasting_model $INSTALL_DIR/models/ 2>/dev/null || echo "Manual model copy needed"
 
 # Create systemd service
