@@ -1,6 +1,6 @@
 {
   "zabbix": {
-    "url": "http://your-zabbix-server",
+    "url": "https://your-zabbix-server",
     "user": "Admin",
     "password": "your-password"
   },
