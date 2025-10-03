@@ -76,8 +76,12 @@ class ZabbixAnomalyMonitor:
                         "forecasting_model_path": "../forecasting_model"
                     },
                     "monitoring": {
-                        "host_groups": ["Industrial", "SCADA", "Network"],
-                        "update_interval": 60
+                        "context_length": 60,
+                        "update_interval": 60,
+                        "prediction_horizon": 6
+                    },
+                    "industrial_filters": {
+                        "device_groups": ["Zabbix servers", "Linux servers"]
                     }
                 }
                 
@@ -155,7 +159,7 @@ class ZabbixAnomalyMonitor:
         """Fetch recent data from industrial devices"""
         try:
             # Get hosts from configured groups
-            host_groups = self.config['monitoring'].get('host_groups', ['Industrial'])
+            host_groups = self.config.get('industrial_filters', {}).get('device_groups', ['Zabbix servers'])
             all_hosts = []
             
             for group_name in host_groups:
@@ -424,7 +428,8 @@ def main():
                 print("✅ All systems ready!")
             else:
                 print("⚠️ No data collected - check host groups and monitored items")
-                print(f"   Configured host groups: {monitor.config['monitoring']['host_groups']}")
+                configured_groups = monitor.config.get('industrial_filters', {}).get('device_groups', ['Zabbix servers'])
+                print(f"   Configured host groups: {configured_groups}")
                 
         else:
             print("\n❌ System not ready:")

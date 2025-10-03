@@ -48,7 +48,7 @@ def test_zabbix_connection(config_file="config.json"):
             print(f"   - {group['name']} (ID: {group['groupid']})")
         
         # Test configured groups
-        configured_groups = config['monitoring']['host_groups']
+        configured_groups = config.get('industrial_filters', {}).get('device_groups', ['Zabbix servers'])
         print(f"\n🎯 Checking configured groups: {configured_groups}")
         
         found_groups = []
