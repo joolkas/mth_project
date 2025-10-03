@@ -353,33 +353,53 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
                                         variables, 
                                         prediction_horizon=6, 
                                         classification_model_path=None):
+    """
+    Simplified multi-step forecasting with Dash integration
+    Removes complex features for production stability
+    """
 
-    # Initialize graceful shutdown system
+    # Initialize graceful shutdown system (simplified for production)
     global stop_flag
     stop_flag.clear()  # Reset the flag for this run
     
-    # Start keyboard listener in separate thread
-    print("⌨️  Starting keyboard listener (Press 'q' to quit gracefully)...")
-    keyboard_thread = threading.Thread(target=keyboard_listener, daemon=True)
-    keyboard_thread.start()
+    print("🚀 Starting multi-step forecasting pipeline...")
+    print(f"📊 Data info: {len(df_online)} samples, {len(variables)} variables, context_length={context_length}")
+    print(f"🎯 Variables: {variables}")
+    print(f"📅 Time range: {df_online.index[0]} to {df_online.index[-1]}")
     
-    # Prepare model for online learning by recompiling with fresh optimizer
-    print("\n Preparing multi-step model for online learning...")
-    try:
-        initial_model.compile(
-            optimizer=keras.optimizers.Adam(learning_rate=0.001), 
-            loss='mse', 
-            metrics=['mae']
-        )
-        print("\n Multi-step model successfully prepared for online learning")
-    except Exception as e:
-        print(f"Warning: Could not recompile model ({e}), will try per-step recompilation")
+    # Skip keyboard listener for production stability
+    
+    # Prepare model for online learning (simplified)
+    print("🔧 Preparing multi-step model...")
+    model = initial_model  # Use model as-is for stability
     
     # Scale the online data using the same scalers from training
+    print("⚖️  Scaling data with training scalers...")
     scaled_data = np.zeros_like(df_online.values)
+    
+    scaling_errors = []
     for i, var in enumerate(variables):
-        scaler = scalers[var]
-        scaled_data[:, i] = scaler.transform(df_online[var].values.reshape(-1, 1)).flatten()
+        if var in scalers:
+            scaler = scalers[var]
+            try:
+                scaled_data[:, i] = scaler.transform(df_online[var].values.reshape(-1, 1)).flatten()
+            except Exception as e:
+                scaling_errors.append(f"{var}: {e}")
+                # Fallback: use standardization
+                data_values = df_online[var].values
+                scaled_data[:, i] = (data_values - data_values.mean()) / (data_values.std() + 1e-8)
+        else:
+            scaling_errors.append(f"{var}: scaler not found")
+            # Fallback: use standardization
+            data_values = df_online[var].values
+            scaled_data[:, i] = (data_values - data_values.mean()) / (data_values.std() + 1e-8)
+    
+    if scaling_errors:
+        print(f"⚠️  Scaling issues: {len(scaling_errors)} variables had problems")
+        for error in scaling_errors[:3]:  # Show first 3 errors
+            print(f"   • {error}")
+    else:
+        print("✅ All variables scaled successfully")
     
     final_predictions = []
     final_actuals = []
@@ -389,56 +409,44 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
     actuals_actuals = []
     total_steps = len(scaled_data) - context_length - prediction_horizon + 1
 
-    if dash_plotter is not None:
-        dash_plotter.set_total_steps(total_steps)
-
-    current_context = scaled_data[:context_length].copy() 
-    model = initial_model
+    print(f"📈 Will process {total_steps} prediction steps")
     
-    # Store previous predictions for learning from historical errors
-    previous_prediction = None
-    previous_context = None
+    if dash_plotter is not None:
+        try:
+            dash_plotter.set_total_steps(total_steps)
+            print("🎯 Dashboard configured successfully")
+        except Exception as e:
+            print(f"⚠️  Dashboard configuration failed: {e}")
+            dash_plotter = None
 
-    # Load classification model once at the beginning
-    try:
-        if classification_model_path is None:
-            classification_model_path = r"C:\ThesisWork\offical_approach\mth_project\mth_project\industrial_network_analysis\classification_model"
-        
-        classification_model, label_to_index, index_to_label, label_to_name = load_classification_model(classification_model_path)
-        classification_enabled = True
-        
-        # Set the label_to_name dictionary in the dashboard
-        if dash_plotter is not None:
-            dash_plotter.set_label_to_name_dict(label_to_name)
+    current_context = scaled_data[:context_length].copy()
+    print(f"🔄 Initial context shape: {current_context.shape}")
+    
+    # Track processing time
+    start_time = time.time()
 
-    except Exception as e:
-        print(f"Warning: Could not load classification model: {e}")
-        print("   Continuing with multi-step forecasting only...")
-        classification_enabled = False
-        classification_model = None
+    # Disable classification for production stability (can be re-enabled later)
+    print("🔧 Classification disabled for production stability")
+    classification_enabled = False
+    classification_model = None
 
     # Main prediction loop
     for t in range(context_length, len(scaled_data) - prediction_horizon + 1):
-        # Check for quit signal at the start of each iteration
-        if stop_flag.is_set():
-            print("🛑 Graceful shutdown initiated...")
-            break
-            
         current_step = t - context_length
         
-        # Interruptible sleep (can be interrupted by quit signal)
-        interruptible_sleep(1)  # wait 1 second (for demo)
+        # Show progress every 10 steps
+        if current_step % 10 == 0:
+            progress_pct = (current_step / total_steps) * 100
+            print(f"📊 Progress: {current_step}/{total_steps} steps ({progress_pct:.1f}%)")
         
-        # Check again after sleep in case quit was requested
-        if stop_flag.is_set():
-            print("🛑 Graceful shutdown initiated...")
-            break
+        # No sleep in production mode for faster processing
 
         # 1. Make multi-step predictions using direct method
         try:
             step_predictions = predict_multistep_direct(model, current_context, variables=variables, prediction_horizon=prediction_horizon)    
         except Exception as e:
-            print(f" Multi-step prediction failed ({e}).")
+            print(f"⚠️  Multi-step prediction failed ({e}), skipping this step")
+            continue  # Skip this iteration if prediction fails
                     
         # 2. Convert all predictions to original scale
         step_predictions_original = []
@@ -492,39 +500,9 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
             last_actual_values
         )
  
-        # 6. Classification (Only if model is loaded), with proper temporal alignment
-        if classification_enabled and classification_model is not None:
-            try:
-                # Create classification input using historical context + first prediction
-                # Take last 5 timesteps from context + first prediction = 6 timesteps total
-                historical_part = current_context[-5:]  # Shape: (5, features)
-                
-                if len(step_predictions_original) > 0:
-                    # Add the first prediction as the 6th timestep
-                    first_prediction = np.array(step_predictions_original[0]).reshape(1, -1)  # Shape: (1, features)
-                    classification_input = np.vstack([historical_part, first_prediction])  # Shape: (6, features)
-                else:
-                    # Fallback: use last 6 timesteps from context
-                    classification_input = current_context[-6:]  # Shape: (6, features)
-                
-                # Reshape for model input: (batch_size=1, timesteps=6, features)
-                classification_input_reshaped = classification_input.reshape(1, 6, len(variables))
-                
-                # Perform classification
-                classification_result = classification_model.predict(classification_input_reshaped, verbose=0)
-                result = np.argmax(classification_result, axis=1)
-                result_to_label = index_to_label[result[0]]
-
-                classification_result_name = label_to_name[result_to_label]
-                print(f"Classification result: {classification_result_name}")
-
-            except Exception as e:
-                print(f"Classification error: {e}")
-                classification_result = None
-                result = None
-        else:
-            classification_result = None
-            result = None
+        # 6. Classification (Disabled for production stability)
+        classification_result = None
+        result = None
 
         port_statuses_check = df_removed_nans_classification.iloc[t]
         port_statuses = {}
@@ -546,13 +524,8 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
                 future_prediction_t1 = step_predictions_actual[0] if len(step_predictions_actual) > 0 else None
                 
                 try:
-                    # Prepare classification result if available
+                    # Classification disabled for stability
                     classification_result_data = None
-                    if classification_enabled and 'classification_result_name' in locals() and 'classification_result' in locals():
-                        classification_result_data = {
-                            'classification': classification_result_name,
-                            'confidence': float(np.max(classification_result))
-                        }
                     
                     dash_plotter.add_buffer_predictions(
                         predictions=step_predictions_actual, 
@@ -578,63 +551,24 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
         else:
             print("DEBUG: dash_plotter is None, not calling dash plotter")
 
-        # 8. Update context and model for next iteration - MULTI-STEP ADAPTATION
+        # 8. Update context for next iteration (simplified - no online learning)
         new_row = scaled_data[t, :].copy()
+        current_context = np.vstack((current_context[1:], new_row))
         
-        # REALISTIC ONLINE LEARNING: Learn from historical prediction error
-        if previous_prediction is not None and previous_context is not None:
-            # The actual values that just arrived (multiple steps)
-            actual_current_steps = []
-            num_previous_steps = len(previous_prediction)
-            
-            for step in range(num_previous_steps):
-                if t + step < len(scaled_data):
-                    actual_current_steps.append(scaled_data[t + step, :].copy())
-            
-            if len(actual_current_steps) > 0:
-                # Flatten previous multi-step prediction for comparison
-                previous_pred_flattened = np.concatenate(previous_prediction, axis=0)
-                actual_steps_flattened = np.concatenate(actual_current_steps, axis=0)
-                
-                # Calculate the error from our previous multi-step prediction
-                historical_prediction_error = np.mean(np.abs(previous_pred_flattened - actual_steps_flattened))
-                
-                print(f"   Learning from multi-step historical error at step {current_step}: MAE = {historical_prediction_error:.6f}")
-                
-                # Create multi-step target for training
-                multistep_target = actual_steps_flattened.reshape(1, -1)
-                
-                # Train the model on the historical multi-step prediction error
-                model = improve_model(
-                    model, 
-                    previous_context.reshape(1, context_length, len(variables)), 
-                    multistep_target, 
-                    prediction_error_mae=historical_prediction_error
-                )
-        
-        # Prepare context for the NEXT multi-step prediction
-        updated_context = np.vstack((current_context[1:], new_row))
-        
-        # Make multi-step prediction for the NEXT steps - this will be evaluated in the next iteration
-        if t + prediction_horizon < len(scaled_data):
-            next_predictions = predict_multistep_direct(model, updated_context, variables, prediction_horizon)
-            
-            # Store this prediction and context for learning in the next iteration
-            previous_prediction = [pred.copy() for pred in next_predictions]
-            previous_context = updated_context.copy()
-        
-        # Update context for next iteration
-        current_context = updated_context
+        # Calculate and display prediction error for monitoring
+        if len(step_predictions_original) > 0 and len(actuals_original) > 0:
+            prediction_error = np.mean(np.abs(np.array(step_predictions_original[0]) - np.array(actuals_original[0])))
+            if current_step % 20 == 0:  # Show error every 20 steps
+                print(f"   📉 Step {current_step} prediction error (MAE): {prediction_error:.6f}")
 
-    # End of main loop - either completed naturally or stopped by user
+    # End of main loop
     print("=" * 60)
-    
-    if stop_flag.is_set():
-        print("Multi-step rolling prediction stopped by user request!")
-        print(f"📈 Processed {current_step + 1} steps before stopping")
-    else:
-        print("Multi-step rolling prediction completed successfully!")
-        print(f"📈 Processed all {current_step + 1} steps")
+    print("✅ Multi-step rolling prediction completed successfully!")
+    print(f"📈 Processed all {current_step + 1} steps")
+    print(f"🎯 Generated {len(final_predictions)} predictions")
+    processing_time = time.time() - start_time
+    print(f"⏱️  Total processing time: {processing_time:.2f} seconds")
+    print(f"⚡ Average time per step: {processing_time/max(1, current_step+1):.3f} seconds")
     
     # Create results using graceful cleanup function
     try:

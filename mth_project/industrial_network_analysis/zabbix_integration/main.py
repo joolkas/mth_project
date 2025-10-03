@@ -326,7 +326,7 @@ class OptimizedZabbixConnector:
         model_path = self.config.get('models', {}).get('forecasting_model_path')
         if model_path and not os.path.isabs(model_path):
             # Convert relative path to absolute path from current file location
-            model_path = os.path.abspath(os.path.join(os.path.dirname(__file__), model_path))
+            model_path = os.path.join(os.path.dirname(__file__), model_path)
         scalers_file = os.path.join(model_path, 'scalers_train.pkl') if model_path else None
         
         if scalers_file and os.path.exists(scalers_file):
@@ -356,10 +356,7 @@ class OptimizedZabbixConnector:
             model_path = self.config.get('models', {}).get('forecasting_model_path')
             if model_path and not os.path.isabs(model_path):
                 # Convert relative path to absolute path from current file location
-                model_path = os.path.abspath(os.path.join(os.path.dirname(__file__), model_path))
-            
-            self.logger.info(f"🔍 Looking for model at: {model_path}")
-            self.logger.info(f"🔍 Directory contents: {os.listdir(model_path) if os.path.exists(model_path) else 'Directory not found'}")
+                model_path = os.path.join(os.path.dirname(__file__), model_path)
             
             if not model_path or not os.path.exists(model_path):
                 raise FileNotFoundError(f"Model not found: {model_path}")
@@ -367,11 +364,34 @@ class OptimizedZabbixConnector:
             initial_model = get_initial_model(model_path)
             self.logger.info("📦 Loaded forecasting model")
             
-            # Initialize dashboard
-            plotter = DashRealTimePlotter()
-            plotter.start_server()
-            self.logger.info("🎯 Dashboard started at http://localhost:8050")
-            time.sleep(3)  # Allow initialization
+            # Validate model input shape
+            expected_input_shape = initial_model.input_shape
+            self.logger.info(f"🔍 Model expects input shape: {expected_input_shape}")
+            
+            # The model expects (batch_size, context_length, num_features)
+            if len(expected_input_shape) == 3:
+                expected_context_length = expected_input_shape[1]
+                expected_num_features = expected_input_shape[2]
+                
+                if expected_context_length != self.context_length:
+                    self.logger.warning(f"⚠️  Context length mismatch: model expects {expected_context_length}, config has {self.context_length}")
+                    self.context_length = expected_context_length  # Use model's expectation
+                
+                self.logger.info(f"📐 Model configuration: context_length={expected_context_length}, features={expected_num_features}")
+            else:
+                self.logger.warning(f"⚠️  Unexpected model input shape: {expected_input_shape}")
+            
+            # Initialize dashboard with error handling
+            plotter = None
+            try:
+                plotter = DashRealTimePlotter()
+                plotter.start_server()
+                self.logger.info("🎯 Dashboard started at http://localhost:8050")
+                time.sleep(3)  # Allow initialization
+            except Exception as dash_error:
+                self.logger.warning(f"⚠️  Dashboard failed to start: {dash_error}")
+                self.logger.info("   Continuing without dashboard...")
+                plotter = None
             
             # Main loop
             cycle_count = 0
@@ -391,8 +411,24 @@ class OptimizedZabbixConnector:
                     # Prepare data structures for your existing forecasting function
                     df_removed_nans_classification = df_removed_nans_forecasting.copy()
                     
+                    # Validate data compatibility with model
+                    num_features = len(variables)
+                    expected_features = initial_model.input_shape[2] if len(initial_model.input_shape) == 3 else num_features
+                    
+                    if num_features != expected_features:
+                        self.logger.error(f"❌ Feature mismatch: model expects {expected_features}, data has {num_features}")
+                        self.logger.info(f"   Data variables: {variables}")
+                        self.logger.info("   Skipping this cycle...")
+                        time.sleep(self.update_interval)
+                        continue
+                    
+                    if len(df_online) < context_length:
+                        self.logger.warning(f"⚠️  Insufficient data: need {context_length}, have {len(df_online)}")
+                        time.sleep(self.update_interval)
+                        continue
+                    
                     # Run forecasting using your existing pipeline
-                    self.logger.info(f"🎯 Running forecasting on {len(df_online)} data points...")
+                    self.logger.info(f"🎯 Running forecasting on {len(df_online)} data points with {num_features} features...")
                     
                     predictions_df, actuals_df, predictions_actuals_df, actuals_actuals_df = \
                         multistep_rolling_buffer_learning_prediction_with_dash(
@@ -407,7 +443,24 @@ class OptimizedZabbixConnector:
                             prediction_horizon=self.prediction_horizon
                         )
                     
-                    self.logger.info(f"✅ Cycle #{cycle_count} completed successfully")
+                    # Display detailed results
+                    if not predictions_df.empty:
+                        num_predictions = len(predictions_df)
+                        avg_error = abs(predictions_df.values - actuals_df.values).mean() if not actuals_df.empty else 0
+                        self.logger.info(f"✅ Cycle #{cycle_count} completed successfully:")
+                        self.logger.info(f"   📊 Generated {num_predictions} predictions")
+                        self.logger.info(f"   📉 Average prediction error: {avg_error:.4f}")
+                        self.logger.info(f"   🏷️  Variables: {list(predictions_df.columns)}")
+                        
+                        # Show sample predictions vs actuals
+                        if len(predictions_df) > 0 and len(actuals_df) > 0:
+                            sample_idx = min(2, len(predictions_df) - 1)  # Show 3rd prediction or last
+                            pred_sample = predictions_df.iloc[sample_idx].values
+                            actual_sample = actuals_df.iloc[sample_idx].values
+                            self.logger.info(f"   🎯 Sample prediction: {pred_sample[:3].round(4)}...")
+                            self.logger.info(f"   🎯 Sample actual:     {actual_sample[:3].round(4)}...")
+                    else:
+                        self.logger.info(f"✅ Cycle #{cycle_count} completed (no predictions generated)")
                     
                     # Wait for next cycle
                     self.logger.info(f"⏱️  Waiting {self.update_interval}s for next cycle...")

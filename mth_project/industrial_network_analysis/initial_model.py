@@ -706,7 +706,45 @@ def get_initial_model(initial_model_path=None, ):
                             
                     except Exception as e4:
                         print(f"Final attempt failed: {e4}")
-                        raise RuntimeError(f"All model loading attempts failed. Original error: {e1}. Consider retraining the model with current TensorFlow version.")
+                        
+                        # Fifth attempt: Try loading from alternative formats
+                        try:
+                            print("Attempting to load from metadata and weights...")
+                            
+                            # Check for metadata file
+                            metadata_file = os.path.join(initial_model_path, "model_metadata.json")
+                            weights_file = os.path.join(initial_model_path, "model_weights.h5")
+                            
+                            if os.path.exists(metadata_file) and os.path.exists(weights_file):
+                                import json
+                                with open(metadata_file, 'r') as f:
+                                    metadata = json.load(f)
+                                
+                                # Rebuild model from metadata
+                                context_length = metadata['context_length']
+                                num_features = metadata['num_features']
+                                model_mode = metadata['model_mode']
+                                
+                                if model_mode == "multi_step":
+                                    prediction_horizon = metadata['prediction_horizon']
+                                    model = create_online_multistep_model_simple(context_length, num_features, prediction_horizon)
+                                else:
+                                    model = create_online_onestep_model_simple(context_length, num_features)
+                                
+                                # Load weights
+                                model.load_weights(weights_file)
+                                print("✅ Model rebuilt from metadata and weights loaded successfully")
+                            else:
+                                raise FileNotFoundError("No alternative model formats found")
+                                
+                        except Exception as e5:
+                            print(f"Alternative format loading failed: {e5}")
+                            raise RuntimeError(f"All model loading attempts failed.\n"
+                                             f"Original error: {e1}\n"
+                                             f"Solutions:\n"
+                                             f"1. Retrain model with current TensorFlow version\n"
+                                             f"2. Install exact TensorFlow version used for training\n"
+                                             f"3. Use Docker with pinned dependencies")
         
         # Basic model validation
         if model is None:
@@ -842,9 +880,42 @@ if __name__ == "__main__":
         plot_results(df_actuals, df_predictions, title = "One-Step", history = history)
         description = f"Initial One-Step Model Training Description:\n{model_description}\n Results:\n MSE: {mse:.6f}\n MAE: {mae:.6f}\n RMSE: {rmse:.6f}\n Percentage Error: {percentage_error:.6f}\n, Accuracy: {history.history['accuracy'][-1]:.6f}\n"
 
-    # save the trained model
+    # save the trained model in multiple formats for compatibility
+    # 1. Save complete model (H5 format)
     model.save(os.path.join(initial_model_path, "initial_model.h5"))
     print(f"✓ Initial model saved to: {os.path.join(initial_model_path, 'initial_model.h5')}")
+    
+    # 2. Save weights only (more compatible)
+    model.save_weights(os.path.join(initial_model_path, "model_weights.h5"))
+    print(f"✓ Model weights saved to: {os.path.join(initial_model_path, 'model_weights.h5')}")
+    
+    # 3. Save model architecture as JSON (version-independent)
+    import json
+    with open(os.path.join(initial_model_path, "model_architecture.json"), 'w') as f:
+        f.write(model.to_json())
+    print(f"✓ Model architecture saved to: {os.path.join(initial_model_path, 'model_architecture.json')}")
+    
+    # 4. Save model metadata for reconstruction
+    model_metadata = {
+        'model_mode': model_mode,
+        'context_length': context_length,
+        'prediction_horizon': prediction_horizon,
+        'num_features': len(variables),
+        'input_shape': [context_length, len(variables)],
+        'output_shape': prediction_horizon * len(variables) if model_mode == "multi_step" else len(variables),
+        'tensorflow_version': keras.__version__,
+        'architecture_params': {
+            'first_layer_units': first_layer_units,
+            'second_layer_units': second_layer_units,
+            'third_layer_units': third_layer_units,
+            'dense_units': dense_units,
+            'activation': activation,
+            'dropout_rate': dropout_rate
+        }
+    }
+    with open(os.path.join(initial_model_path, "model_metadata.json"), 'w') as f:
+        json.dump(model_metadata, f, indent=2)
+    print(f"✓ Model metadata saved to: {os.path.join(initial_model_path, 'model_metadata.json')}")
     
     save_online_data(initial_model_path, df_online, scalers_train, context_length, df_removed_nans_forecasting, df_removed_nans_classification, variables = variables)
     print(f"✓ Online data saved to: {initial_model_path}")
