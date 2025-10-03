@@ -202,7 +202,7 @@ class OptimizedZabbixConnector:
             raise
 
     def apply_training_preprocessing(self, raw_df: pd.DataFrame = None):
-        """Apply EXACT same preprocessing as get_data_real_system.py"""
+        """Apply EXACT same preprocessing as get_data_real_system.py - SIMPLIFIED"""
         try:
             # If no raw_df provided, try to load from file
             if raw_df is None:
@@ -210,80 +210,46 @@ class OptimizedZabbixConnector:
                     raise FileNotFoundError("No raw data file found")
                 raw_df = pd.read_csv(self.raw_data_file, parse_dates=['timestamp'])
             
-            self.logger.info("🔧 Applying training-compatible preprocessing...")
+            self.logger.info("🔧 Using EXACT same preprocessing as get_data_real_system.py...")
             
-            # SAME preprocessing as get_data_real_system.py with error handling
-            # Create a temporary Dataset-like structure
+            # Save data in exact same format as get_data_real_system.py expects
             temp_file = os.path.join(self.temp_data_dir, "temp_dataset.csv")
-            raw_df[['name', 'timestamp', 'value']].to_csv(temp_file, index=False)
+            raw_df.to_csv(temp_file, index=False)
             
-            self.logger.info(f"🔧 Processing data with Dataset class...")
+            # Use EXACTLY the same Dataset processing as get_data_real_system.py
+            dataset = Dataset(temp_file)
             
-            try:
-                # Try using Dataset class first
-                dataset = Dataset(temp_file)
-                
-                # Remove outliers - SAME as get_data_real_system.py
-                dataset.remove_outliers()
-                
-                # Get the final dataframe - SAME as get_data_real_system.py
-                df_processed = dataset.df.copy()
-                
-                self.logger.info("✅ Successfully used Dataset class")
-                
-            except Exception as dataset_error:
-                self.logger.warning(f"⚠️  Dataset class failed ({dataset_error}), using direct processing...")
-                
-                # Fallback: Process data directly without Dataset class
-                df_raw = pd.read_csv(temp_file, parse_dates=['timestamp'])
-                
-                # Convert to wide format (same as Dataset class would do)
-                df_processed = df_raw.pivot(index='timestamp', columns='name', values='value')
-                
-                # Handle missing values (same as Dataset preprocessing)
-                try:
-                    df_processed = df_processed.ffill()  # Forward fill missing values
-                except AttributeError:
-                    df_processed.fillna(method='ffill', inplace=True)  # Fallback for older pandas
-                df_processed.fillna(0, inplace=True)  # Fill remaining NaN with 0
-                
-                # Apply basic outlier removal directly
-                for col in df_processed.columns:
-                    if df_processed[col].dtype in ['float64', 'int64']:
-                        q75, q25 = np.percentile(df_processed[col].dropna(), [75, 25])
-                        iqr = q75 - q25
-                        lower_bound = q25 - (1.5 * iqr)
-                        upper_bound = q75 + (1.5 * iqr)
-                        df_processed[col] = df_processed[col].clip(lower_bound, upper_bound)
-                
-                self.logger.info("✅ Successfully used direct processing")
+            # Remove outliers - EXACTLY as get_data_real_system.py
+            dataset.remove_outliers()
             
-            # Ensure we have a proper DataFrame
-            if not isinstance(df_processed, pd.DataFrame):
-                raise ValueError(f"Expected DataFrame, got {type(df_processed)}")
+            # Get the final dataframe - EXACTLY as get_data_real_system.py
+            df_data = dataset.df.copy()
             
-            self.logger.info(f"📊 Processed dataset shape: {df_processed.shape}")
-            if len(df_processed.columns) > 0:
-                self.logger.info(f"📊 Sample columns: {list(df_processed.columns)[:5]}...")
-            else:
-                self.logger.warning("⚠️  No columns in processed dataset!")
+            self.logger.info(f"✅ Dataset processed successfully")
+            self.logger.info(f"   📊 Dataset shape: {df_data.shape}")
+            self.logger.info(f"   📊 Dataset columns: {len(df_data.columns)}")
             
-            # Apply same outlier removal as get_data_real_system.py
-            df_removed_outliers_forecasting = remove_outliers(df_processed, 1000)
+            # Apply EXACTLY the same steps as get_data_real_system.py process_zabbix_data_for_training()
+            self.logger.info("🔄 Processing Zabbix data for training format...")
+            
+            # Apply preprocessing similar to original function
+            self.logger.info("Preprocessing data...")
+            
+            # Remove outliers for forecasting - EXACTLY as get_data_real_system.py
+            df_removed_outliers_forecasting = remove_outliers(df_data, 1000)
             df_removed_nans_forecasting = df_removed_outliers_forecasting.dropna(axis=1, how="all")
             
-            # Remove outliers for classification - SAME as get_data_real_system.py
-            df_removed_outliers_statuses = remove_outliers(df_processed, 1000)
+            # Remove outliers for classification - EXACTLY as get_data_real_system.py
+            df_removed_outliers_statuses = remove_outliers(df_data, 1000)
             df_removed_nans_classification = df_removed_outliers_statuses.dropna(axis=1, how="all")
-            
-            # Save processed data (same format as training)
-            df_removed_nans_forecasting.to_csv(self.processed_forecasting_file)
-            df_removed_nans_classification.to_csv(self.processed_classification_file)
             
             self.logger.info(f"✅ Preprocessing completed:")
             self.logger.info(f"   📊 Forecasting data shape: {df_removed_nans_forecasting.shape}")
             self.logger.info(f"   📊 Classification data shape: {df_removed_nans_classification.shape}")
-            self.logger.info(f"   💾 Saved to: {self.processed_forecasting_file}")
+            
+            # Save processed data (same format as training)
+            df_removed_nans_forecasting.to_csv(self.processed_forecasting_file)
+            df_removed_nans_classification.to_csv(self.processed_classification_file)
             
             # Clean up temp file
             if os.path.exists(temp_file):
@@ -293,6 +259,8 @@ class OptimizedZabbixConnector:
             
         except Exception as e:
             self.logger.error(f"❌ Preprocessing failed: {e}")
+            import traceback
+            self.logger.error(f"Full error: {traceback.format_exc()}")
             raise
 
     def get_industrial_hosts(self) -> List[Dict]:
@@ -330,37 +298,50 @@ class OptimizedZabbixConnector:
 
     def get_training_data_format(self, hours_back: int = 2) -> Tuple[pd.DataFrame, pd.DataFrame, Dict, int, List[str]]:
         """
-        Get data in the exact format expected by your training pipeline using same preprocessing
+        Get data in EXACT same format as initial_model.py training
         Returns: (df_online, df_removed_nans_forecasting, scalers, context_length, variables)
         """
         try:
-            self.logger.info(f"🔄 Collecting and preprocessing {hours_back} hours of data...")
+            self.logger.info(f"🔄 Using EXACT same pipeline as initial_model.py...")
             
             # Step 1: Collect raw data from Zabbix (same format as training CSV)
             raw_df = self.collect_and_save_raw_data(hours_back)
             
-            # Step 2: Apply the exact same preprocessing as in training
+            # Step 2: Apply EXACT same preprocessing as get_data_real_system.py
             df_removed_nans_forecasting, df_removed_nans_classification = self.apply_training_preprocessing(raw_df)
             
-            # Step 3: Apply differencing (same as initial_model.py)
+            self.logger.info(f"📊 After preprocessing: {df_removed_nans_forecasting.shape}")
+            
+            # Step 3: Select numeric columns EXACTLY as initial_model.py does
+            df_removed_nans_forecasting = df_removed_nans_forecasting.select_dtypes(include=[np.number])
+            df_removed_nans_classification = df_removed_nans_classification.select_dtypes(include=[np.number])
+            
+            self.logger.info(f"📊 After numeric selection: {df_removed_nans_forecasting.shape}")
+            
+            # Step 4: Apply differencing EXACTLY as initial_model.py
             df_differenced = df_removed_nans_forecasting.diff().dropna()
             
-            # Step 4: Create df_online from the processed data (same as training)
+            self.logger.info(f"📊 After differencing: {df_differenced.shape}")
+            
+            # Step 5: Create df_online EXACTLY as initial_model.py
             df_online = df_differenced.copy()
             variables = df_online.columns.tolist()
             
-            # Step 5: Load or create scalers (same approach as training)
-            scalers = self._load_or_create_scalers(df_online, variables)
-            
-            self.logger.info(f"✅ Data processed with training pipeline:")
+            self.logger.info(f"✅ Data processed with EXACT training pipeline:")
             self.logger.info(f"   📊 df_online shape: {df_online.shape}")
-            self.logger.info(f"   🏷️  Variables: {len(variables)}")
+            self.logger.info(f"   🏷️  Variables count: {len(variables)}")
+            self.logger.info(f"   🏷️  First 5 variables: {variables[:5]}")
             self.logger.info(f"   📅 Time range: {df_online.index.min()} to {df_online.index.max()}")
+            
+            # Step 6: Load or create scalers (same approach as training)
+            scalers = self._load_or_create_scalers(df_online, variables)
             
             return df_online, df_removed_nans_forecasting, scalers, self.context_length, variables
             
         except Exception as e:
             self.logger.error(f"❌ Data processing failed: {e}")
+            import traceback
+            self.logger.error(f"Full traceback: {traceback.format_exc()}")
             raise
 
     def _load_or_create_scalers(self, df: pd.DataFrame, variables: List[str]) -> Dict:
