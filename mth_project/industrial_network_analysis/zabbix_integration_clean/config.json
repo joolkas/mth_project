@@ -8,7 +8,7 @@
     "forecasting_model_path": "../forecasting_model"
   },
   "monitoring": {
-    "host_groups": ["Industrial", "SCADA", "Network", "PLC"],
+    "host_groups": ["Zabbix servers"],
     "update_interval": 60
   }
 }
