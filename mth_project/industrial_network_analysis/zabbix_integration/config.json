@@ -13,6 +13,6 @@
     "prediction_horizon": 6
   },
   "industrial_filters": {
-    "device_groups": ["Virtual machines", "Zabbix servers"]
+    "device_groups": ["Zabbix servers"]
   }
 }
