@@ -72,7 +72,7 @@ echo "Expected: $INSTALL_DIR/models/forecasting_model/"
 echo ""
 
 # Get configuration
-read -p "Enter Zabbix server URL: " ZABBIX_URL
+#read -p "Enter Zabbix server URL: " ZABBIX_URL
 read -p "Enter Zabbix username: " ZABBIX_USER
 read -s -p "Enter Zabbix password: " ZABBIX_PASSWORD
 echo ""
@@ -81,6 +81,12 @@ echo ""
 sed -i "s|your-zabbix-server|${ZABBIX_URL#http://}|g" $INSTALL_DIR/config.json
 sed -i "s|Admin|$ZABBIX_USER|g" $INSTALL_DIR/config.json
 sed -i "s|your-password|$ZABBIX_PASSWORD|g" $INSTALL_DIR/config.json
+
+cp ../data_utils.py $INSTALL_DIR/
+cp ../initial_model.py $INSTALL_DIR/  
+cp ../online_forecasting_multi_step.py $INSTALL_DIR/
+cp ../dash_plotter.py $INSTALL_DIR/
+cp -r ../forecasting_model $INSTALL_DIR/models/ 2>/dev/null || echo "Manual model copy needed"
 
 # Create systemd service
 echo -e "${BLUE}🔧 Creating service...${NC}"
