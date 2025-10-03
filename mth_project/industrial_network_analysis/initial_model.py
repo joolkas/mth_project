@@ -46,7 +46,8 @@ reduce_lr_patience = 5       # More patience for learning rate reduction
 initial_idx = 48 * 60 # first 48 hours for initial training
 split_ratio = 0.8  # 80% training, 20% testing
 
-initial_model_path = "C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\forecasting_model" # path for model saving and loading
+# Use relative path from current file location
+initial_model_path = os.path.join(os.path.dirname(__file__), "forecasting_model")  # path for model saving and loading
 
 model_description = f"Initial Model - Epochs: {epochs},\n \
     Batch Size: {batch_size},\n Validation Split: {validation_split},\n Context Length: {context_length},\n \
@@ -228,7 +229,7 @@ def train_model(model,
                 es_patience = early_stopping_patience,
                 lr_factor = reduce_lr_factor,
                 lr_patience = reduce_lr_patience,
-                model_save_path = 'C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\forecasting_model\\best_model.h5'):
+                model_save_path = os.path.join(os.path.dirname(__file__), "forecasting_model", "best_model.h5")):
     
     callback_list = []
     if use_callbacks:
@@ -508,7 +509,7 @@ def plot_results(actuals_df, predictions_df, title, history=None):
 def save_online_data(initial_model_path, df_online, scalers_train, context_length, df_removed_nans_forecasting, df_removed_nans_classification, variables, model_mode = model_mode):
     # Create directory if it doesn't exist
     if initial_model_path is None:
-        initial_model_path = "C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\forecasting_model"
+        initial_model_path = os.path.join(os.path.dirname(__file__), "forecasting_model")
     os.makedirs(initial_model_path, exist_ok=True)
     
     # Save DataFrames as CSV or Parquet to preserve structure
@@ -539,7 +540,7 @@ def save_online_data(initial_model_path, df_online, scalers_train, context_lengt
 
 def get_initial_model(initial_model_path=None, ):
     if initial_model_path is None:
-        initial_model_path = "C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\forecasting_model"
+        initial_model_path = os.path.join(os.path.dirname(__file__), "forecasting_model")
     
     model_file_path = f"{initial_model_path}\\best_model.h5"
     
