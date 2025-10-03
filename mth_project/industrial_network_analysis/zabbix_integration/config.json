@@ -1,8 +1,8 @@
 {
   "zabbix": {
-    "url": "https://your-zabbix-server",
+    "url": "https://192.168.93.45",
     "user": "Admin",
-    "password": "your-password"
+    "password": "zabbix"
   },
   "models": {
     "forecasting_model_path": "C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\forecasting_model"
