@@ -357,13 +357,38 @@ class OptimizedZabbixConnector:
             df_online = df_differenced.copy()
             variables = df_online.columns.tolist()
             
+            self.logger.info(f"📊 Before filtering: {len(variables)} variables")
+            
+            # Step 6: Filter to match training model expectations
+            expected_variables = self._get_expected_variables_from_model()
+            
+            if expected_variables and len(expected_variables) > 0:
+                self.logger.info(f"🔍 Filtering to match model expectations:")
+                self.logger.info(f"   📊 Available: {len(variables)} variables")
+                self.logger.info(f"   📊 Expected: {len(expected_variables)} variables")
+                
+                # Find matching variables
+                matching_variables = [var for var in expected_variables if var in variables]
+                
+                if len(matching_variables) > 0:
+                    # Filter to only matching variables
+                    df_online = df_online[matching_variables].copy()
+                    df_removed_nans_forecasting = df_removed_nans_forecasting[matching_variables].copy()
+                    variables = matching_variables
+                    
+                    self.logger.info(f"✅ Filtered to {len(variables)} matching variables")
+                else:
+                    self.logger.warning("⚠️  No matching variables found - using all available")
+            else:
+                self.logger.warning("⚠️  Could not load expected variables - using all available")
+            
             self.logger.info(f"✅ Data processed with EXACT training pipeline:")
             self.logger.info(f"   📊 df_online shape: {df_online.shape}")
             self.logger.info(f"   🏷️  Variables count: {len(variables)}")
             self.logger.info(f"   🏷️  First 5 variables: {variables[:5]}")
             self.logger.info(f"   📅 Time range: {df_online.index.min()} to {df_online.index.max()}")
             
-            # Step 6: Load or create scalers (same approach as training)
+            # Step 7: Load or create scalers (same approach as training)
             scalers = self._load_or_create_scalers(df_online, variables)
             
             return df_online, df_removed_nans_forecasting, scalers, self.context_length, variables
@@ -373,6 +398,29 @@ class OptimizedZabbixConnector:
             import traceback
             self.logger.error(f"Full traceback: {traceback.format_exc()}")
             raise
+
+    def _get_expected_variables_from_model(self) -> List[str]:
+        """Load the expected variables from the trained model"""
+        try:
+            model_path = self.config.get('models', {}).get('forecasting_model_path')
+            if model_path and not os.path.isabs(model_path):
+                # Convert relative path to absolute path from current file location
+                model_path = os.path.join(os.path.dirname(__file__), model_path)
+            
+            variables_file = os.path.join(model_path, 'variables.txt') if model_path else None
+            
+            if variables_file and os.path.exists(variables_file):
+                with open(variables_file, 'r') as f:
+                    expected_variables = [line.strip() for line in f.readlines() if line.strip()]
+                self.logger.info(f"✅ Loaded {len(expected_variables)} expected variables from model")
+                return expected_variables
+            else:
+                self.logger.warning(f"⚠️  Variables file not found: {variables_file}")
+                return []
+                
+        except Exception as e:
+            self.logger.warning(f"⚠️  Could not load expected variables: {e}")
+            return []
 
     def _load_or_create_scalers(self, df: pd.DataFrame, variables: List[str]) -> Dict:
         """Load scalers from trained model or create new ones"""
