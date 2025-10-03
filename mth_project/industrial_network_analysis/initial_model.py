@@ -57,6 +57,54 @@ model_description = f"Initial Model - Epochs: {epochs},\n \
 
 results_file_name = "initial_model_results_006"
 
+def create_online_multistep_model_simple(context_length, num_features, prediction_horizon):
+    """Simplified multi-step model creation for compatibility recovery"""
+    output_size = prediction_horizon * num_features
+    
+    model = keras.models.Sequential([
+        keras.layers.LSTM(128, return_sequences=True, input_shape=(context_length, num_features)),
+        keras.layers.Dropout(0.15),  
+        keras.layers.LSTM(64, return_sequences=True),
+        keras.layers.Dropout(0.15),
+        keras.layers.LSTM(32, return_sequences=False),
+        keras.layers.Dropout(0.21),
+        keras.layers.Dense(256, activation='relu'),
+        keras.layers.Dropout(0.3),
+        keras.layers.Dense(128, activation='relu'),
+        keras.layers.Dropout(0.15),
+        keras.layers.Dense(output_size, activation='linear')
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(learning_rate=0.001), 
+        loss='mse',
+        metrics=['accuracy','mse']
+    )
+    
+    return model
+
+def create_online_onestep_model_simple(context_length, num_features):
+    """Simplified one-step model creation for compatibility recovery"""
+    model = keras.models.Sequential([
+        keras.layers.LSTM(128, return_sequences=True, input_shape=(context_length, num_features)),
+        keras.layers.Dropout(0.15),  
+        keras.layers.LSTM(64, return_sequences=False),
+        keras.layers.Dropout(0.21),
+        keras.layers.Dense(256, activation='relu'),
+        keras.layers.Dropout(0.3),
+        keras.layers.Dense(128, activation='relu'),
+        keras.layers.Dropout(0.15),
+        keras.layers.Dense(num_features, activation='linear')
+    ])
+
+    model.compile(
+        optimizer=keras.optimizers.Adam(learning_rate=0.001), 
+        loss='mse',
+        metrics=['accuracy', 'mse']
+    )
+    
+    return model
+
 def create_online_multistep_model(df,
                                   context_length=context_length,
                                   prediction_horizon=prediction_horizon,
@@ -574,7 +622,91 @@ def get_initial_model(initial_model_path=None, ):
                 print("Model loaded without compilation and recompiled successfully")
             except Exception as e2:
                 print(f"Second attempt failed: {e2}")
-                raise e2
+                try:
+                    # Third attempt: Rebuild model architecture and load weights only
+                    print("Attempting to rebuild model architecture and load weights...")
+                    
+                    # Load model config to get architecture details
+                    import h5py
+                    with h5py.File(model_file_path, 'r') as f:
+                        if 'model_config' in f.attrs:
+                            import json
+                            model_config = json.loads(f.attrs['model_config'].decode('utf-8'))
+                            
+                            # Try to determine if it's multi-step or one-step from config
+                            if 'config' in model_config and 'layers' in model_config['config']:
+                                layers = model_config['config']['layers']
+                                output_layer = layers[-1] if layers else None
+                                
+                                if output_layer and 'config' in output_layer:
+                                    output_units = output_layer['config'].get('units', 0)
+                                    input_shape = None
+                                    
+                                    # Find input shape
+                                    for layer in layers:
+                                        if layer.get('class_name') == 'InputLayer':
+                                            batch_shape = layer.get('config', {}).get('batch_shape', [])
+                                            if len(batch_shape) >= 3:
+                                                context_length = batch_shape[1]
+                                                num_features = batch_shape[2]
+                                                input_shape = (context_length, num_features)
+                                                break
+                                    
+                                    if input_shape:
+                                        context_length, num_features = input_shape
+                                        
+                                        # Determine model type based on output units
+                                        if output_units == num_features:
+                                            # One-step model
+                                            print(f"Rebuilding one-step model: input{input_shape}, output{output_units}")
+                                            model = create_online_onestep_model_simple(context_length, num_features)
+                                        elif output_units > num_features:
+                                            # Multi-step model
+                                            prediction_horizon = output_units // num_features
+                                            print(f"Rebuilding multi-step model: input{input_shape}, horizon{prediction_horizon}")
+                                            model = create_online_multistep_model_simple(context_length, num_features, prediction_horizon)
+                                        else:
+                                            raise ValueError(f"Cannot determine model type from output units: {output_units}")
+                                        
+                                        # Load weights
+                                        model.load_weights(model_file_path)
+                                        print("✅ Model architecture rebuilt and weights loaded successfully")
+                                    else:
+                                        raise ValueError("Could not determine input shape from model config")
+                                else:
+                                    raise ValueError("Could not find output layer configuration")
+                            else:
+                                raise ValueError("Could not parse model configuration")
+                        else:
+                            raise ValueError("No model configuration found in H5 file")
+                            
+                except Exception as e3:
+                    print(f"Third attempt failed: {e3}")
+                    try:
+                        # Fourth attempt: Create a basic model with common architecture
+                        print("Final attempt: Creating basic compatible model...")
+                        
+                        # Assume common settings from your training
+                        context_length = 60  # Default context length
+                        num_features = 23    # Based on error message batch_shape [None, 60, 23]
+                        
+                        # Try to create a simple multi-step model (most likely case)
+                        prediction_horizon = 6  # Default from config
+                        model = create_online_multistep_model_simple(context_length, num_features, prediction_horizon)
+                        
+                        # Try to load weights - this might work even if layer loading failed
+                        try:
+                            model.load_weights(model_file_path)
+                            print("✅ Basic model created and weights loaded successfully")
+                        except:
+                            # If weights don't match, try one-step model
+                            model = create_online_onestep_model_simple(context_length, num_features) 
+                            model.load_weights(model_file_path)
+                            print("✅ One-step model created and weights loaded successfully")
+                            
+                    except Exception as e4:
+                        print(f"Final attempt failed: {e4}")
+                        raise RuntimeError(f"All model loading attempts failed. Original error: {e1}. Consider retraining the model with current TensorFlow version.")
         
         # Basic model validation
         if model is None:
