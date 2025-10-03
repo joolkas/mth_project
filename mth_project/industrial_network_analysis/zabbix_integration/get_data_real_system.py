@@ -14,6 +14,7 @@ from typing import Dict, List, Optional
 import pandas as pd
 import numpy as np
 from pyzabbix import ZabbixAPI
+import urllib3
 
 # configure warning logging
 warnings_logger = logging.getLogger('warnings')
@@ -138,6 +139,12 @@ def get_data_from_zabbix():
     # Connect to Zabbix
     try:
         zapi = ZabbixAPI(zabbix_config['url'])
+        # Disable SSL verification for self-signed certificates
+        zapi.session.verify = False
+        # Suppress SSL warnings
+        import urllib3
+        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        
         zapi.login(zabbix_config['user'], zabbix_config['password'])
         print("✅ Connected to Zabbix successfully")
     except Exception as e:
