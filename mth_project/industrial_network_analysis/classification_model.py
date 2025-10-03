@@ -288,7 +288,7 @@ def train_classification_model(model, X_train, y_train, X_test, y_test, epochs =
             verbose=1
         ),
         callbacks.ModelCheckpoint(
-            'C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\classification_model\\best_model.h5',
+            os.path.join(os.path.dirname(__file__), 'classification_model', 'best_model.h5'),
             monitor='val_loss',
             save_best_only=True,
             verbose=1
