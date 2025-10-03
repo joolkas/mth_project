@@ -232,127 +232,54 @@ def collect_training_data_from_zabbix(zapi: ZabbixAPI, config: Dict) -> Optional
                 print(f"⚠️ No monitored items found for host {host_name}")
                 continue
             
-            # Filter items we're interested in
+            # Filter items we're interested in - COLLECT ALL ITEMS to match training data exactly
             relevant_items = {}
             for item in items:
                 key = item['key_']
+                name = item['name']
                 
-                # Map items to our variables (same as in main.py)
-                if 'icmpping' in key.lower():
-                    relevant_items['ICMP'] = item['itemid']
-                elif 'temp' in key.lower() or 'temperature' in key.lower():
-                    relevant_items['temperature'] = item['itemid']
-                elif 'cpu' in key.lower() and ('util' in key.lower() or 'usage' in key.lower()):
-                    relevant_items['cpu'] = item['itemid']
-                elif 'memory' in key.lower() and ('util' in key.lower() or 'usage' in key.lower()):
-                    relevant_items['memory'] = item['itemid']
-                elif 'net.if' in key.lower() and ('in' in key.lower() or 'out' in key.lower()):
-                    if 'bits' not in relevant_items:
-                        relevant_items['bits'] = []
-                    relevant_items['bits'].append(item['itemid'])
+                # Create descriptive names that match training data format
+                item_name = f"{host_name} - {name}"
+                relevant_items[item['itemid']] = item_name
             
             if not relevant_items:
                 print(f"⚠️ No relevant items found for host {host_name}")
                 continue
             
-            # Get history for relevant items
-            host_data = {'timestamp': [], 'host': []}
+            # Get history for ALL relevant items (same format as training data)
+            all_records = []
             
-            # Initialize columns
-            for var in ['ICMP', 'temperature', 'cpu', 'memory', 'bits']:
-                host_data[var] = []
-            
-            # Get history for each item type
-            for var_name, item_info in relevant_items.items():
-                try:
-                    if var_name == 'bits' and isinstance(item_info, list):
-                        # Handle multiple network interfaces
-                        all_bits_data = []
-                        for item_id in item_info:
-                            history = zapi.history.get(
-                                itemids=[item_id],
-                                time_from=time_from,
-                                time_till=time_to,
-                                output='extend',
-                                sortfield='clock',
-                                sortorder='ASC'
-                            )
-                            if history:
-                                all_bits_data.extend(history)
-                        
-                        # Aggregate bits data by timestamp
-                        bits_by_time = {}
-                        for record in all_bits_data:
-                            timestamp = int(record['clock'])
-                            value = float(record['value'])
-                            if timestamp not in bits_by_time:
-                                bits_by_time[timestamp] = 0
-                            bits_by_time[timestamp] += value
-                        
-                        # Store aggregated data
-                        for timestamp, total_bits in bits_by_time.items():
-                            if timestamp not in [ts for ts in host_data['timestamp']]:
-                                host_data['timestamp'].append(timestamp)
-                                host_data['host'].append(host_name)
-                                host_data['ICMP'].append(0)
-                                host_data['temperature'].append(0)
-                                host_data['cpu'].append(0)
-                                host_data['memory'].append(0)
-                                host_data['bits'].append(total_bits)
-                            else:
-                                # Update existing record
-                                idx = host_data['timestamp'].index(timestamp)
-                                host_data['bits'][idx] = total_bits
-                    
-                    else:
-                        # Handle single items
-                        item_id = item_info if not isinstance(item_info, list) else item_info[0]
-                        history = zapi.history.get(
-                            itemids=[item_id],
-                            time_from=time_from,
-                            time_till=time_to,
-                            output='extend',
-                            sortfield='clock',
-                            sortorder='ASC'
-                        )
-                        
-                        for record in history:
-                            timestamp = int(record['clock'])
-                            value = float(record['value'])
-                            
-                            if timestamp not in host_data['timestamp']:
-                                host_data['timestamp'].append(timestamp)
-                                host_data['host'].append(host_name)
-                                # Initialize all variables
-                                for var in ['ICMP', 'temperature', 'cpu', 'memory', 'bits']:
-                                    if var == var_name:
-                                        host_data[var].append(value)
-                                    else:
-                                        host_data[var].append(0)
-                            else:
-                                # Update existing record
-                                idx = host_data['timestamp'].index(timestamp)
-                                host_data[var_name][idx] = value
+            # Fetch history for all items at once
+            if relevant_items:
+                history = zapi.history.get(
+                    itemids=list(relevant_items.keys()),
+                    time_from=time_from,
+                    time_till=time_to,
+                    output='extend',
+                    sortfield='clock',
+                    sortorder='ASC'
+                )
                 
-                except Exception as e:
-                    print(f"⚠️ Error getting history for {var_name} from {host_name}: {e}")
-                    continue
-            
-            # Convert to DataFrame
-            if host_data['timestamp']:
-                host_df = pd.DataFrame(host_data)
-                host_df['datetime'] = pd.to_datetime(host_df['timestamp'], unit='s')
-                host_df = host_df.sort_values('datetime')
-                all_data.append(host_df)
-                print(f"✅ Collected {len(host_df)} records from {host_name}")
+                # Convert to training data format (name, timestamp, value)
+                for record in history:
+                    if record['itemid'] in relevant_items:
+                        all_records.append({
+                            'name': relevant_items[record['itemid']],
+                            'timestamp': pd.to_datetime(int(record['clock']), unit='s'),
+                            'value': float(record['value'])
+                        })
+                
+                print(f"✅ Collected {len(all_records)} records from {host_name}")
+                all_data.extend(all_records)
         
         if not all_data:
             print("❌ No data collected from any host")
             return None
         
-        # Combine all host data
-        df_combined = pd.concat(all_data, ignore_index=True)
+        # Create DataFrame in training format
+        df_combined = pd.DataFrame(all_data)
         print(f"📊 Total combined records: {len(df_combined)}")
+        print(f"📊 Unique items: {df_combined['name'].nunique()}")
         
         return df_combined
         
