@@ -30,9 +30,9 @@ def warning_handler_func(message, category, filename, lineno, file=None, line=No
 warnings.showwarning = warning_handler_func
 
 def get_path_and_device_name():
-    device_name="SW-SUPV-243"
+    device_name="DEMO"
     # Updated path to go up one level from zabbix_integration folder
-    data_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "Data082025")
+    data_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "RealData")
     return device_name, data_path
 
 def get_processed_path():
