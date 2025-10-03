@@ -524,13 +524,30 @@ class OptimizedZabbixConnector:
                     if num_features != expected_features:
                         self.logger.error(f"❌ Feature mismatch: model expects {expected_features}, data has {num_features}")
                         self.logger.info(f"   📋 All variables: {variables}")
-                        self.logger.info("   🔧 This usually means:")
-                        self.logger.info("      1. Model was trained on different data")
-                        self.logger.info("      2. Different hosts/items available now")
-                        self.logger.info("      3. Need to retrain model with current data")
-                        self.logger.info("   Skipping this cycle...")
-                        time.sleep(self.update_interval)
-                        continue
+                        
+                        # AUTO-UPDATE variables.txt with current data
+                        variables_file = os.path.join(self.config['models']['forecasting_model_path'], 'variables.txt')
+                        try:
+                            self.logger.info("🔄 Auto-updating variables.txt with current Zabbix data...")
+                            with open(variables_file, 'w') as f:
+                                for var in variables:
+                                    f.write(f"{var}\n")
+                            self.logger.info(f"✅ Updated {variables_file} with {len(variables)} variables")
+                            self.logger.info("� Please retrain your model with the new variables or use a model trained on this data")
+                            self.logger.info("   📄 Variables saved - system will continue with current data")
+                        except Exception as e:
+                            self.logger.error(f"❌ Failed to update variables.txt: {e}")
+                            self.logger.info("   🔧 Manual update needed:")
+                            self.logger.info("      1. Model was trained on different data") 
+                            self.logger.info("      2. Different hosts/items available now")
+                            self.logger.info("      3. Need to retrain model with current data")
+                            self.logger.info("   Skipping this cycle...")
+                            time.sleep(self.update_interval)
+                            continue
+                        
+                        # Continue with current data (model predictions may be inaccurate)
+                        self.logger.warning("⚠️  Continuing with mismatched features - predictions may be inaccurate")
+                        self.logger.info("   🎯 Recommendation: Retrain model with updated variables.txt")
                     
                     if len(df_online) < context_length:
                         self.logger.warning(f"⚠️  Insufficient data: need {context_length}, have {len(df_online)}")
@@ -630,6 +647,11 @@ def main():
         action='store_true',
         help='Run connection test only'
     )
+    parser.add_argument(
+        '--update-variables', '-u',
+        action='store_true', 
+        help='Update variables.txt with current Zabbix data and exit'
+    )
     
     args = parser.parse_args()
     
@@ -641,6 +663,27 @@ def main():
             # Test mode
             success = connector.test_connection()
             sys.exit(0 if success else 1)
+        elif args.update_variables:
+            # Update variables mode
+            print("🔄 Updating variables.txt with current Zabbix data...")
+            try:
+                df_online, df_removed_nans_forecasting, scalers, context_length, variables = connector.get_training_data_format()
+                variables_file = os.path.join(connector.config['models']['forecasting_model_path'], 'variables.txt')
+                
+                with open(variables_file, 'w') as f:
+                    for var in variables:
+                        f.write(f"{var}\n")
+                
+                print(f"✅ Updated {variables_file} with {len(variables)} variables:")
+                for i, var in enumerate(variables[:5]):
+                    print(f"   {i+1}. {var}")
+                if len(variables) > 5:
+                    print(f"   ... and {len(variables)-5} more")
+                print("🎯 Next step: Retrain your model with these variables")
+                sys.exit(0)
+            except Exception as e:
+                print(f"❌ Failed to update variables: {e}")
+                sys.exit(1)
         else:
             # Production monitoring
             print("🏭 Starting production monitoring...")
