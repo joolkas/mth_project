@@ -1,6 +1,6 @@
 {
   "zabbix": {
-    "url": "https://192.168.93.45/zabbix",
+    "url": "https://192.168.93.45",
     "user": "Admin",
     "password": "zabbix"
   },
