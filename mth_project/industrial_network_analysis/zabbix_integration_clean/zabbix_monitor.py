@@ -317,16 +317,10 @@ class ZabbixAnomalyMonitor:
             
             # Initialize Dash plotter if not already done
             if self.dash_plotter is None:
-                try:
-                    self.logger.info("🌐 Starting Dash server...")
-                    self.dash_plotter = DashRealTimePlotter()
-                    self.dash_plotter.start_server()
-                    self.logger.info("✅ Dash server started at http://localhost:8050")
-                    time.sleep(3)  # Give server more time to start
-                except Exception as e:
-                    self.logger.error(f"❌ Failed to start Dash server: {e}")
-                    self.logger.warning("⚠️ Continuing without dashboard...")
-                    self.dash_plotter = None
+                self.dash_plotter = DashRealTimePlotter()
+                self.dash_plotter.start_server()
+                self.logger.info("🌐 Dash server started at http://localhost:8050")
+                time.sleep(2)  # Give server time to start
             
             # Run your existing multi-step forecasting function
             predictions_df, actuals_df, predictions_actuals_df, actuals_actuals_df = multistep_rolling_buffer_learning_prediction_with_dash(
@@ -355,23 +349,14 @@ class ZabbixAnomalyMonitor:
         self.logger.info("🏭 Starting industrial anomaly monitoring...")
         
         # Initialize connections and models
-        self.logger.info("📡 Initializing Zabbix connection...")
         if not self.connect_zabbix():
-            self.logger.error("❌ Failed to connect to Zabbix - exiting")
             return False
         
-        self.logger.info("🤖 Loading ML models...")
         if not self.load_models():
-            self.logger.error("❌ Failed to load models - exiting")
             return False
         
         self.logger.info(f"⏰ Monitoring every {self.update_interval} seconds")
         self.logger.info("🌐 Dashboard will be available at http://localhost:8050")
-        
-        # Add flush to ensure logs appear immediately
-        import sys
-        sys.stdout.flush()
-        sys.stderr.flush()
         
         cycle = 0
         while True:
@@ -394,20 +379,13 @@ class ZabbixAnomalyMonitor:
                     continue
                 
                 # Run anomaly detection
-                self.logger.info("🔮 Running anomaly detection...")
                 success = self.run_anomaly_detection(prepared_data)
                 if success:
                     self.logger.info(f"✅ Cycle #{cycle} completed successfully")
                 else:
                     self.logger.warning(f"⚠️ Cycle #{cycle} had issues")
                 
-                # Flush logs to ensure they appear in journalctl
-                import sys
-                sys.stdout.flush()
-                sys.stderr.flush()
-                
                 # Wait for next cycle
-                self.logger.info(f"⏸️ Waiting {self.update_interval} seconds for next cycle...")
                 time.sleep(self.update_interval)
                 
             except KeyboardInterrupt:
