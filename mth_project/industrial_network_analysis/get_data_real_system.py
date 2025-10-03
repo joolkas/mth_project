@@ -44,7 +44,6 @@ def get_column_names_exclude(df, search_keyword, exclude_keyword):
     for col in df_column_names:
         if exclude_keyword.lower() not in col.lower():
             df_column_names_excluded.append(col)
-
     return df_column_names_excluded
 
 device_name, data_path = get_path_and_device_name()
