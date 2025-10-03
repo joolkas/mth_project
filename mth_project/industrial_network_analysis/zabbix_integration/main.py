@@ -212,19 +212,61 @@ class OptimizedZabbixConnector:
             
             self.logger.info("🔧 Applying training-compatible preprocessing...")
             
-            # SAME preprocessing as get_data_real_system.py
+            # SAME preprocessing as get_data_real_system.py with error handling
             # Create a temporary Dataset-like structure
             temp_file = os.path.join(self.temp_data_dir, "temp_dataset.csv")
             raw_df[['name', 'timestamp', 'value']].to_csv(temp_file, index=False)
             
-            # Use the same Dataset preprocessing as in get_data_real_system.py
-            dataset = Dataset(temp_file)
+            self.logger.info(f"🔧 Processing data with Dataset class...")
             
-            # Remove outliers - SAME as get_data_real_system.py
-            dataset.remove_outliers()
+            try:
+                # Try using Dataset class first
+                dataset = Dataset(temp_file)
+                
+                # Remove outliers - SAME as get_data_real_system.py
+                dataset.remove_outliers()
+                
+                # Get the final dataframe - SAME as get_data_real_system.py
+                df_processed = dataset.df.copy()
+                
+                self.logger.info("✅ Successfully used Dataset class")
+                
+            except Exception as dataset_error:
+                self.logger.warning(f"⚠️  Dataset class failed ({dataset_error}), using direct processing...")
+                
+                # Fallback: Process data directly without Dataset class
+                df_raw = pd.read_csv(temp_file, parse_dates=['timestamp'])
+                
+                # Convert to wide format (same as Dataset class would do)
+                df_processed = df_raw.pivot(index='timestamp', columns='name', values='value')
+                
+                # Handle missing values (same as Dataset preprocessing)
+                try:
+                    df_processed = df_processed.ffill()  # Forward fill missing values
+                except AttributeError:
+                    df_processed.fillna(method='ffill', inplace=True)  # Fallback for older pandas
+                df_processed.fillna(0, inplace=True)  # Fill remaining NaN with 0
+                
+                # Apply basic outlier removal directly
+                for col in df_processed.columns:
+                    if df_processed[col].dtype in ['float64', 'int64']:
+                        q75, q25 = np.percentile(df_processed[col].dropna(), [75, 25])
+                        iqr = q75 - q25
+                        lower_bound = q25 - (1.5 * iqr)
+                        upper_bound = q75 + (1.5 * iqr)
+                        df_processed[col] = df_processed[col].clip(lower_bound, upper_bound)
+                
+                self.logger.info("✅ Successfully used direct processing")
             
-            # Get the final dataframe - SAME as get_data_real_system.py
-            df_processed = dataset.df.copy()
+            # Ensure we have a proper DataFrame
+            if not isinstance(df_processed, pd.DataFrame):
+                raise ValueError(f"Expected DataFrame, got {type(df_processed)}")
+            
+            self.logger.info(f"📊 Processed dataset shape: {df_processed.shape}")
+            if len(df_processed.columns) > 0:
+                self.logger.info(f"📊 Sample columns: {list(df_processed.columns)[:5]}...")
+            else:
+                self.logger.warning("⚠️  No columns in processed dataset!")
             
             # Apply same outlier removal as get_data_real_system.py
             df_removed_outliers_forecasting = remove_outliers(df_processed, 1000)
