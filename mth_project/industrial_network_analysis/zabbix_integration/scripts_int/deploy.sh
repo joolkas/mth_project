@@ -82,6 +82,7 @@ echo ""
 # sed -i "s|Admin|$ZABBIX_USER|g" $INSTALL_DIR/config.json
 # sed -i "s|your-password|$ZABBIX_PASSWORD|g" $INSTALL_DIR/config.json
 
+# Copy supporting files from parent directory
 cp ../data_utils.py $INSTALL_DIR/
 cp ../initial_model.py $INSTALL_DIR/  
 cp ../online_forecasting_multi_step.py $INSTALL_DIR/
@@ -89,6 +90,9 @@ cp ../dash_plotter.py $INSTALL_DIR/
 cp ../get_data.py $INSTALL_DIR/
 cp ../data_preprocessing.py $INSTALL_DIR/
 cp -r ../forecasting_model $INSTALL_DIR/models/ 2>/dev/null || echo "Manual model copy needed"
+
+# IMPORTANT: Copy additional files from current zabbix_integration directory
+cp ../get_data_real_system.py $INSTALL_DIR/ 2>/dev/null || echo "get_data_real_system.py not found"
 
 # Create systemd service
 echo -e "${BLUE}🔧 Creating service...${NC}"
