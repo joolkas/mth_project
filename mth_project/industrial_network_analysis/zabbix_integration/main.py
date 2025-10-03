@@ -95,13 +95,15 @@ class OptimizedZabbixConnector:
     def _connect_to_zabbix(self):
         """Establish connection to Zabbix API"""
         try:
-            zabbix_config = self.config['zabbix']
+            zabbix_config = self.config['zabbix']            
             self.zabbix_api = ZabbixAPI(zabbix_config['url'])
-            self.zabbix_api.login(zabbix_config['user'], zabbix_config['password'])
+            self.zabbix_api.session.verify = False
             
-            # Verify connection
-            version = self.zabbix_api.apiinfo.version()
-            self.logger.info(f"✅ Connected to Zabbix API v{version}")
+            # Suppress SSL warnings
+            import urllib3
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+            
+            self.zabbix_api.login(zabbix_config['user'], zabbix_config['password'])
             
         except Exception as e:
             self.logger.error(f"❌ Failed to connect to Zabbix: {e}")
