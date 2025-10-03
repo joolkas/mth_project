@@ -118,7 +118,7 @@ def get_data_from_zabbix():
     """Get real data from Zabbix using the same approach as online loop"""
     
     # Load configuration
-    config_path = os.path.join(os.path.dirname(__file__), 'config.json')
+    config_path = os.path.join(os.path.dirname(__file__), 'zabbix_integration', 'config.json')
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Config file not found: {config_path}")
     
@@ -127,12 +127,12 @@ def get_data_from_zabbix():
     
     zabbix_config = config['zabbix']
     
-    print(f"🔌 Connecting to Zabbix server: {zabbix_config['server']}")
+    print(f"🔌 Connecting to Zabbix server: {zabbix_config['url']}")
     
     # Connect to Zabbix
     try:
-        zapi = ZabbixAPI(zabbix_config['server'])
-        zapi.login(zabbix_config['username'], zabbix_config['password'])
+        zapi = ZabbixAPI(zabbix_config['url'])
+        zapi.login(zabbix_config['user'], zabbix_config['password'])
         print("✅ Connected to Zabbix successfully")
     except Exception as e:
         print(f"❌ Failed to connect to Zabbix: {e}")
@@ -140,7 +140,7 @@ def get_data_from_zabbix():
     
     # Collect data
     print("📊 Collecting data from Zabbix...")
-    df_raw = collect_training_data_from_zabbix(zapi, zabbix_config)
+    df_raw = collect_training_data_from_zabbix(zapi, config)
     
     if df_raw is not None and not df_raw.empty:
         print(f"✅ Collected {len(df_raw)} records")
@@ -159,12 +159,12 @@ def get_data_from_zabbix():
         print("❌ No data collected")
         return None, None
 
-def collect_training_data_from_zabbix(zapi: ZabbixAPI, zabbix_config: Dict) -> Optional[pd.DataFrame]:
+def collect_training_data_from_zabbix(zapi: ZabbixAPI, config: Dict) -> Optional[pd.DataFrame]:
     """Collect data from Zabbix for training (similar to online loop but for longer period)"""
     
     try:
         # Get all hosts from configured host groups
-        host_groups = zabbix_config.get('host_groups', [])
+        host_groups = config['industrial_filters'].get('device_groups', [])
         all_hosts = []
         
         for group_name in host_groups:
