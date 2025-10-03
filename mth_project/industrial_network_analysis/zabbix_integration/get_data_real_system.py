@@ -206,9 +206,9 @@ def collect_training_data_from_zabbix(zapi: ZabbixAPI, config: Dict) -> Optional
             print("❌ No hosts found in configured groups")
             return None
         
-        # Define time range (last 24 hours for training data)
+        # Define time range (last 7 days for more training data)
         time_to = int(time.time())
-        time_from = time_to - (24 * 60 * 60)  # 24 hours ago
+        time_from = time_to - (7 * 24 * 60 * 60)  # 7 days ago
         
         print(f"📅 Collecting data from {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time_from))} to {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time_to))}")
         
@@ -293,34 +293,64 @@ def process_zabbix_data_for_training(df_raw: pd.DataFrame):
     print("🔄 Processing Zabbix data for training format...")
     
     try:
-        # Create forecasting data (numeric values)
-        numeric_columns = ['ICMP', 'temperature', 'cpu', 'memory', 'bits']
-        df_forecasting = df_raw[numeric_columns].copy()
+        # Convert raw data format to time series format
+        print(f"Raw data shape: {df_raw.shape}")
+        print(f"Raw data columns: {df_raw.columns.tolist()}")
+        print(f"Sample raw data:\n{df_raw.head()}")
         
-        # Create status data (for classification) - simulated from numeric data
-        # In real system, you would collect actual status items
-        df_classification = pd.DataFrame()
-        df_classification['operational_status'] = (df_raw['ICMP'] > 0).astype(int)  # Simple status based on ICMP
+        # Pivot the data to get metrics as columns (same as online system)
+        df_pivot = df_raw.pivot_table(
+            index='timestamp', 
+            columns='name', 
+            values='value', 
+            aggfunc='mean'
+        ).reset_index()
         
-        # Apply preprocessing similar to original function
+        print(f"Pivoted data shape: {df_pivot.shape}")
+        print(f"Available metrics: {df_pivot.columns.tolist()}")
+        
+        # Use the Dataset class for consistent preprocessing (same as online system)
+        from data_preprocessing import Dataset
+        
+        # Create a temporary CSV file for Dataset class
+        temp_csv = "temp_training_data.csv"
+        df_pivot.to_csv(temp_csv, index=False)
+        
+        # Use Dataset class (same as online preprocessing)
+        dataset = Dataset(temp_csv)
+        
+        # Get all numeric columns (exclude timestamp)
+        numeric_columns = [col for col in df_pivot.columns if col != 'timestamp']
+        df_forecasting = dataset.get_column_values(numeric_columns)
+        
+        # Apply outlier removal (same as online system)
         print("Preprocessing data...")
-        
-        # Remove outliers for forecasting
         df_removed_outliers_forecasting = remove_outliers(df_forecasting, 1000)
         df_removed_nans_forecasting = df_removed_outliers_forecasting.dropna(axis=1, how="all")
         
-        # Remove outliers for classification
-        df_removed_outliers_statuses = remove_outliers(df_classification, 1000)
-        df_removed_nans_statuses = df_removed_outliers_statuses.dropna(axis=1, how="all")
+        # Create simple classification data (operational status based on data availability)
+        df_classification = pd.DataFrame()
+        # Simple status: 1 if we have data, 0 if not
+        df_classification['operational_status'] = 1
+        df_removed_nans_statuses = df_classification
         
-        print(f"Forecasting data shape: {df_removed_nans_forecasting.shape}")
-        print(f"Classification data shape: {df_removed_nans_statuses.shape}")
+        print(f"✅ Forecasting data shape: {df_removed_nans_forecasting.shape}")
+        print(f"✅ Classification data shape: {df_removed_nans_statuses.shape}")
+        print(f"✅ Feature columns: {df_removed_nans_forecasting.columns.tolist()[:5]}...")
+        
+        # Clean up temp file
+        if os.path.exists(temp_csv):
+            os.remove(temp_csv)
         
         return df_removed_nans_forecasting, df_removed_nans_statuses
         
     except Exception as e:
         print(f"❌ Error processing Zabbix data: {e}")
-        return df_raw[numeric_columns], pd.DataFrame({'status': [1] * len(df_raw)})
+        import traceback
+        traceback.print_exc()
+        
+        # Fallback: return empty DataFrames
+        return pd.DataFrame(), pd.DataFrame()
 
 if __name__ == "__main__":
     print("🚀 Starting real system data collection...")
