@@ -257,7 +257,7 @@ class OptimizedZabbixConnector:
         """Get industrial devices from configured host groups"""
         try:
             device_groups = self.config.get('industrial_filters', {}).get(
-                'device_groups', ['Industrial', 'SCADA', 'PLC']
+                'device_groups', ["Virtual machines", "Zabbix servers"]
             )
             
             # Get host groups
