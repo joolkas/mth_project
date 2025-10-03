@@ -129,28 +129,51 @@ def collect_training_data(config_path="config.json", days=7):
     
     print(f"✅ Final data shape: {df_final.shape}")
     
-    # Save data
-    os.makedirs("training_data", exist_ok=True)
-    forecasting_path = "training_data/forecasting.csv"
-    classification_path = "training_data/classification.csv"
+    # Save data in the EXACT format expected by initial_model.py
     
-    df_final.to_csv(forecasting_path)
+    # Create the RealData directory structure that get_processed_path() expects
+    real_data_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "RealData")
+    processed_dir = os.path.join(real_data_dir, "processed")
+    os.makedirs(processed_dir, exist_ok=True)
+    
+    # Use the exact file names expected by get_processed_path()
+    device_name = "DEMO"  # This matches what get_processed_path() uses
+    forecasting_path = os.path.join(processed_dir, f"{device_name}_forecasting.csv")
+    classification_path = os.path.join(processed_dir, f"{device_name}_statuses.csv")
+    
+    # Save with proper datetime index (required by initial_model.py)
+    df_final.to_csv(forecasting_path, index=True)  # Keep datetime index
     
     # Simple classification data (operational status)
     df_classification = pd.DataFrame({
         'operational_status': [1] * len(df_final)
     }, index=df_final.index)
-    df_classification.to_csv(classification_path)
+    df_classification.to_csv(classification_path, index=True)  # Keep datetime index
     
     print(f"💾 Saved to {forecasting_path} and {classification_path}")
+    print(f"📁 Data structure matches initial_model.py requirements")
     
-    # Save variables list
-    variables_path = "training_data/variables.txt"
-    with open(variables_path, 'w') as f:
+    # ALSO save variables to the model directory for online system
+    try:
+        # Save variables list to model directory (for online monitoring)
+        model_dir = "/opt/anomaly_detection/models/forecasting_model"
+        if os.path.exists(model_dir):
+            variables_path = os.path.join(model_dir, "variables.txt")
+            with open(variables_path, 'w') as f:
+                for col in df_final.columns:
+                    f.write(f"{col}\n")
+            print(f"🏷️ Saved {len(df_final.columns)} variables to {variables_path}")
+        else:
+            print("⚠️ Model directory not found - variables not saved")
+    except Exception as e:
+        print(f"⚠️ Could not save variables to model directory: {e}")
+    
+    # Save a copy in current directory for reference
+    local_variables_path = "current_variables.txt"
+    with open(local_variables_path, 'w') as f:
         for col in df_final.columns:
             f.write(f"{col}\n")
-    
-    print(f"🏷️ Saved {len(df_final.columns)} variables to {variables_path}")
+    print(f"📋 Reference variables saved to {local_variables_path}")
     
     return df_final, df_classification
 

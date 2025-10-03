@@ -23,15 +23,17 @@ sudo ./simple_deploy.sh
 python3 /opt/anomaly_detection/main.py --test
 ```
 
-### 3. Collect Training Data
+### 3. Auto-Train Model (NEW!)
 ```bash
-python3 /opt/anomaly_detection/simple_training.py
+python3 /opt/anomaly_detection/auto_train.py
 ```
+This automatically:
+- ✅ Collects 7 days of Zabbix data
+- ✅ Trains the model with current features  
+- ✅ Deploys the trained model
+- ✅ Sets up variables for monitoring
 
-### 4. Train Model
-Use the generated `training_data/forecasting.csv` with your existing training pipeline.
-
-### 5. Start Monitoring
+### 4. Start Monitoring
 ```bash
 sudo systemctl start zabbix-monitoring
 sudo journalctl -u zabbix-monitoring -f
@@ -130,13 +132,16 @@ sudo systemctl restart zabbix-monitoring
 
 ## 🚀 Advanced Usage
 
-### Custom Training Data Collection
+### Quick Retrain
 ```bash
-# Collect specific time period
-python3 -c "
-from simple_training import collect_training_data
-collect_training_data(days=14)  # 14 days of data
-"
+# Retrain model with fresh data
+python3 /opt/anomaly_detection/auto_train.py --quick
+```
+
+### Manual Data Collection Only
+```bash
+# Just collect data without training
+python3 /opt/anomaly_detection/simple_training.py
 ```
 
 ### Manual Feature Count

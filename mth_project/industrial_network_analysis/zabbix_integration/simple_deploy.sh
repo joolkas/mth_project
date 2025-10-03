@@ -20,6 +20,7 @@ mkdir -p $INSTALL_DIR/models
 echo "📋 Installing simplified system..."
 cp simple_main.py $INSTALL_DIR/main.py
 cp simple_training.py $INSTALL_DIR/
+cp auto_train.py $INSTALL_DIR/
 cp config.json $INSTALL_DIR/
 
 # Copy supporting files
@@ -71,10 +72,9 @@ echo "✅ Simple deployment complete!"
 echo ""
 echo "🎯 Next steps:"
 echo "1. Test connection: python3 $INSTALL_DIR/main.py --test"
-echo "2. Collect training data: python3 $INSTALL_DIR/simple_training.py"
-echo "3. Train your model with the collected data"
-echo "4. Start monitoring: systemctl start zabbix-monitoring"
-echo "5. View logs: journalctl -u zabbix-monitoring -f"
+echo "2. Auto-train model: python3 $INSTALL_DIR/auto_train.py"
+echo "3. Start monitoring: systemctl start zabbix-monitoring"
+echo "4. View logs: journalctl -u zabbix-monitoring -f"
 echo ""
 echo "📊 Features:"
 echo "✅ Auto-discovers all Zabbix hosts and metrics"
