@@ -1,0 +1,22 @@
+{
+  "zabbix": {
+    "url": "https://192.168.93.45",
+    "user": "Admin",
+    "password": "zabbix"
+  },
+  "data_collection": {
+    "search_criteria": ["cpu", "bits sent", "bits received", "memory", "temperature"],
+    "host_groups": ["Zabbix servers"],
+    "update_interval": 60,
+    "history_hours": 48
+  },
+  "model": {
+    "context_length": 60,
+    "prediction_horizon": 6,
+    "model_path": "./trained_model"
+  },
+  "monitoring": {
+    "dashboard_port": 8050,
+    "log_level": "INFO"
+  }
+}
