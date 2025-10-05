@@ -36,7 +36,6 @@ if systemctl is-active --quiet $SERVICE_NAME; then
     systemctl stop $SERVICE_NAME
     echo "✅ Service stopped"
 fi
-
 if systemctl is-enabled --quiet $SERVICE_NAME; then
     systemctl disable $SERVICE_NAME
     echo "✅ Service disabled"
