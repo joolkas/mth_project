@@ -383,11 +383,21 @@ class StandaloneDashboard:
         """Start the dashboard server"""
         def run_server():
             try:
-                self.app.run_server(
+                # Use the newer app.run method for newer Dash versions
+                self.app.run(
                     debug=self.debug,
                     host='0.0.0.0',
                     port=self.port,
                     use_reloader=False,  # Important: disable reloader in thread
+                    dev_tools_hot_reload=False
+                )
+            except AttributeError:
+                # Fallback to run_server for older Dash versions
+                self.app.run_server(
+                    debug=self.debug,
+                    host='0.0.0.0',
+                    port=self.port,
+                    use_reloader=False,
                     dev_tools_hot_reload=False
                 )
             except Exception as e:

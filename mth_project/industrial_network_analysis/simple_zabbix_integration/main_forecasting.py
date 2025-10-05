@@ -342,14 +342,30 @@ class ZabbixForecastingLoop:
         """Initialize the Dash dashboard"""
         try:
             dashboard_port = self.config['monitoring']['dashboard_port']
-            self.dash_plotter = StandaloneDashboard(port=dashboard_port, debug=False)
-            self.dash_plotter.start_server()
+            self.logger.info(f"🔧 Initializing dashboard on port {dashboard_port}...")
             
+            # Import here to catch import errors specifically
+            from standalone_dashboard import StandaloneDashboard
+            
+            self.dash_plotter = StandaloneDashboard(port=dashboard_port, debug=False)
+            self.logger.info("✅ Dashboard instance created successfully")
+            
+            self.dash_plotter.start_server()
             self.logger.info(f"🌐 Dashboard started at http://localhost:{dashboard_port}")
+            
+            # Set connection status
+            self.dash_plotter.set_connection_status('Connected')
+            
             time.sleep(2)  # Give server time to start
             
+        except ImportError as e:
+            self.logger.error(f"❌ Dashboard import failed: {e}")
+            self.logger.error("   Please install: pip install dash plotly")
+            self.dash_plotter = None
         except Exception as e:
             self.logger.error(f"❌ Dashboard initialization failed: {e}")
+            import traceback
+            self.logger.error(f"   Full error: {traceback.format_exc()}")
             self.dash_plotter = None
     
     def run_prediction_cycle(self, df: pd.DataFrame, cycle: int) -> bool:
@@ -372,33 +388,43 @@ class ZabbixForecastingLoop:
             )
             
             # Update standalone dashboard with results
-            if self.dash_plotter and not predictions_df.empty:
-                timestamp = datetime.now()
-                
-                # Convert predictions to dictionary format
-                predictions_dict = {}
-                actuals_dict = {}
-                
-                if len(predictions_df.columns) > 0:
-                    # Use last row of predictions
-                    last_pred = predictions_df.iloc[-1]
-                    for col in predictions_df.columns:
-                        predictions_dict[col] = float(last_pred[col])
-                
-                if not actuals_df.empty and len(actuals_df.columns) > 0:
-                    # Use last row of actuals
-                    last_actual = actuals_df.iloc[-1]
-                    for col in actuals_df.columns:
-                        if col in last_actual:
-                            actuals_dict[col] = float(last_actual[col])
-                
-                # Update dashboard
-                self.dash_plotter.update_data(
-                    timestamp=timestamp,
-                    predictions_dict=predictions_dict,
-                    actuals_dict=actuals_dict,
-                    is_anomaly=False  # TODO: Add anomaly detection logic
-                )
+            if self.dash_plotter is not None and not predictions_df.empty:
+                try:
+                    timestamp = datetime.now()
+                    
+                    # Convert predictions to dictionary format
+                    predictions_dict = {}
+                    actuals_dict = {}
+                    
+                    if len(predictions_df.columns) > 0:
+                        # Use last row of predictions
+                        last_pred = predictions_df.iloc[-1]
+                        for col in predictions_df.columns:
+                            predictions_dict[col] = float(last_pred[col])
+                    
+                    if not actuals_df.empty and len(actuals_df.columns) > 0:
+                        # Use last row of actuals
+                        last_actual = actuals_df.iloc[-1]
+                        for col in actuals_df.columns:
+                            if col in last_actual:
+                                actuals_dict[col] = float(last_actual[col])
+                    
+                    # Update dashboard
+                    self.dash_plotter.update_data(
+                        timestamp=timestamp,
+                        predictions_dict=predictions_dict,
+                        actuals_dict=actuals_dict,
+                        is_anomaly=False  # TODO: Add anomaly detection logic
+                    )
+                    
+                    self.logger.debug(f"📊 Dashboard updated with {len(predictions_dict)} predictions")
+                    
+                except Exception as e:
+                    self.logger.error(f"❌ Dashboard update failed: {e}")
+            elif self.dash_plotter is None:
+                self.logger.debug("DEBUG: dash_plotter is None, dashboard not available")
+            else:
+                self.logger.debug("DEBUG: predictions_df is empty, skipping dashboard update")
             
             # Log prediction results
             if not predictions_df.empty:
