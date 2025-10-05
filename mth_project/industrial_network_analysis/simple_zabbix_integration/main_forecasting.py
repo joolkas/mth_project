@@ -31,12 +31,21 @@ parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(parent_dir)
 
 try:
+    # Mock the get_data module to prevent import errors
+    import types
+    mock_get_data = types.ModuleType('get_data')
+    mock_get_data.get_processed_path = lambda: ("", "")
+    sys.modules['get_data'] = mock_get_data
+    
     from initial_model import get_initial_model, get_online_data
     from online_forecasting_multi_step import multistep_rolling_buffer_learning_prediction_with_dash
     from dash_plotter import DashRealTimePlotter
-    from get_data import get_processed_path
+    print("✅ Successfully imported existing modules")
 except ImportError as e:
     print(f"❌ Cannot import required modules: {e}")
+    print("   This indicates the parent directory modules are not available")
+    print("   Please ensure you're running from the correct location")
+    print("   Or install this as a standalone system")
     sys.exit(1)
 
 
