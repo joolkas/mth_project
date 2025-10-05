@@ -16,7 +16,7 @@
     "model_path": "./trained_model"
   },
   "monitoring": {
-    "dashboard_port": 8050,
+    "dashboard_port": 8051,
     "log_level": "INFO"
   }
 }
