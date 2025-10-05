@@ -15,6 +15,10 @@ import json
 import logging
 from datetime import datetime
 
+# Import TensorFlow configuration fix first
+from tensorflow_config import fix_tensorflow_configuration
+fix_tensorflow_configuration()
+
 import numpy as np
 import pandas as pd
 import pickle

@@ -23,8 +23,14 @@ import pickle
 from pyzabbix import ZabbixAPI
 import urllib3
 
+# Import TensorFlow configuration fix
+from tensorflow_config import fix_tensorflow_configuration
+
 # Disable SSL warnings
 urllib3.disable_warnings()
+
+# Fix TensorFlow configuration early
+fix_tensorflow_configuration()
 
 # Add parent directory to import existing modules
 parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -39,8 +45,10 @@ try:
     
     from initial_model import get_initial_model, get_online_data
     from online_forecasting_multi_step import multistep_rolling_buffer_learning_prediction_with_dash
-    from dash_plotter import DashRealTimePlotter
-    print("✅ Successfully imported existing modules")
+    
+    # Use standalone dashboard instead of parent directory version
+    from standalone_dashboard import StandaloneDashboard
+    print("✅ Successfully imported modules with standalone dashboard")
 except ImportError as e:
     print(f"❌ Cannot import required modules: {e}")
     print("   This indicates the parent directory modules are not available")
@@ -333,10 +341,10 @@ class ZabbixForecastingLoop:
     def initialize_dashboard(self):
         """Initialize the Dash dashboard"""
         try:
-            self.dash_plotter = DashRealTimePlotter()
+            dashboard_port = self.config['monitoring']['dashboard_port']
+            self.dash_plotter = StandaloneDashboard(port=dashboard_port, debug=False)
             self.dash_plotter.start_server()
             
-            dashboard_port = self.config['monitoring']['dashboard_port']
             self.logger.info(f"🌐 Dashboard started at http://localhost:{dashboard_port}")
             time.sleep(2)  # Give server time to start
             
@@ -358,10 +366,39 @@ class ZabbixForecastingLoop:
                 context_length=self.context_length,
                 df_removed_nans_forecasting=self.df_removed_nans_forecasting,
                 df_removed_nans_classification=self.df_removed_nans_classification,
-                dash_plotter=self.dash_plotter,
+                dash_plotter=None,  # Use our standalone dashboard instead
                 variables=self.variables,
                 prediction_horizon=self.prediction_horizon
             )
+            
+            # Update standalone dashboard with results
+            if self.dash_plotter and not predictions_df.empty:
+                timestamp = datetime.now()
+                
+                # Convert predictions to dictionary format
+                predictions_dict = {}
+                actuals_dict = {}
+                
+                if len(predictions_df.columns) > 0:
+                    # Use last row of predictions
+                    last_pred = predictions_df.iloc[-1]
+                    for col in predictions_df.columns:
+                        predictions_dict[col] = float(last_pred[col])
+                
+                if not actuals_df.empty and len(actuals_df.columns) > 0:
+                    # Use last row of actuals
+                    last_actual = actuals_df.iloc[-1]
+                    for col in actuals_df.columns:
+                        if col in last_actual:
+                            actuals_dict[col] = float(last_actual[col])
+                
+                # Update dashboard
+                self.dash_plotter.update_data(
+                    timestamp=timestamp,
+                    predictions_dict=predictions_dict,
+                    actuals_dict=actuals_dict,
+                    is_anomaly=False  # TODO: Add anomaly detection logic
+                )
             
             # Log prediction results
             if not predictions_df.empty:
