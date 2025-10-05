@@ -6,9 +6,17 @@
 set -e  # Exit on any error
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-INSTALL_DIR="/opt/zabbix_anomaly_detection"
 SERVICE_NAME="zabbix-anomaly-detection"
 SERVICE_USER="anomaly"
+
+# Default installation directory - can be overridden
+INSTALL_DIR="/opt/zabbix_anomaly_detection"
+
+# Check if custom installation directory provided
+if [ "$1" != "" ]; then
+    INSTALL_DIR="$1"
+    echo "🔧 Using custom installation directory: $INSTALL_DIR"
+fi
 
 echo "🏭 RHEL Production Setup - Zabbix Industrial Anomaly Detection"
 echo "=============================================================="
@@ -304,9 +312,54 @@ setup_selinux() {
     fi
 }
 
+# Function to check disk space requirements
+check_disk_space() {
+    echo "💾 Checking disk space requirements..."
+    
+    # Check installation directory space
+    INSTALL_DIR_PARENT=$(dirname "$INSTALL_DIR")
+    INSTALL_AVAIL_GB=$(df "$INSTALL_DIR_PARENT" 2>/dev/null | awk 'NR==2 {print int($4/1024/1024)}' || df / | awk 'NR==2 {print int($4/1024/1024)}')
+    
+    echo "📁 Installation directory: $INSTALL_DIR"
+    echo "💾 Available space: ${INSTALL_AVAIL_GB}GB"
+    
+    if [ "$INSTALL_AVAIL_GB" -lt 2 ]; then
+        echo "❌ Insufficient disk space for installation"
+        echo "   Minimum 2GB required, found ${INSTALL_AVAIL_GB}GB"
+        echo ""
+        echo "💡 Alternative installation locations with more space:"
+        df -h | grep -E "/(home|var|tmp)" | while read -r line; do
+            mount_point=$(echo "$line" | awk '{print $6}')
+            avail_space=$(echo "$line" | awk '{print $4}')
+            echo "   $mount_point ($avail_space available)"
+        done
+        echo ""
+        echo "🔧 To install in a different location:"
+        echo "   sudo $0 /home/zabbix_anomaly_detection"
+        echo "   sudo $0 /var/opt/zabbix_anomaly_detection"
+        exit 1
+    elif [ "$INSTALL_AVAIL_GB" -lt 5 ]; then
+        echo "⚠️  Limited disk space detected (${INSTALL_AVAIL_GB}GB available)"
+        echo "   Installation will proceed, but monitor disk usage"
+        echo "   Consider using a location with more space for large datasets"
+        read -p "Continue with current location? (y/N): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            echo "💡 Alternative: Run with custom path:"
+            echo "   sudo $0 /home/zabbix_anomaly_detection"
+            exit 1
+        fi
+    else
+        echo "✅ Sufficient disk space available"
+    fi
+}
+
 # Main installation process
 main() {
     echo "🚀 Starting RHEL installation process..."
+    
+    # Check disk space first
+    check_disk_space
     
     # Check internet connectivity
     if ! ping -c 1 google.com >/dev/null 2>&1; then

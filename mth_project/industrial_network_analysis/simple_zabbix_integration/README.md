@@ -17,14 +17,19 @@ This simplified integration provides:
 ### For RHEL/CentOS Systems (Recommended)
 
 ```bash
-# 1. Validate system requirements
+# 1. Validate system requirements (includes disk space check)
 ./rhel_validate.sh
 
 # 2. Run automated installation
 sudo ./rhel_install.sh
 
+# For systems with limited disk space, specify alternative location:
+# sudo ./rhel_install.sh /home/zabbix_anomaly_detection
+
 # 3. Configure and start (see RHEL_INSTALL.md for details)
 ```
+
+**💾 Important**: If you have limited disk space, see [DISK_SPACE_GUIDE.md](DISK_SPACE_GUIDE.md) for installation options.
 
 ### Manual Installation
 

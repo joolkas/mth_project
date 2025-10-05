@@ -95,13 +95,57 @@ else
     print_result "Memory Requirements" "FAIL" "Minimum 2GB required, found ${MEMORY_GB}GB"
 fi
 
-# Disk space
-DISK_AVAIL_GB=$(df / | awk 'NR==2 {print int($4/1024/1024)}')
-print_result "Disk Space" "INFO" "${DISK_AVAIL_GB}GB available"
-if [ "$DISK_AVAIL_GB" -ge 10 ]; then
-    print_result "Disk Requirements" "PASS"
+# Disk space requirements
+echo "💾 Checking disk space requirements..."
+
+# Check /opt directory (main installation)
+OPT_AVAIL_GB=$(df /opt 2>/dev/null | awk 'NR==2 {print int($4/1024/1024)}' || df / | awk 'NR==2 {print int($4/1024/1024)}')
+OPT_MOUNT=$(df /opt 2>/dev/null | awk 'NR==2 {print $6}' || echo "/")
+print_result "/opt Directory Space" "INFO" "${OPT_AVAIL_GB}GB available (mounted on $OPT_MOUNT)"
+
+if [ "$OPT_AVAIL_GB" -ge 5 ]; then
+    print_result "/opt Space Requirements" "PASS"
+elif [ "$OPT_AVAIL_GB" -ge 2 ]; then
+    print_result "/opt Space Requirements" "WARN" "5GB recommended for models and data, found ${OPT_AVAIL_GB}GB"
 else
-    print_result "Disk Requirements" "FAIL" "Minimum 10GB required, found ${DISK_AVAIL_GB}GB"
+    print_result "/opt Space Requirements" "FAIL" "Minimum 2GB required for installation, found ${OPT_AVAIL_GB}GB"
+fi
+
+# Check /var directory (logs and temporary data)
+VAR_AVAIL_GB=$(df /var 2>/dev/null | awk 'NR==2 {print int($4/1024/1024)}' || df / | awk 'NR==2 {print int($4/1024/1024)}')
+VAR_MOUNT=$(df /var 2>/dev/null | awk 'NR==2 {print $6}' || echo "/")
+print_result "/var Directory Space" "INFO" "${VAR_AVAIL_GB}GB available (mounted on $VAR_MOUNT)"
+
+if [ "$VAR_AVAIL_GB" -ge 2 ]; then
+    print_result "/var Space Requirements" "PASS"
+elif [ "$VAR_AVAIL_GB" -ge 1 ]; then
+    print_result "/var Space Requirements" "WARN" "2GB recommended for logs, found ${VAR_AVAIL_GB}GB"
+else
+    print_result "/var Space Requirements" "FAIL" "Minimum 1GB required for logs, found ${VAR_AVAIL_GB}GB"
+fi
+
+# Check root filesystem (general system space)
+ROOT_AVAIL_GB=$(df / | awk 'NR==2 {print int($4/1024/1024)}')
+print_result "Root Filesystem Space" "INFO" "${ROOT_AVAIL_GB}GB available"
+
+if [ "$ROOT_AVAIL_GB" -ge 2 ]; then
+    print_result "Root Space Requirements" "PASS"
+elif [ "$ROOT_AVAIL_GB" -ge 1 ]; then
+    print_result "Root Space Requirements" "WARN" "Root filesystem is getting full (${ROOT_AVAIL_GB}GB available)"
+else
+    print_result "Root Space Requirements" "FAIL" "Root filesystem critically low (${ROOT_AVAIL_GB}GB available)"
+fi
+
+# Overall disk space assessment
+TOTAL_NEEDED=7  # 5GB for /opt + 2GB for /var
+TOTAL_AVAILABLE=$((OPT_AVAIL_GB + VAR_AVAIL_GB))
+
+print_result "Total Disk Assessment" "INFO" "Need ~${TOTAL_NEEDED}GB total, available across filesystems: ${TOTAL_AVAILABLE}GB"
+
+if [ "$TOTAL_AVAILABLE" -ge "$TOTAL_NEEDED" ]; then
+    print_result "Overall Disk Requirements" "PASS"
+else
+    print_result "Overall Disk Requirements" "WARN" "Tight disk space - monitor usage during operation"
 fi
 
 # Network Connectivity
