@@ -110,36 +110,51 @@ class ZabbixForecastingLoop:
             self.logger.info("Initializing system components...")
             
             # Step 1: Connect to Zabbix
+            print("Step 1: Connecting to Zabbix...")
             self.logger.info("Step 1: Connecting to Zabbix...")
             if not self.collector.connect():
+                print("❌ Zabbix connection failed")
                 self.logger.error("❌ Zabbix connection failed")
                 return False
+            print("✅ Zabbix connection successful")
             self.logger.info("✅ Zabbix connection successful")
             
             # Step 2: Check if model directory exists
+            print(f"Step 2: Checking model directory: {self.model_path}")
             self.logger.info(f"Step 2: Checking model directory: {self.model_path}")
             if not os.path.exists(self.model_path):
+                print(f"❌ Model directory not found: {self.model_path}")
+                print("   Please train a model first using: python3 train_model.py --data your_data.csv")
                 self.logger.error(f"❌ Model directory not found: {self.model_path}")
                 self.logger.error("   Please train a model first using: python3 train_model.py --data your_data.csv")
                 return False
+            print("✅ Model directory exists")
             self.logger.info("✅ Model directory exists")
             
             # Step 3: Load trained model
+            print("Step 3: Loading trained model...")
             self.logger.info("Step 3: Loading trained model...")
             try:
                 self.model = get_initial_model(self.model_path)
+                print("✅ Model loaded successfully")
                 self.logger.info("✅ Model loaded successfully")
             except Exception as e:
+                print(f"❌ Model loading failed: {e}")
+                print("   Check if model files exist and are valid")
                 self.logger.error(f"❌ Model loading failed: {e}")
                 self.logger.error("   Check if model files exist and are valid")
                 return False
             
             # Step 4: Load online data and scalers
+            print("Step 4: Loading online data and scalers...")
             self.logger.info("Step 4: Loading online data and scalers...")
             try:
                 df_online, self.scalers, context_length, df_removed_nans_forecasting, df_removed_nans_classification, self.variables, model_mode = get_online_data(self.model_path)
+                print("✅ Online data and scalers loaded")
                 self.logger.info("✅ Online data and scalers loaded")
             except Exception as e:
+                print(f"❌ Online data loading failed: {e}")
+                print("   Check if training data files exist in model directory")
                 self.logger.error(f"❌ Online data loading failed: {e}")
                 self.logger.error("   Check if training data files exist in model directory")
                 return False
@@ -149,16 +164,21 @@ class ZabbixForecastingLoop:
                 self.logger.warning(f"⚠️ Context length mismatch: config={self.context_length}, model={context_length}")
                 self.context_length = context_length
             
-            # Step 6: Discover monitoring items
+            # Step 5: Discover monitoring items
+            print("Step 5: Discovering Zabbix monitoring items...")
             self.logger.info("Step 5: Discovering Zabbix monitoring items...")
             try:
                 self.monitoring_items = self.collector.discover_items()
                 if not self.monitoring_items:
+                    print("❌ No monitoring items found")
+                    print("   Check host groups and search criteria in config.json")
                     self.logger.error("❌ No monitoring items found")
                     self.logger.error("   Check host groups and search criteria in config.json")
                     return False
+                print(f"✅ Found {len(self.monitoring_items)} monitoring items")
                 self.logger.info(f"✅ Found {len(self.monitoring_items)} monitoring items")
             except Exception as e:
+                print(f"❌ Item discovery failed: {e}")
                 self.logger.error(f"❌ Item discovery failed: {e}")
                 return False
             
@@ -171,8 +191,10 @@ class ZabbixForecastingLoop:
             return True
             
         except Exception as e:
-            self.logger.error(f"❌ Unexpected error during system initialization: {e}")
+            print(f"❌ Unexpected error during system initialization: {e}")
             import traceback
+            print(f"   Full traceback: {traceback.format_exc()}")
+            self.logger.error(f"❌ Unexpected error during system initialization: {e}")
             self.logger.error(f"   Full traceback: {traceback.format_exc()}")
             return False
     
@@ -335,12 +357,26 @@ def main():
     
     if args.test:
         print("🧪 Testing system components...")
-        success = forecaster.initialize_system()
-        if success:
-            print("✅ All systems ready for monitoring!")
-        else:
-            print("❌ System initialization failed")
+        print("=" * 50)
+        
+        try:
+            success = forecaster.initialize_system()
+            if success:
+                print("=" * 50)
+                print("✅ All systems ready for monitoring!")
+                print(f"   Found {len(forecaster.monitoring_items)} monitoring items")
+                print(f"   Model variables: {len(forecaster.variables)}")
+                print(f"   Context length: {forecaster.context_length}")
+            else:
+                print("=" * 50)
+                print("❌ System initialization failed - check logs above for details")
+                return 1
+        except Exception as e:
+            print(f"❌ Unexpected error during testing: {e}")
+            import traceback
+            print(f"Full traceback:\n{traceback.format_exc()}")
             return 1
+        
         return 0
     
     # Initialize and run monitoring
