@@ -11,13 +11,13 @@ from collections import deque
 
 
 class DashRealTimePlotter:
-    def __init__(self, max_points=60, update_interval=1000):
+    def __init__(self, max_points=60, update_interval=30000):
         """
         Simplified real-time plotter for industrial network forecasting data.
         
         Args:
             max_points: Maximum number of points to display in each plot
-            update_interval: Update interval in milliseconds
+            update_interval: Update interval in milliseconds (default 30 seconds)
         """
         self.app = dash.Dash(__name__)
         self.max_points = max_points
@@ -85,17 +85,7 @@ class DashRealTimePlotter:
                 html.Div(id='port-graphs-container', style={'margin': '20px'})
             ], style={'marginBottom': '40px'}),
             
-            # Port status display at the very bottom
-            html.Div([
-                html.H3("Port Status", style={'textAlign': 'center', 'color': '#27ae60', 'margin': '30px 20px'}),
-                html.Div(id='port-status-display', style={
-                    'padding': '15px', 
-                    'backgroundColor': '#f0fff4', 
-                    'borderRadius': '5px',
-                    'border': '1px solid #27ae60',
-                    'margin': '10px'
-                })
-            ]),
+            # Port status display removed - causing issues
             
             # Auto-refresh component
             dcc.Interval(
@@ -111,8 +101,7 @@ class DashRealTimePlotter:
             [Output('classification-results', 'children'),
              Output('status-info', 'children'),
              Output('system-graphs-container', 'children'),
-             Output('port-graphs-container', 'children'),
-             Output('port-status-display', 'children')],
+             Output('port-graphs-container', 'children')],
             [Input('interval-component', 'n_intervals')]
         )
         def update_dashboard(n):
@@ -120,8 +109,7 @@ class DashRealTimePlotter:
                 self._get_classification_results(),
                 self._get_status_info(),
                 self._update_system_graphs(),
-                self._update_port_graphs(),
-                self._get_port_status_display()
+                self._update_port_graphs()
             )
     
     def _categorize_variables(self):

@@ -145,7 +145,8 @@ class ZabbixDataCollector:
                 if record['itemid'] in item_lookup:
                     try:
                         all_data.append({
-                            'timestamp': pd.to_datetime(int(record['clock']), unit='s'),
+                            # Fix timezone issue: Convert from UTC and remove timezone info for consistency
+                            'timestamp': pd.to_datetime(int(record['clock']), unit='s', utc=True).tz_localize(None),
                             'variable': item_lookup[record['itemid']]['display_name'],
                             'value': float(record['value'])
                         })

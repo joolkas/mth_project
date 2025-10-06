@@ -1,19 +1,3 @@
-# 🏭 Simple Zabbix Integration for Industrial Network Anomaly Detection
-
-A streamlined, production-ready integration that connects your existing LSTM forecasting models to live industrial data from Zabbix systems on Debian/Ubuntu servers.
-
-## ✨ What This System Does
-
-This simplified integration provides:
-
-1. **🔍 Data Collection**: Collects industrial metrics from Zabbix API based on search criteria
-2. **🤖 Model Training**: Creates LSTM models compatible with your existing architecture  
-3. **📡 Real-time Monitoring**: Continuous forecasting with live Zabbix data
-4. **🛑 Clean Stopping**: Graceful shutdown mechanism with 'Q' key or system signals
-5. **📊 Anomaly Detection**: Uses your existing forecasting and classification models
-
-## 🚀 Quick Start
-
 ### Prerequisites
 
 - Debian/Ubuntu system with Zabbix server already installed

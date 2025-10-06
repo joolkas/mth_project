@@ -204,7 +204,9 @@ class ZabbixForecastingLoop:
             dashboard_port = self.config['monitoring']['dashboard_port']
             self.logger.info(f"🌐 Initializing dashboard on port {dashboard_port}...")
             
-            self.dash_plotter = DashRealTimePlotter()
+            # Use update interval that matches data collection cycle to prevent unnecessary updates
+            dashboard_update_interval = self.update_interval * 1000  # Convert to milliseconds
+            self.dash_plotter = DashRealTimePlotter(update_interval=dashboard_update_interval)
             
             # Check if the DashRealTimePlotter has a start_server method with parameters
             if hasattr(self.dash_plotter, 'start_server'):
@@ -453,4 +455,3 @@ def main():
 
 if __name__ == "__main__":
     exit(main())
-    
