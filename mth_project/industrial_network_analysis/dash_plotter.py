@@ -11,13 +11,13 @@ from collections import deque
 
 
 class DashRealTimePlotter:
-    def __init__(self, max_points=60, update_interval=30000):
+    def __init__(self, max_points=60, update_interval=60000):
         """
         Simplified real-time plotter for industrial network forecasting data.
         
         Args:
             max_points: Maximum number of points to display in each plot
-            update_interval: Update interval in milliseconds (default 30 seconds)
+            update_interval: Update interval in milliseconds (default 60 seconds)
         """
         self.app = dash.Dash(__name__)
         self.max_points = max_points

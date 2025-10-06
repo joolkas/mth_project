@@ -18,5 +18,9 @@
   "monitoring": {
     "dashboard_port": 8050,
     "log_level": "INFO"
+  },
+  "timezone": {
+    "server_utc_offset": 0,
+    "note": "Set server_utc_offset to hours difference from UTC (e.g., +3 for UTC+3, -5 for UTC-5)"
   }
 }

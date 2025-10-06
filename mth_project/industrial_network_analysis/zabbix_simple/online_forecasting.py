@@ -310,6 +310,10 @@ class ZabbixForecastingLoop:
             temp_file = f"temp_data/cycle_{cycle:04d}_{timestamp}.csv"
             df.to_csv(temp_file)
             
+            # Clear dashboard data to prevent accumulation of multiple streams
+            if self.dash_plotter is not None:
+                self.dash_plotter.clear_data()
+            
             # Run forecasting
             predictions_df, actuals_df, predictions_actuals_df, actuals_actuals_df = multistep_rolling_buffer_learning_prediction_with_dash(
                 initial_model=self.model,

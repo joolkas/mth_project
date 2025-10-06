@@ -32,6 +32,9 @@ class ZabbixDataCollector:
         self.host_groups = self.config['data_collection']['host_groups']
         self.history_hours = self.config['data_collection']['history_hours']
         
+        # Timezone configuration
+        self.server_utc_offset = self.config.get('timezone', {}).get('server_utc_offset', 0)
+        
     def _load_config(self, config_file: str) -> dict:
         """Load configuration from JSON file"""
         with open(config_file, 'r') as f:
@@ -144,9 +147,11 @@ class ZabbixDataCollector:
             for record in history:
                 if record['itemid'] in item_lookup:
                     try:
+                        # Convert Zabbix timestamp (UTC) to server local time
+                        # Apply server UTC offset from config
+                        timestamp = pd.to_datetime(int(record['clock']) + (self.server_utc_offset * 3600), unit='s')
                         all_data.append({
-                            # Fix timezone issue: Convert from UTC and remove timezone info for consistency
-                            'timestamp': pd.to_datetime(int(record['clock']), unit='s', utc=True).tz_localize(None),
+                            'timestamp': timestamp,
                             'variable': item_lookup[record['itemid']]['display_name'],
                             'value': float(record['value'])
                         })
