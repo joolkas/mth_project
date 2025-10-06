@@ -206,27 +206,52 @@ class ZabbixForecastingLoop:
             
             self.dash_plotter = DashRealTimePlotter()
             
-            # Make dashboard accessible from network (not just localhost)
-            # This allows access from other VMs in the same network
-            self.dash_plotter.app.run_server(
-                host='0.0.0.0',  # Bind to all interfaces, not just localhost
-                port=dashboard_port,
-                debug=False,
-                threaded=True,
-                use_reloader=False
-            )
+            # Check if the DashRealTimePlotter has a start_server method with parameters
+            if hasattr(self.dash_plotter, 'start_server'):
+                # Use the original start_server method with proper parameters
+                self.logger.info("📊 Starting dashboard server with network binding...")
+                dashboard_thread = self.dash_plotter.start_server(
+                    host='0.0.0.0',  # Bind to all interfaces for network access
+                    port=dashboard_port,
+                    debug=False
+                )
+                self.logger.info("✅ Dashboard started using original start_server method")
+                
+                # Give the server time to start
+                time.sleep(3)
+                
+            else:
+                # Fallback: start manually in thread (should not be needed with original class)
+                def start_dashboard():
+                    try:
+                        self.dash_plotter.app.run_server(
+                            host='0.0.0.0',  # Bind to all interfaces
+                            port=dashboard_port,
+                            debug=False,
+                            threaded=True,
+                            use_reloader=False
+                        )
+                    except Exception as e:
+                        self.logger.error(f"Dashboard server failed to start: {e}")
+                
+                dashboard_thread = threading.Thread(target=start_dashboard, daemon=True)
+                dashboard_thread.start()
+                self.logger.info("✅ Dashboard started in fallback thread mode")
+                time.sleep(3)
             
             # Get VM's IP address for connection info
             import socket
             hostname = socket.gethostname()
-            local_ip = socket.gethostbyname(hostname)
+            try:
+                local_ip = socket.gethostbyname(hostname)
+            except:
+                local_ip = "localhost"
             
-            self.logger.info(f"✅ Dashboard started and accessible at:")
+            self.logger.info(f"📡 Dashboard accessible at:")
             self.logger.info(f"   Local: http://localhost:{dashboard_port}")
             self.logger.info(f"   Network: http://{local_ip}:{dashboard_port}")
             print(f"🌐 Dashboard accessible from Windows VM at: http://{local_ip}:{dashboard_port}")
-            
-            time.sleep(2)  # Give server time to start
+            print(f"📊 Dashboard should now be running and accessible!")
             
         except Exception as e:
             self.logger.warning(f"⚠️ Dashboard initialization failed: {e}")
