@@ -8,7 +8,11 @@ numpy>=1.21.0
 scikit-learn>=1.0.0
 tensorflow>=2.8.0
 
-# Optional for enhanced features
+# Required for parent module compatibility
+matplotlib>=3.3.0
+keyboard>=0.13.5
+
+# Dashboard features (optional but recommended)
 plotly>=5.0.0
 dash>=2.0.0
 
