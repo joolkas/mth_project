@@ -1,0 +1,17 @@
+# Simple Zabbix Integration Requirements
+# Minimal dependencies for Debian/RHEL systems
+
+# Core dependencies
+pyzabbix>=1.0.0
+pandas>=1.3.0
+numpy>=1.21.0
+scikit-learn>=1.0.0
+tensorflow>=2.8.0
+
+# Optional for enhanced features
+plotly>=5.0.0
+dash>=2.0.0
+
+# System compatibility
+urllib3>=1.26.0
+setuptools>=50.0.0

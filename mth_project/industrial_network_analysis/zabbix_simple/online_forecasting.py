@@ -1,0 +1,342 @@
+#!/usr/bin/env python3
+"""
+Online Forecasting Loop for Zabbix Integration
+Real-time anomaly detection with clean stopping mechanism
+"""
+
+import json
+import os
+import sys
+import time
+import logging
+import threading
+import signal
+from datetime import datetime
+from typing import Optional
+import pandas as pd
+import numpy as np
+
+# Add parent directory to import existing modules
+parent_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(parent_dir)
+
+try:
+    from initial_model import get_initial_model, get_online_data
+    from online_forecasting_multi_step import multistep_rolling_buffer_learning_prediction_with_dash
+    from collect_data import ZabbixDataCollector
+    from dash_plotter import DashRealTimePlotter
+    print("✅ Imported existing modules")
+except ImportError as e:
+    print(f"❌ Import error: {e}")
+    print("Please ensure parent modules are available")
+    sys.exit(1)
+
+# Global stop flag for clean shutdown
+stop_flag = threading.Event()
+
+
+class ZabbixForecastingLoop:
+    """Online forecasting loop with Zabbix integration"""
+    
+    def __init__(self, config_file="config.json"):
+        self.config = self._load_config(config_file)
+        self.logger = self._setup_logging()
+        
+        # Configuration
+        self.context_length = self.config['model']['context_length']
+        self.prediction_horizon = self.config['model']['prediction_horizon']
+        self.model_path = self.config['model']['model_path']
+        self.update_interval = self.config['data_collection']['update_interval']
+        
+        # Components
+        self.model = None
+        self.scalers = None
+        self.variables = None
+        self.collector = ZabbixDataCollector(config_file)
+        self.monitoring_items = []
+        self.dash_plotter = None
+        
+        # Data storage
+        os.makedirs('temp_data', exist_ok=True)
+        
+    def _load_config(self, config_file: str) -> dict:
+        """Load configuration"""
+        with open(config_file, 'r') as f:
+            return json.load(f)
+    
+    def _setup_logging(self):
+        """Setup logging"""
+        logging.basicConfig(
+            level=getattr(logging, self.config['monitoring']['log_level']),
+            format='%(asctime)s - %(levelname)s - %(message)s',
+            handlers=[
+                logging.StreamHandler(),
+                logging.FileHandler('forecasting_loop.log')
+            ]
+        )
+        return logging.getLogger(__name__)
+    
+    def setup_signal_handlers(self):
+        """Setup signal handlers for clean shutdown"""
+        def signal_handler(signum, frame):
+            self.logger.info(f"Received signal {signum}, initiating graceful shutdown...")
+            stop_flag.set()
+        
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
+    
+    def setup_keyboard_listener(self):
+        """Setup keyboard listener in separate thread"""
+        def keyboard_listener():
+            while not stop_flag.is_set():
+                try:
+                    user_input = input()
+                    if user_input.upper() == 'Q':
+                        self.logger.info("Quit command detected! Initiating graceful shutdown...")
+                        stop_flag.set()
+                        break
+                except (EOFError, KeyboardInterrupt):
+                    break
+                except Exception:
+                    pass
+        
+        listener_thread = threading.Thread(target=keyboard_listener, daemon=True)
+        listener_thread.start()
+        return listener_thread
+    
+    def initialize_system(self) -> bool:
+        """Initialize all system components"""
+        try:
+            self.logger.info("Initializing system components...")
+            
+            # Connect to Zabbix
+            if not self.collector.connect():
+                return False
+            
+            # Load trained model
+            self.logger.info(f"Loading model from: {self.model_path}")
+            self.model = get_initial_model(self.model_path)
+            
+            # Load online data and scalers
+            df_online, self.scalers, context_length, df_removed_nans_forecasting, df_removed_nans_classification, self.variables, model_mode = get_online_data(self.model_path)
+            
+            # Verify parameters
+            if context_length != self.context_length:
+                self.logger.warning(f"Context length mismatch: config={self.context_length}, model={context_length}")
+                self.context_length = context_length
+            
+            # Discover monitoring items
+            self.monitoring_items = self.collector.discover_items()
+            if not self.monitoring_items:
+                self.logger.error("No monitoring items found")
+                return False
+            
+            self.logger.info("✅ System initialization completed")
+            self.logger.info(f"   Model mode: {model_mode}")
+            self.logger.info(f"   Context length: {context_length}")
+            self.logger.info(f"   Variables: {len(self.variables)}")
+            self.logger.info(f"   Monitoring items: {len(self.monitoring_items)}")
+            
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"System initialization failed: {e}")
+            return False
+    
+    def initialize_dashboard(self):
+        """Initialize Dash dashboard (optional)"""
+        try:
+            dashboard_port = self.config['monitoring']['dashboard_port']
+            self.logger.info(f"🌐 Initializing dashboard on port {dashboard_port}...")
+            
+            self.dash_plotter = DashRealTimePlotter()
+            self.dash_plotter.start_server()
+            
+            self.logger.info(f"✅ Dashboard available at http://localhost:{dashboard_port}")
+            time.sleep(2)  # Give server time to start
+            
+        except Exception as e:
+            self.logger.warning(f"⚠️ Dashboard initialization failed: {e}")
+            self.dash_plotter = None
+    
+    def collect_and_prepare_data(self) -> Optional[pd.DataFrame]:
+        """Collect current data and prepare for prediction"""
+        try:
+            # Collect recent data from Zabbix
+            raw_data = self.collector.collect_recent_data(self.monitoring_items, hours_back=2)
+            
+            if raw_data is None or raw_data.empty:
+                self.logger.warning("No data collected from Zabbix")
+                return None
+            
+            # Ensure we have enough data for context
+            if len(raw_data) < self.context_length:
+                self.logger.warning(f"Insufficient data: need {self.context_length}, have {len(raw_data)}")
+                return None
+            
+            # Match columns to model variables (simplified approach)
+            available_columns = raw_data.columns.tolist()
+            
+            if len(available_columns) >= len(self.variables):
+                # Use first N columns matching model size
+                selected_data = raw_data[available_columns[:len(self.variables)]].copy()
+                selected_data.columns = self.variables
+            else:
+                # Pad with zeros if not enough columns
+                selected_data = pd.DataFrame(index=raw_data.index, columns=self.variables)
+                for i, col in enumerate(available_columns):
+                    if i < len(self.variables):
+                        selected_data[self.variables[i]] = raw_data[col]
+                selected_data = selected_data.fillna(0)
+            
+            # Apply differencing (like training)
+            prepared_data = selected_data.diff().dropna()
+            
+            # Get recent data for prediction
+            recent_data = prepared_data.tail(self.context_length * 2)
+            
+            return recent_data
+            
+        except Exception as e:
+            self.logger.error(f"Data preparation failed: {e}")
+            return None
+    
+    def run_prediction_cycle(self, df: pd.DataFrame, cycle: int) -> bool:
+        """Run single prediction cycle"""
+        try:
+            # Save temporary data
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            temp_file = f"temp_data/cycle_{cycle:04d}_{timestamp}.csv"
+            df.to_csv(temp_file)
+            
+            # Run forecasting
+            predictions_df, actuals_df, predictions_actuals_df, actuals_actuals_df = multistep_rolling_buffer_learning_prediction_with_dash(
+                initial_model=self.model,
+                df_online=df,
+                scalers=self.scalers,
+                context_length=self.context_length,
+                df_removed_nans_forecasting=df,  # Simplified
+                df_removed_nans_classification=df,  # Simplified
+                dash_plotter=self.dash_plotter,  # Enable dashboard
+                variables=self.variables,
+                prediction_horizon=self.prediction_horizon
+            )
+            
+            # Log results
+            if not predictions_df.empty:
+                mae = np.mean(np.abs(predictions_df.values - actuals_df.values)) if not actuals_df.empty else 0
+                self.logger.info(f"Cycle {cycle}: Generated {len(predictions_df)} predictions, MAE: {mae:.6f}")
+            else:
+                self.logger.warning(f"Cycle {cycle}: No predictions generated")
+            
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"Prediction cycle {cycle} failed: {e}")
+            return False
+    
+    def run_monitoring_loop(self):
+        """Main monitoring loop"""
+        self.logger.info("🏭 Starting real-time forecasting loop...")
+        self.logger.info("Press 'Q' + Enter to stop gracefully")
+        
+        # Setup signal handlers and keyboard listener
+        self.setup_signal_handlers()
+        keyboard_thread = self.setup_keyboard_listener()
+        
+        cycle = 0
+        start_time = time.time()
+        
+        try:
+            while not stop_flag.is_set():
+                cycle += 1
+                cycle_start = time.time()
+                
+                self.logger.info(f"🔄 Cycle #{cycle} started")
+                
+                # Collect and prepare data
+                prepared_data = self.collect_and_prepare_data()
+                
+                if prepared_data is None:
+                    self.logger.warning(f"Cycle #{cycle}: Skipping due to data issues")
+                else:
+                    # Run prediction
+                    success = self.run_prediction_cycle(prepared_data, cycle)
+                    
+                    if success:
+                        self.logger.info(f"✅ Cycle #{cycle} completed")
+                    else:
+                        self.logger.warning(f"⚠️ Cycle #{cycle} had issues")
+                
+                # Wait for next cycle or check stop flag
+                cycle_time = time.time() - cycle_start
+                sleep_time = max(0, self.update_interval - cycle_time)
+                
+                # Interruptible sleep
+                end_time = time.time() + sleep_time
+                while time.time() < end_time and not stop_flag.is_set():
+                    time.sleep(0.1)
+                
+        except Exception as e:
+            self.logger.error(f"Unexpected error in monitoring loop: {e}")
+        
+        finally:
+            # Clean shutdown
+            total_time = time.time() - start_time
+            self.logger.info("🛑 Graceful shutdown initiated")
+            self.logger.info(f"📊 Session summary:")
+            self.logger.info(f"   Total cycles: {cycle}")
+            self.logger.info(f"   Total runtime: {total_time:.1f} seconds")
+            self.logger.info(f"   Average cycle time: {total_time/max(cycle,1):.1f} seconds")
+            self.logger.info("✅ Shutdown completed")
+
+
+def main():
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='Zabbix Real-time Forecasting Loop')
+    parser.add_argument('--test', action='store_true', help='Test system components')
+    args = parser.parse_args()
+    
+    forecaster = ZabbixForecastingLoop()
+    
+    if args.test:
+        print("🧪 Testing system components...")
+        success = forecaster.initialize_system()
+        if success:
+            print("✅ All systems ready for monitoring!")
+        else:
+            print("❌ System initialization failed")
+            return 1
+        return 0
+    
+    # Initialize and run monitoring
+    print("🏭 Zabbix Real-time Anomaly Detection")
+    print("=" * 40)
+    print("Initializing system...")
+    
+    if not forecaster.initialize_system():
+        print("❌ System initialization failed")
+        return 1
+    
+    print("✅ System ready!")
+    
+    # Initialize dashboard (optional)
+    forecaster.initialize_dashboard()
+    if forecaster.dash_plotter:
+        print(f"🌐 Dashboard: http://localhost:{forecaster.config['monitoring']['dashboard_port']}")
+    
+    print("Starting monitoring loop...")
+    print("Press 'Q' + Enter to stop gracefully")
+    print("=" * 40)
+    
+    try:
+        forecaster.run_monitoring_loop()
+    except KeyboardInterrupt:
+        print("\n🛑 Interrupted by user")
+    
+    return 0
+
+
+if __name__ == "__main__":
+    exit(main())
