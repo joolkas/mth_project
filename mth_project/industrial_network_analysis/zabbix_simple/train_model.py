@@ -124,7 +124,7 @@ class SimpleModelTrainer:
             self.logger.info(f"Training data shape: X={X_train.shape}, y={y_train.shape}")
             
             # Train model
-            model_save_path = os.path.join(self.model_path, "initial_model.h5")
+            model_save_path = os.path.join(self.model_path, "best_model.h5")
             history, trained_model = train_model(
                 model, X_train, y_train,
                 epochs=self.epochs,
@@ -150,7 +150,7 @@ class SimpleModelTrainer:
             self.logger.info("Saving model files...")
             
             # Save model
-            model.save(os.path.join(self.model_path, "initial_model.h5"))
+            model.save(os.path.join(self.model_path, "best_model.h5"))
             
             # Save scalers
             with open(os.path.join(self.model_path, "scalers_train.pkl"), 'wb') as f:
