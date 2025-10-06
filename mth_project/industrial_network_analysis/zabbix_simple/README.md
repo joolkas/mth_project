@@ -183,6 +183,34 @@ python3 collect_data.py --test
 python3 online_forecasting.py --test
 ```
 
+### Testing with Minimal Data
+
+For testing purposes when you don't have enough historical data:
+
+```bash
+# 1. Collect minimal data (1 hour)
+python3 collect_data.py --collect --hours 1
+
+# 2. Train with reduced parameters for small dataset
+python3 train_model.py --data data/training_data_*.csv \
+    --context-length 15 \
+    --prediction-horizon 1 \
+    --epochs 10 \
+    --batch-size 16 \
+    --validation-split 0.1
+
+# 3. Update config.json to match training parameters
+# Edit config.json: set context_length=15, prediction_horizon=1
+
+# 4. Test the system
+python3 online_forecasting.py --test
+```
+
+**Minimum data requirements:**
+- **Ultra-minimal**: 30-40 records (30-40 minutes of data)
+- **Recommended for testing**: 100-200 records (1.5-3 hours of data)
+- **Production**: 2000+ records (48+ hours of data)
+
 ### Common Issues
 
 **"No hosts found"**
@@ -269,7 +297,14 @@ python3 collect_data.py --collect --hours 168
 
 ### Train with Custom Parameters
 ```bash
+# Basic training with custom epochs and batch size
 python3 train_model.py --data data/training_data.csv --epochs 100 --batch-size 64
+
+# Training for small datasets (testing)
+python3 train_model.py --data data/training_data.csv --epochs 10 --batch-size 16 --validation-split 0.1
+
+# Override model parameters for testing
+python3 train_model.py --data data/training_data.csv --context-length 15 --prediction-horizon 1 --epochs 20
 ```
 
 ### Monitor with Different Update Interval

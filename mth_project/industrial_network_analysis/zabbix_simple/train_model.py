@@ -200,6 +200,9 @@ def main():
     parser.add_argument('--data', '-d', required=True, help='Training data CSV file')
     parser.add_argument('--epochs', type=int, default=50, help='Training epochs')
     parser.add_argument('--batch-size', type=int, default=32, help='Batch size')
+    parser.add_argument('--validation-split', type=float, default=0.2, help='Validation split ratio (0.0-1.0)')
+    parser.add_argument('--context-length', type=int, help='Override context length from config')
+    parser.add_argument('--prediction-horizon', type=int, help='Override prediction horizon from config')
     
     args = parser.parse_args()
     
@@ -210,6 +213,16 @@ def main():
         trainer = SimpleModelTrainer()
         trainer.epochs = args.epochs
         trainer.batch_size = args.batch_size
+        trainer.validation_split = args.validation_split
+        
+        # Override config parameters if provided
+        if args.context_length:
+            trainer.context_length = args.context_length
+            print(f"ℹ️  Override context_length: {args.context_length}")
+        
+        if args.prediction_horizon:
+            trainer.prediction_horizon = args.prediction_horizon
+            print(f"ℹ️  Override prediction_horizon: {args.prediction_horizon}")
         
         # Load and preprocess data
         df = trainer.load_and_preprocess_data(args.data)

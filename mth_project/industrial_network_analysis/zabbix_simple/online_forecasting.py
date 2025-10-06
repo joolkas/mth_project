@@ -109,29 +109,60 @@ class ZabbixForecastingLoop:
         try:
             self.logger.info("Initializing system components...")
             
-            # Connect to Zabbix
+            # Step 1: Connect to Zabbix
+            self.logger.info("Step 1: Connecting to Zabbix...")
             if not self.collector.connect():
+                self.logger.error("❌ Zabbix connection failed")
+                return False
+            self.logger.info("✅ Zabbix connection successful")
+            
+            # Step 2: Check if model directory exists
+            self.logger.info(f"Step 2: Checking model directory: {self.model_path}")
+            if not os.path.exists(self.model_path):
+                self.logger.error(f"❌ Model directory not found: {self.model_path}")
+                self.logger.error("   Please train a model first using: python3 train_model.py --data your_data.csv")
+                return False
+            self.logger.info("✅ Model directory exists")
+            
+            # Step 3: Load trained model
+            self.logger.info("Step 3: Loading trained model...")
+            try:
+                self.model = get_initial_model(self.model_path)
+                self.logger.info("✅ Model loaded successfully")
+            except Exception as e:
+                self.logger.error(f"❌ Model loading failed: {e}")
+                self.logger.error("   Check if model files exist and are valid")
                 return False
             
-            # Load trained model
-            self.logger.info(f"Loading model from: {self.model_path}")
-            self.model = get_initial_model(self.model_path)
+            # Step 4: Load online data and scalers
+            self.logger.info("Step 4: Loading online data and scalers...")
+            try:
+                df_online, self.scalers, context_length, df_removed_nans_forecasting, df_removed_nans_classification, self.variables, model_mode = get_online_data(self.model_path)
+                self.logger.info("✅ Online data and scalers loaded")
+            except Exception as e:
+                self.logger.error(f"❌ Online data loading failed: {e}")
+                self.logger.error("   Check if training data files exist in model directory")
+                return False
             
-            # Load online data and scalers
-            df_online, self.scalers, context_length, df_removed_nans_forecasting, df_removed_nans_classification, self.variables, model_mode = get_online_data(self.model_path)
-            
-            # Verify parameters
+            # Step 5: Verify parameters
             if context_length != self.context_length:
-                self.logger.warning(f"Context length mismatch: config={self.context_length}, model={context_length}")
+                self.logger.warning(f"⚠️ Context length mismatch: config={self.context_length}, model={context_length}")
                 self.context_length = context_length
             
-            # Discover monitoring items
-            self.monitoring_items = self.collector.discover_items()
-            if not self.monitoring_items:
-                self.logger.error("No monitoring items found")
+            # Step 6: Discover monitoring items
+            self.logger.info("Step 5: Discovering Zabbix monitoring items...")
+            try:
+                self.monitoring_items = self.collector.discover_items()
+                if not self.monitoring_items:
+                    self.logger.error("❌ No monitoring items found")
+                    self.logger.error("   Check host groups and search criteria in config.json")
+                    return False
+                self.logger.info(f"✅ Found {len(self.monitoring_items)} monitoring items")
+            except Exception as e:
+                self.logger.error(f"❌ Item discovery failed: {e}")
                 return False
             
-            self.logger.info("✅ System initialization completed")
+            self.logger.info("🎉 System initialization completed successfully!")
             self.logger.info(f"   Model mode: {model_mode}")
             self.logger.info(f"   Context length: {context_length}")
             self.logger.info(f"   Variables: {len(self.variables)}")
@@ -140,7 +171,9 @@ class ZabbixForecastingLoop:
             return True
             
         except Exception as e:
-            self.logger.error(f"System initialization failed: {e}")
+            self.logger.error(f"❌ Unexpected error during system initialization: {e}")
+            import traceback
+            self.logger.error(f"   Full traceback: {traceback.format_exc()}")
             return False
     
     def initialize_dashboard(self):
