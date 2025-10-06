@@ -205,13 +205,32 @@ class ZabbixForecastingLoop:
             self.logger.info(f"🌐 Initializing dashboard on port {dashboard_port}...")
             
             self.dash_plotter = DashRealTimePlotter()
-            self.dash_plotter.start_server()
             
-            self.logger.info(f"✅ Dashboard available at http://localhost:{dashboard_port}")
+            # Make dashboard accessible from network (not just localhost)
+            # This allows access from other VMs in the same network
+            self.dash_plotter.app.run_server(
+                host='0.0.0.0',  # Bind to all interfaces, not just localhost
+                port=dashboard_port,
+                debug=False,
+                threaded=True,
+                use_reloader=False
+            )
+            
+            # Get VM's IP address for connection info
+            import socket
+            hostname = socket.gethostname()
+            local_ip = socket.gethostbyname(hostname)
+            
+            self.logger.info(f"✅ Dashboard started and accessible at:")
+            self.logger.info(f"   Local: http://localhost:{dashboard_port}")
+            self.logger.info(f"   Network: http://{local_ip}:{dashboard_port}")
+            print(f"🌐 Dashboard accessible from Windows VM at: http://{local_ip}:{dashboard_port}")
+            
             time.sleep(2)  # Give server time to start
             
         except Exception as e:
             self.logger.warning(f"⚠️ Dashboard initialization failed: {e}")
+            self.logger.warning("   Continuing without dashboard...")
             self.dash_plotter = None
     
     def collect_and_prepare_data(self) -> Optional[pd.DataFrame]:

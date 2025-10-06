@@ -91,6 +91,11 @@ python3 online_forecasting.py
 # Press 'Q' + Enter to stop gracefully
 ```
 
+**Dashboard Access:**
+- **Local access**: `http://localhost:8050`
+- **Network access**: `http://[VM_IP]:8050` (shown in program output)
+- **Firewall**: Ensure port 8050 is open: `sudo firewall-cmd --permanent --add-port=8050/tcp && sudo firewall-cmd --reload`
+
 ## 📁 File Structure
 
 ```
