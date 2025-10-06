@@ -1,0 +1,18 @@
+{
+  "zabbix": {
+    "url": "https://192.168.93.45",
+    "user": "Admin",
+    "password": "zabbix"
+  },
+  "models": {
+    "forecasting_model_path": "/opt/anomaly_detection/models/forecasting_model"
+  },
+  "monitoring": {
+    "context_length": 60,
+    "update_interval": 60,
+    "prediction_horizon": 6
+  },
+  "industrial_filters": {
+    "device_groups": ["Zabbix servers"]
+  }
+}

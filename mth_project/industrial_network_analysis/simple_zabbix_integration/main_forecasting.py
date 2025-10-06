@@ -340,64 +340,33 @@ class ZabbixForecastingLoop:
     
     def initialize_dashboard(self):
         """Initialize the Dash dashboard"""
-        self.logger.info("🔧 Starting dashboard initialization...")
-        
         try:
-            # Test basic requirements first
             dashboard_port = self.config['monitoring']['dashboard_port']
-            self.logger.info(f"� Dashboard port from config: {dashboard_port}")
+            self.logger.info(f"🔧 Initializing dashboard on port {dashboard_port}...")
             
-            # Test imports step by step
-            self.logger.info("📦 Testing dashboard dependencies...")
-            try:
-                import dash
-                import plotly
-                self.logger.info(f"✅ Dashboard dependencies available (Dash {dash.__version__}, Plotly {plotly.__version__})")
-            except ImportError as e:
-                self.logger.error(f"❌ Dashboard dependencies missing: {e}")
-                self.logger.error("   Please run: pip install -r requirements.txt")
-                self.dash_plotter = None
-                return
-            
-            # Import dashboard class
-            self.logger.info("📊 Importing StandaloneDashboard...")
+            # Import here to catch import errors specifically
             from standalone_dashboard import StandaloneDashboard
-            self.logger.info("✅ StandaloneDashboard imported successfully")
             
-            # Create dashboard instance
-            self.logger.info("🏗️ Creating dashboard instance...")
             self.dash_plotter = StandaloneDashboard(port=dashboard_port, debug=False)
             self.logger.info("✅ Dashboard instance created successfully")
             
-            # Start server
-            self.logger.info("🚀 Starting dashboard server...")
             self.dash_plotter.start_server()
-            self.logger.info(f"🌐 Dashboard server started at http://localhost:{dashboard_port}")
+            self.logger.info(f"🌐 Dashboard started at http://localhost:{dashboard_port}")
             
-            # Set initial connection status
-            self.dash_plotter.set_connection_status('Initializing')
-            self.logger.info("✅ Dashboard initialization completed successfully")
+            # Set connection status
+            self.dash_plotter.set_connection_status('Connected')
             
             time.sleep(2)  # Give server time to start
             
         except ImportError as e:
             self.logger.error(f"❌ Dashboard import failed: {e}")
-            self.logger.error("   Missing dependencies - install with: pip install -r requirements.txt")
+            self.logger.error("   Please install: pip install dash plotly")
             self.dash_plotter = None
         except Exception as e:
             self.logger.error(f"❌ Dashboard initialization failed: {e}")
             import traceback
-            self.logger.error("   Full error details:")
-            for line in traceback.format_exc().split('\n'):
-                if line.strip():
-                    self.logger.error(f"   {line}")
+            self.logger.error(f"   Full error: {traceback.format_exc()}")
             self.dash_plotter = None
-            
-        # Final status check
-        if self.dash_plotter is not None:
-            self.logger.info("🎉 Dashboard is ready and running!")
-        else:
-            self.logger.warning("⚠️ Dashboard is not available - continuing without dashboard")
     
     def run_prediction_cycle(self, df: pd.DataFrame, cycle: int) -> bool:
         """Run a single prediction cycle"""

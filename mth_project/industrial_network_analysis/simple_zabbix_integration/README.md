@@ -1,5 +1,5 @@
 # 🏭 Simplified Zabbix Integration for Industrial Anomaly Detection
-
+# change something
 A streamlined, production-ready integration that connects your existing LSTM forecasting models to live industrial data from Zabbix systems.
 
 ## ✨ What This System Does
