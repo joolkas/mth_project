@@ -18,16 +18,21 @@ else
     SERVICE_INSTALL=false
 fi
 
+# Save current directory (source directory)
+SOURCE_DIR="$(pwd)"
+
 # Create installation directory
 echo "📁 Creating installation directory: $INSTALL_DIR"
 mkdir -p "$INSTALL_DIR"
-cd "$INSTALL_DIR"
 
-# Copy files (assuming script is run from source directory)
+# Copy files from source directory
 echo "📋 Copying program files..."
-cp *.py "$INSTALL_DIR/"
-cp *.json "$INSTALL_DIR/"
-cp requirements.txt "$INSTALL_DIR/"
+cp "$SOURCE_DIR"/*.py "$INSTALL_DIR/"
+cp "$SOURCE_DIR"/*.json "$INSTALL_DIR/"
+cp "$SOURCE_DIR"/requirements.txt "$INSTALL_DIR/"
+
+# Change to installation directory for remaining operations
+cd "$INSTALL_DIR"
 
 # Install Python dependencies
 echo "📦 Installing Python dependencies..."
