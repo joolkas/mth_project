@@ -8,11 +8,11 @@
     "search_criteria": ["cpu", "memory", "temperature", "bits"],
     "host_groups": ["Zabbix servers"],
     "update_interval": 60,
-    "history_hours": 1
+    "history_hours": 12
   },
   "model": {
-    "context_length": 15,
-    "prediction_horizon": 1,
+    "context_length": 60,
+    "prediction_horizon": 6,
     "model_path": "./trained_model"
   },
   "monitoring": {

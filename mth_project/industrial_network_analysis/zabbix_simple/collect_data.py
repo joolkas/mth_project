@@ -6,7 +6,6 @@ Collects data from Zabbix API for model training and real-time monitoring
 
 import json
 import time
-import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 import pandas as pd
@@ -23,7 +22,6 @@ class ZabbixDataCollector:
     
     def __init__(self, config_file="config.json"):
         self.config = self._load_config(config_file)
-        self.logger = self._setup_logging()
         self.zabbix_api = None
         
         # Configuration
@@ -40,28 +38,20 @@ class ZabbixDataCollector:
         with open(config_file, 'r') as f:
             return json.load(f)
     
-    def _setup_logging(self):
-        """Setup basic logging"""
-        logging.basicConfig(
-            level=getattr(logging, self.config['monitoring']['log_level']),
-            format='%(asctime)s - %(levelname)s - %(message)s'
-        )
-        return logging.getLogger(__name__)
-    
     def connect(self) -> bool:
         """Connect to Zabbix API"""
         try:
-            self.logger.info(f"Connecting to Zabbix: {self.zabbix_config['url']}")
+            print(f"Connecting to Zabbix: {self.zabbix_config['url']}")
             self.zabbix_api = ZabbixAPI(self.zabbix_config['url'])
             self.zabbix_api.session.verify = False
             self.zabbix_api.login(self.zabbix_config['user'], self.zabbix_config['password'])
             
             version = self.zabbix_api.apiinfo.version()
-            self.logger.info(f"Connected to Zabbix {version}")
+            print(f"Connected to Zabbix {version}")
             return True
             
         except Exception as e:
-            self.logger.error(f"Zabbix connection failed: {e}")
+            print(f"Zabbix connection failed: {e}")
             return False
     
     def discover_items(self) -> List[Dict]:
@@ -80,7 +70,7 @@ class ZabbixDataCollector:
                     all_hosts.extend(hosts)
             
             if not all_hosts:
-                self.logger.error("No hosts found")
+                print("No hosts found")
                 return []
             
             # Get monitored numeric items
@@ -111,11 +101,11 @@ class ZabbixDataCollector:
                             filtered_items.append(item)
                         break
             
-            self.logger.info(f"Found {len(filtered_items)} matching items")
+            print(f"Found {len(filtered_items)} matching items")
             return filtered_items
             
         except Exception as e:
-            self.logger.error(f"Item discovery failed: {e}")
+            print(f"Item discovery failed: {e}")
             return []
     
     def collect_historical_data(self, items: List[Dict], hours_back: int = None) -> Optional[pd.DataFrame]:
@@ -126,9 +116,9 @@ class ZabbixDataCollector:
         try:
             time_to = int(time.time())
             time_from = time_to - (hours_back * 3600)
-            
-            self.logger.info(f"Collecting {hours_back} hours of historical data...")
-            
+
+            print(f"Collecting {hours_back} hours of historical data...")
+
             all_data = []
             item_ids = [item['itemid'] for item in items]
             
@@ -159,7 +149,7 @@ class ZabbixDataCollector:
                         continue
             
             if not all_data:
-                self.logger.warning("No historical data collected")
+                print("No historical data collected")
                 return None
             
             # Create time series DataFrame
@@ -180,12 +170,12 @@ class ZabbixDataCollector:
             # Resample to 1-minute intervals
             df_resampled = df_pivot.resample('1T').mean()
             df_resampled = df_resampled.fillna(method='ffill')
-            
-            self.logger.info(f"Historical data collected: {df_resampled.shape}")
+
+            print(f"Historical data collected: {df_resampled.shape}")
             return df_resampled
             
         except Exception as e:
-            self.logger.error(f"Historical data collection failed: {e}")
+            print(f"Historical data collection failed: {e}")
             return None
     
     def collect_recent_data(self, items: List[Dict], hours_back: int = 2) -> Optional[pd.DataFrame]:
@@ -199,9 +189,9 @@ class ZabbixDataCollector:
             os.makedirs('data', exist_ok=True)
             filepath = f"data/{filename}"
             df.to_csv(filepath)
-            self.logger.info(f"Data saved to: {filepath}")
+            print(f"Data saved to: {filepath}")
         except Exception as e:
-            self.logger.error(f"Failed to save data: {e}")
+            print(f"Failed to save data: {e}")
 
 
 def main():
