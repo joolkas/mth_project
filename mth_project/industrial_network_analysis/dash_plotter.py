@@ -656,7 +656,7 @@ def test_dashboard():
 
 
 if __name__ == "__main__":
-    test_dashboard()
+    # test_dashboard()
     input("Press Enter to stop the server...")
     
     def _get_classification_display(self):

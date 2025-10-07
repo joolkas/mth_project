@@ -543,7 +543,7 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
                     if classification_result is not None:
                         dash_plotter.add_classification_result(classification_result)
                     
-                    print("DEBUG: add_buffer_predictions called successfully")
+                    # print("DEBUG: add_buffer_predictions called successfully")
                 except Exception as e:
                     print(f"DEBUG: Error in add_buffer_predictions: {e}")
             else:

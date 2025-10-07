@@ -227,7 +227,7 @@ class ZabbixForecastingLoop:
             # Collect recent data from Zabbix
             raw_data = self.collector.collect_recent_data(self.monitoring_items, hours_back=2)
 
-            print(f"📊 Collected recent data: {raw_data.shape}")
+
 
             if raw_data is None or raw_data.empty:
                 print("No data collected from Zabbix")
