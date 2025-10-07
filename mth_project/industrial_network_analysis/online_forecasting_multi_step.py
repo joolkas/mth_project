@@ -88,10 +88,10 @@ def cleanup_and_create_results(final_predictions, final_actuals, final_timestamp
             predictions_actuals_df = pd.DataFrame(columns=variables)
             actuals_actuals_df = pd.DataFrame(columns=variables)
         
-        print(f"📊 Results summary:")
-        print(f"   - Completed steps: {current_step}")
-        print(f"   - Predictions collected: {len(final_predictions)}")
-        print(f"   - Variables tracked: {len(variables)}")
+        # print(f"📊 Results summary:")
+        # print(f"   - Completed steps: {current_step}")
+        # print(f"   - Predictions collected: {len(final_predictions)}")
+        # print(f"   - Variables tracked: {len(variables)}")
         
         return predictions_df, actuals_df, predictions_actuals_df, actuals_actuals_df
         
@@ -370,11 +370,11 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
     # Skip keyboard listener for production stability
     
     # Prepare model for online learning (simplified)
-    print("🔧 Preparing multi-step model...")
+    # print("🔧 Preparing multi-step model...")
     model = initial_model  # Use model as-is for stability
     
     # Scale the online data using the same scalers from training
-    print("⚖️  Scaling data with training scalers...")
+    # print("⚖️  Scaling data with training scalers...")
     scaled_data = np.zeros_like(df_online.values)
     
     scaling_errors = []
@@ -398,8 +398,8 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
         print(f"⚠️  Scaling issues: {len(scaling_errors)} variables had problems")
         for error in scaling_errors[:3]:  # Show first 3 errors
             print(f"   • {error}")
-    else:
-        print("✅ All variables scaled successfully")
+    # else:
+    #     print("✅ All variables scaled successfully")
     
     final_predictions = []
     final_actuals = []
@@ -409,18 +409,18 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
     actuals_actuals = []
     total_steps = len(scaled_data) - context_length - prediction_horizon + 1
 
-    print(f"📈 Will process {total_steps} prediction steps")
+    # print(f"📈 Will process {total_steps} prediction steps")
     
     if dash_plotter is not None:
         try:
             dash_plotter.set_total_steps(total_steps)
-            print("🎯 Dashboard configured successfully")
+            # print("🎯 Dashboard configured successfully")
         except Exception as e:
             print(f"⚠️  Dashboard configuration failed: {e}")
             dash_plotter = None
 
     current_context = scaled_data[:context_length].copy()
-    print(f"🔄 Initial context shape: {current_context.shape}")
+    # print(f"🔄 Initial context shape: {current_context.shape}")
     
     # Track processing time
     start_time = time.time()
@@ -437,7 +437,7 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
         # Show progress every 10 steps
         if current_step % 10 == 0:
             progress_pct = (current_step / total_steps) * 100
-            print(f"📊 Progress: {current_step}/{total_steps} steps ({progress_pct:.1f}%)")
+            #print(f"📊 Progress: {current_step}/{total_steps} steps ({progress_pct:.1f}%)")
         
         # No sleep in production mode for faster processing
 

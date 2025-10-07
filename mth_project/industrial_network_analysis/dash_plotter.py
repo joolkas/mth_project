@@ -1073,7 +1073,7 @@ def test_dashboard():
     return plotter
 
 
-if __name__ == "__main__":
-    # Run test if this file is executed directly
-    test_dashboard()
-    input("Press Enter to stop the server...")
+# if __name__ == "__main__":
+#     # Run test if this file is executed directly
+#     test_dashboard()
+#     input("Press Enter to stop the server...")
