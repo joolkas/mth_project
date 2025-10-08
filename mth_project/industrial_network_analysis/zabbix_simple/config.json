@@ -5,7 +5,7 @@
     "password": "zabbix"
   },
   "data_collection": {
-    "search_criteria": ["cpu utilization", "memory", "temperature", "bits"],
+    "search_criteria": ["cpu utilizatio", "memory", "temperature", "bits"],
     "host_groups": ["Zabbix servers"],
     "update_interval": 60,
     "history_hours": 24
