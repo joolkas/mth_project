@@ -309,7 +309,6 @@ def one_step_rolling_buffer_learning_prediction_with_dash(initial_model,
         classification_enabled = False
         classification_model = None
 
-
     # Main prediction loop
     for t in range(context_length, len(scaled_data) - prediction_horizon + 1):
         # wait 1 seconds (for demo - real data is 1 minute apart)
