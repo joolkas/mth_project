@@ -622,49 +622,6 @@ class DashRealTimePlotter:
         self.stats['total_predictions'] = 0
         self.current_step = 0
 
-
-# Simplified test function
-def test_dashboard():
-    """Test function to demonstrate the simplified dashboard"""
-    plotter = DashRealTimePlotter()
-    
-    # Start server
-    server_thread = plotter.start_server()
-    print("Dashboard started at http://localhost:8050")
-    
-    # Simulate some data
-    variables = ['bits_sent_port1', 'bits_recv_port1', 'bits_sent_port2', 'bits_recv_port2']
-    plotter.set_total_steps(100)
-    
-    for step in range(20):
-        # Generate fake predictions and actuals
-        predictions = []
-        for pred_step in range(6):  # prediction horizon of 6
-            predictions.append(np.random.randn(len(variables)) * 10 + 50 + pred_step)
-        
-        actuals = [predictions[0] + np.random.randn(len(variables)) * 2]
-        
-        timestamp = datetime.now() + timedelta(seconds=step*5)
-        
-        plotter.add_buffer_predictions(
-            predictions=predictions,
-            actuals=actuals,
-            current_step=step,
-            current_datetime=timestamp,
-            variable_names=variables,
-            saved_prediction=predictions[0]
-        )
-        
-        time.sleep(1)
-    
-    print("Test completed. Dashboard should show data.")
-    return plotter
-
-
-if __name__ == "__main__":
-    # test_dashboard()
-    input("Press Enter to stop the server...")
-    
     def _get_classification_display(self):
         """Get classification results display - ENHANCED"""
         if not self.classification_results:
