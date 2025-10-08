@@ -294,8 +294,11 @@ class DashRealTimePlotter:
                 
                 timestamps = list(self.timestamps)
                 
-                # FIX ISSUE 2: Correct time alignment for dash plotter
-                # 1. Actual values trace (blue) - show up to current time (t)
+                # === FIXED TIME ALIGNMENT ===
+                # Current time reference for proper alignment
+                current_time = timestamps[-1] if timestamps else datetime.now()
+                
+                # 1. Actual values (BLUE) - historical data up to current time (t)
                 if var in self.actual_values and len(self.actual_values[var]) > 0:
                     actual_data = list(self.actual_values[var])
                     data_length = min(len(actual_data), len(timestamps))
@@ -318,28 +321,26 @@ class DashRealTimePlotter:
                                 row=row, col=col
                             )
                 
-                # 2. Saved predictions (red) - show historical + t+1 prediction
+                # 2. Saved predictions (RED) - t+1 predictions aligned with future timestamps
                 if var in self.saved_predictions and len(self.saved_predictions[var]) > 0:
                     pred_data = list(self.saved_predictions[var])
-                    data_length = min(len(pred_data), len(timestamps))
                     
-                    if data_length > 0 and timestamps:
-                        # Use historical timestamps plus one step into future
-                        historical_timestamps = timestamps[-data_length:]
-                        historical_pred_data = pred_data[-data_length:]
+                    if timestamps and len(pred_data) > 0:
+                        # Create t+1 timestamps for each prediction
+                        t1_timestamps = []
+                        for j, base_time in enumerate(timestamps):
+                            if j < len(pred_data):
+                                t1_timestamps.append(base_time + timedelta(minutes=1))
                         
-                        # Add t+1 timestamp and prediction
-                        future_timestamp = timestamps[-1] + timedelta(minutes=1)
-                        extended_timestamps = historical_timestamps + [future_timestamp]
-                        extended_pred_data = historical_pred_data + [pred_data[-1]]  # Repeat last prediction for t+1
-                        
-                        if len(extended_timestamps) > 0 and len(extended_pred_data) > 0:
+                        # Use matching data length
+                        min_len = min(len(pred_data), len(t1_timestamps))
+                        if min_len > 0:
                             fig.add_trace(
                                 go.Scatter(
-                                    x=extended_timestamps,
-                                    y=extended_pred_data,
+                                    x=t1_timestamps[-min_len:],
+                                    y=pred_data[-min_len:],
                                     mode='lines+markers',
-                                    name='Saved Predictions (t+1)',
+                                    name='Predictions (t+1)',
                                     line=dict(color='red', width=2, dash='dash'),
                                     marker=dict(size=4),
                                     showlegend=(i == 0)
@@ -347,22 +348,19 @@ class DashRealTimePlotter:
                                 row=row, col=col
                             )
                 
-                # 3. Temporal predictions (green) - show t+1 through t+6 predictions
+                # 3. Future predictions (GREEN) - t+1 through t+6 from current time
                 if var in self.temporal_predictions and len(self.temporal_predictions[var]) > 0:
                     temporal_data = list(self.temporal_predictions[var])
                     
-                    if timestamps and len(temporal_data) > 0:
-                        current_time = timestamps[-1] if timestamps else datetime.now()
-                        
-                        # Get the latest temporal prediction (should be array of 6 future values)
+                    if len(temporal_data) > 0:
+                        # Get the latest temporal prediction (array of 6 future values)
                         latest_temporal = temporal_data[-1] if temporal_data else []
                         
                         if isinstance(latest_temporal, list) and len(latest_temporal) > 0:
-                            # Start green plot from t+1 and go through t+6
+                            # Create future timestamps starting from current_time + 1min
                             future_timestamps = []
                             future_predictions = []
                             
-                            # Add future timestamps and predictions starting from t+1
                             for step in range(0, min(6, len(latest_temporal))):
                                 future_time = current_time + timedelta(minutes=step + 1)  # t+1, t+2, ..., t+6
                                 future_timestamps.append(future_time)
@@ -374,7 +372,7 @@ class DashRealTimePlotter:
                                         x=future_timestamps,
                                         y=future_predictions,
                                         mode='lines+markers',
-                                        name='Future Predictions (t+1 to t+6)',
+                                        name='Future Horizon (t+1→t+6)',
                                         line=dict(color='green', width=2, dash='dot'),
                                         marker=dict(size=3),
                                         showlegend=(i == 0)
@@ -478,6 +476,14 @@ class DashRealTimePlotter:
 
     def add_buffer_predictions(self, predictions, actuals, current_step, current_datetime, variable_names, 
                              saved_prediction=None, future_prediction=None, port_statuses=None, classification_result=None):
+        """
+        Legacy method name - calls add_data_point for compatibility
+        """
+        return self.add_data_point(predictions, actuals, current_step, current_datetime, variable_names,
+                                 saved_prediction, future_prediction, port_statuses, classification_result)
+    
+    def add_data_point(self, predictions, actuals, current_step, current_datetime, variable_names, 
+                      saved_prediction=None, future_prediction=None, port_statuses=None, classification_result=None):
         """
         Add new prediction data to the dashboard - enhanced with classification and port status
         """
