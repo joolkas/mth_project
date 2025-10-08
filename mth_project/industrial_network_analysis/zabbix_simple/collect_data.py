@@ -177,7 +177,6 @@ class ZabbixDataCollector:
         except Exception as e:
             print(f"Historical data collection failed: {e}")
             return None
-    
     def collect_recent_data(self, items: List[Dict], hours_back: int = 2) -> Optional[pd.DataFrame]:
         """Collect recent data for real-time monitoring"""
         return self.collect_historical_data(items, hours_back)
