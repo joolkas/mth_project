@@ -324,6 +324,13 @@ class ZabbixForecastingLoop:
                 
                 # Collect and prepare data
                 prepared_data = self.collect_and_prepare_data()
+                # print last value with timestamp
+                
+                if prepared_data is not None:
+                    print("Prepared data last value:")
+                    for col in prepared_data.columns:
+                        print(f"time: {prepared_data.index[-1]}")
+                        print(f"{col}: {prepared_data[col].iloc[-1]}")
                 
                 if prepared_data is None:
                     print(f"Cycle #{cycle}: Skipping due to data issues")
