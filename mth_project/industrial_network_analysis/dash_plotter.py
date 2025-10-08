@@ -294,22 +294,27 @@ class DashRealTimePlotter:
                 
                 timestamps = list(self.timestamps)
                 
-                # SIMPLE FIX: Shift predictions 6 timesteps to the left (back to historical timestamps)
+                # SHIFT EVERYTHING 6 TIMESTEPS TO THE FUTURE
                 timestamps = list(self.timestamps)
                 
-                # 1. Actual values trace (blue) - show up to current time (t)
+                # 1. Blue line (actual values) - shift 6 timesteps forward, end at time t
                 if var in self.actual_values and len(self.actual_values[var]) > 0:
                     actual_data = list(self.actual_values[var])
                     data_length = min(len(actual_data), len(timestamps))
                     
                     if data_length > 0:
-                        recent_timestamps = timestamps[-data_length:]
+                        # Shift timestamps 6 minutes into the future
+                        shifted_timestamps = []
+                        for ts in timestamps[-data_length:]:
+                            shifted_ts = ts + timedelta(minutes=6)  # Move 6 minutes forward
+                            shifted_timestamps.append(shifted_ts)
+                        
                         recent_actual_data = actual_data[-data_length:]
                         
-                        if len(recent_timestamps) > 0 and len(recent_actual_data) > 0:
+                        if len(shifted_timestamps) > 0 and len(recent_actual_data) > 0:
                             fig.add_trace(
                                 go.Scatter(
-                                    x=recent_timestamps,
+                                    x=shifted_timestamps,
                                     y=recent_actual_data,
                                     mode='lines+markers',
                                     name='Actual Values',
@@ -320,23 +325,25 @@ class DashRealTimePlotter:
                                 row=row, col=col
                             )
                 
-                # 2. Saved predictions (red) - shift 6 timesteps left from where they were
+                # 2. Red dashed line (predictions) - shift 6 timesteps forward, end at t+1
                 if var in self.saved_predictions and len(self.saved_predictions[var]) > 0:
                     pred_data = list(self.saved_predictions[var])
                     data_length = min(len(pred_data), len(timestamps))
                     
                     if data_length > 0 and timestamps:
-                        # Shift timestamps 6 steps to the left (earlier in time)
-                        shifted_timestamps = []
+                        # Shift prediction timestamps 6 minutes forward + 1 more for t+1
+                        shifted_pred_timestamps = []
                         for ts in timestamps[-data_length:]:
-                            shifted_ts = ts - timedelta(minutes=6)  # Move 6 minutes earlier
-                            shifted_timestamps.append(shifted_ts)
+                            shifted_ts = ts + timedelta(minutes=7)  # Move 6 + 1 = 7 minutes forward (end at t+1)
+                            shifted_pred_timestamps.append(shifted_ts)
                         
-                        if len(shifted_timestamps) > 0 and len(pred_data[-data_length:]) > 0:
+                        historical_pred_data = pred_data[-data_length:]
+                        
+                        if len(shifted_pred_timestamps) > 0 and len(historical_pred_data) > 0:
                             fig.add_trace(
                                 go.Scatter(
-                                    x=shifted_timestamps,
-                                    y=pred_data[-data_length:],
+                                    x=shifted_pred_timestamps,
+                                    y=historical_pred_data,
                                     mode='lines+markers',
                                     name='Saved Predictions (t+1)',
                                     line=dict(color='red', width=2, dash='dash'),
@@ -346,7 +353,7 @@ class DashRealTimePlotter:
                                 row=row, col=col
                             )
                 
-                # 3. Temporal predictions (green) - shift 6 timesteps left
+                # 3. Green dotted line (future predictions) - shift 6 timesteps forward, end at t+6
                 if var in self.temporal_predictions and len(self.temporal_predictions[var]) > 0:
                     temporal_data = list(self.temporal_predictions[var])
                     
@@ -357,13 +364,13 @@ class DashRealTimePlotter:
                         latest_temporal = temporal_data[-1] if temporal_data else []
                         
                         if isinstance(latest_temporal, list) and len(latest_temporal) > 0:
-                            # Shift future timestamps 6 steps to the left (start from current_time - 5min)
+                            # Shift future timestamps 6 steps forward, spanning from t+1 to t+6
                             future_timestamps = []
                             future_predictions = []
                             
-                            # Start from 6 minutes earlier and go forward
+                            # Start from t+1 (current + 7 min) and go to t+6 (current + 12 min)
                             for step in range(0, min(6, len(latest_temporal))):
-                                future_time = current_time + timedelta(minutes=step - 5)  # Start 5 min before current
+                                future_time = current_time + timedelta(minutes=step + 7)  # t+1, t+2, ..., t+6 (shifted 6 forward)
                                 future_timestamps.append(future_time)
                                 future_predictions.append(latest_temporal[step])
                             
