@@ -1,13 +1,12 @@
 {
   "model_mode": "multi_step",
-  "context_length": 15,
-  "prediction_horizon": 1,
-  "num_features": 4,
+  "context_length": 60,
+  "prediction_horizon": 6,
+  "num_features": 3,
   "variables": [
     "Zabbix server_Available memory",
     "Zabbix server_Interface ens192: Bits received",
-    "Zabbix server_Interface ens192: Bits sent",
-    "Zabbix server_Number of CPUs"
+    "Zabbix server_Interface ens192: Bits sent"
   ],
-  "trained_at": "2025-10-06T13:34:22.665784"
+  "trained_at": "2025-10-08T21:41:09.093287"
 }
