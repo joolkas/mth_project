@@ -225,8 +225,6 @@ class ZabbixForecastingLoop:
             # Collect recent data from Zabbix
             raw_data = self.collector.collect_recent_data(self.monitoring_items, hours_back=2)
 
-
-
             if raw_data is None or raw_data.empty:
                 print("No data collected from Zabbix")
                 return None
@@ -239,6 +237,12 @@ class ZabbixForecastingLoop:
             # Match columns to model variables (simplified approach)
             available_columns = raw_data.columns.tolist()
             
+            # print the last 5 values
+            print("Last 5 values of raw data:")
+            for col in available_columns:
+                print(f"timestamp of collected values: {raw_data['timestamp'].tail().tolist()}")
+                print(f"{col}: {raw_data[col].tail().tolist()}")
+            
             if len(available_columns) >= len(self.variables):
                 # Use first N columns matching model size
                 selected_data = raw_data[available_columns[:len(self.variables)]].copy()
@@ -250,10 +254,6 @@ class ZabbixForecastingLoop:
                     if i < len(self.variables):
                         selected_data[self.variables[i]] = raw_data[col]
                 selected_data = selected_data.fillna(0)
-            
-            # FIX: Don't apply differencing here - let the forecasting function handle it
-            # The multistep_rolling_buffer_learning_prediction_with_dash expects raw data
-            # and will handle differencing and scaling internally
             
             # Get recent data for prediction (raw data)
             recent_data = selected_data.tail(self.context_length * 2)
