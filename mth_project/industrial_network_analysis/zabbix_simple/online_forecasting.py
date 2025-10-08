@@ -237,11 +237,11 @@ class ZabbixForecastingLoop:
             # Match columns to model variables (simplified approach)
             available_columns = raw_data.columns.tolist()
             
-            # print the last 5 values and its timestamp
-            print("Last 5 values of raw data:")
+            # print the last value and its timestamp
+            print("Last value of raw data:")
             for col in available_columns:
-                print(f"time: {raw_data.index[-1].tolist()}")
-                print(f"{col}: {raw_data[col].iloc[-1].tolist()}")
+                print(f"time: {raw_data.index[-1]}")
+                print(f"{col}: {raw_data[col].iloc[-1]}")
             
             if len(available_columns) >= len(self.variables):
                 # Use first N columns matching model size
