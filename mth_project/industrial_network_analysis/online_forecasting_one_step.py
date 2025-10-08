@@ -266,11 +266,12 @@ def one_step_rolling_buffer_learning_prediction_with_dash(initial_model,
     except Exception as e:
         print(f"Warning: Could not recompile model ({e}), will try per-step recompilation")
     
-    # Scale the online data using the same scalers from training
-    scaled_data = np.zeros_like(df_online.values)
-    for i, var in enumerate(variables):
-        scaler = scalers[var]
-        scaled_data[:, i] = scaler.transform(df_online[var].values.reshape(-1, 1)).flatten()
+    # FIX ISSUE 1: Models expect raw data and do their own scaling - don't double scale!
+    # The models were trained on raw data and have StandardScaler built into their training process.
+    # Adding another scaling step here would result in double scaling: Raw → Scale → Scale → Model
+    # Instead, we use raw data directly: Raw → Model (which handles scaling internally)
+    print("   Using raw data (models handle scaling internally)")
+    scaled_data = df_online.values  # Keep variable name for compatibility, but no scaling applied
     
     final_predictions = []
     final_actuals = []
@@ -283,7 +284,7 @@ def one_step_rolling_buffer_learning_prediction_with_dash(initial_model,
     if dash_plotter is not None:
         dash_plotter.set_total_steps(total_steps)
 
-    current_context = scaled_data[:context_length].copy() 
+    current_context = scaled_data[:context_length].copy()  # Raw data context
     model = initial_model
     
     # Store previous predictions for learning from historical errors
@@ -321,7 +322,7 @@ def one_step_rolling_buffer_learning_prediction_with_dash(initial_model,
         except Exception as e:
             print(f" Prediction failed ({e}).")
                     
-        # 2. Convert all predictions to original scale
+        # 2. Model outputs are already in original scale - no inverse transform needed
         step_predictions_original = []
         for pred in step_predictions:
             pred_original = []
@@ -330,12 +331,12 @@ def one_step_rolling_buffer_learning_prediction_with_dash(initial_model,
                 if 'status' in var.lower():
                     pred[i] = np.round(pred[i])
                 
-                scaler = scalers[var]
-                original_val = scaler.inverse_transform([[pred[i]]])[0, 0]
+                # No scaling conversion needed - model outputs original scale
+                original_val = pred[i]
                 pred_original.append(original_val)
             step_predictions_original.append(pred_original)
         
-        # 3. Get actual values for all predicted steps
+        # 3. Get actual values for all predicted steps (already in original scale)
         actual_values = []
         for step in range(prediction_horizon):
             if t + step < len(scaled_data):
@@ -345,8 +346,8 @@ def one_step_rolling_buffer_learning_prediction_with_dash(initial_model,
         for actual in actual_values:
             actual_original = []
             for i, var in enumerate(variables):
-                scaler = scalers[var]
-                original_val = scaler.inverse_transform([[actual[i]]])[0, 0]
+                # No scaling conversion needed - data is already in original scale
+                original_val = actual[i]
                 actual_original.append(original_val)
             actuals_original.append(actual_original)
         
@@ -465,14 +466,14 @@ def one_step_rolling_buffer_learning_prediction_with_dash(initial_model,
             print("DEBUG: dash_plotter is None, not calling dash plotter")
 
         # 8. Update context and model for next iteration
-        new_row = scaled_data[t, :].copy()
+        new_row = scaled_data[t, :].copy()  # Raw data row
         
-        # learn from historical prediction error
+        # learn from historical prediction error (simplified for raw data)
         if previous_prediction is not None and previous_context is not None:
-            # The actual value that just arrived (time t)
+            # The actual value that just arrived (time t) - raw data
             actual_current_step = scaled_data[t, :].copy()
             
-            # Calculate the error from our previous prediction
+            # Calculate the error from our previous prediction (raw scale comparison)
             historical_prediction_error = np.mean(np.abs(previous_prediction.flatten() - actual_current_step))
             
             print(f"   Learning from historical error at step {current_step}: MAE = {historical_prediction_error:.6f}")

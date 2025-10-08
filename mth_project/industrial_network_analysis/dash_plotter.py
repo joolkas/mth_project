@@ -294,14 +294,15 @@ class DashRealTimePlotter:
                 
                 timestamps = list(self.timestamps)
                 
-                # 1. Actual values trace (blue) - exclude last sample
+                # FIX ISSUE 2: Correct time alignment for dash plotter
+                # 1. Actual values trace (blue) - show up to current time (t)
                 if var in self.actual_values and len(self.actual_values[var]) > 0:
                     actual_data = list(self.actual_values[var])
                     data_length = min(len(actual_data), len(timestamps))
                     
-                    if data_length > 1:
-                        recent_timestamps = timestamps[-data_length:-1]
-                        recent_actual_data = actual_data[-data_length:-1]
+                    if data_length > 0:
+                        recent_timestamps = timestamps[-data_length:]
+                        recent_actual_data = actual_data[-data_length:]
                         
                         if len(recent_timestamps) > 0 and len(recent_actual_data) > 0:
                             fig.add_trace(
@@ -317,22 +318,28 @@ class DashRealTimePlotter:
                                 row=row, col=col
                             )
                 
-                # 2. Saved predictions (red) - keep historical only
+                # 2. Saved predictions (red) - show historical + t+1 prediction
                 if var in self.saved_predictions and len(self.saved_predictions[var]) > 0:
                     pred_data = list(self.saved_predictions[var])
                     data_length = min(len(pred_data), len(timestamps))
                     
-                    if data_length > 0:
-                        recent_timestamps = timestamps[-data_length:]
-                        recent_pred_data = pred_data[-data_length:]
+                    if data_length > 0 and timestamps:
+                        # Use historical timestamps plus one step into future
+                        historical_timestamps = timestamps[-data_length:]
+                        historical_pred_data = pred_data[-data_length:]
                         
-                        if len(recent_timestamps) > 0 and len(recent_pred_data) > 0:
+                        # Add t+1 timestamp and prediction
+                        future_timestamp = timestamps[-1] + timedelta(minutes=1)
+                        extended_timestamps = historical_timestamps + [future_timestamp]
+                        extended_pred_data = historical_pred_data + [pred_data[-1]]  # Repeat last prediction for t+1
+                        
+                        if len(extended_timestamps) > 0 and len(extended_pred_data) > 0:
                             fig.add_trace(
                                 go.Scatter(
-                                    x=recent_timestamps,
-                                    y=recent_pred_data,
+                                    x=extended_timestamps,
+                                    y=extended_pred_data,
                                     mode='lines+markers',
-                                    name='Saved Predictions',
+                                    name='Saved Predictions (t+1)',
                                     line=dict(color='red', width=2, dash='dash'),
                                     marker=dict(size=4),
                                     showlegend=(i == 0)
@@ -340,7 +347,7 @@ class DashRealTimePlotter:
                                 row=row, col=col
                             )
                 
-                # 3. Temporal predictions (green) - Future predictions t+1 to t+6 connected to red plot
+                # 3. Temporal predictions (green) - show t+1 through t+6 predictions
                 if var in self.temporal_predictions and len(self.temporal_predictions[var]) > 0:
                     temporal_data = list(self.temporal_predictions[var])
                     
@@ -351,13 +358,13 @@ class DashRealTimePlotter:
                         latest_temporal = temporal_data[-1] if temporal_data else []
                         
                         if isinstance(latest_temporal, list) and len(latest_temporal) > 0:
-                            # Start green plot from current time (t) and go through t+5
+                            # Start green plot from t+1 and go through t+6
                             future_timestamps = []
                             future_predictions = []
                             
-                            # Add future timestamps and predictions starting from current time (t)
+                            # Add future timestamps and predictions starting from t+1
                             for step in range(0, min(6, len(latest_temporal))):
-                                future_time = current_time + timedelta(minutes=step)  # t, t+1, t+2, ..., t+5
+                                future_time = current_time + timedelta(minutes=step + 1)  # t+1, t+2, ..., t+6
                                 future_timestamps.append(future_time)
                                 future_predictions.append(latest_temporal[step])
                             
@@ -367,7 +374,7 @@ class DashRealTimePlotter:
                                         x=future_timestamps,
                                         y=future_predictions,
                                         mode='lines+markers',
-                                        name='Future Predictions (t to t+5)',
+                                        name='Future Predictions (t+1 to t+6)',
                                         line=dict(color='green', width=2, dash='dot'),
                                         marker=dict(size=3),
                                         showlegend=(i == 0)

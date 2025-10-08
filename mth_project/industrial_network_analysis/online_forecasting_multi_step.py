@@ -373,33 +373,12 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
     # print("🔧 Preparing multi-step model...")
     model = initial_model  # Use model as-is for stability
     
-    # Scale the online data using the same scalers from training
-    # print("⚖️  Scaling data with training scalers...")
-    scaled_data = np.zeros_like(df_online.values)
-    
-    scaling_errors = []
-    for i, var in enumerate(variables):
-        if var in scalers:
-            scaler = scalers[var]
-            try:
-                scaled_data[:, i] = scaler.transform(df_online[var].values.reshape(-1, 1)).flatten()
-            except Exception as e:
-                scaling_errors.append(f"{var}: {e}")
-                # Fallback: use standardization
-                data_values = df_online[var].values
-                scaled_data[:, i] = (data_values - data_values.mean()) / (data_values.std() + 1e-8)
-        else:
-            scaling_errors.append(f"{var}: scaler not found")
-            # Fallback: use standardization
-            data_values = df_online[var].values
-            scaled_data[:, i] = (data_values - data_values.mean()) / (data_values.std() + 1e-8)
-    
-    if scaling_errors:
-        print(f"⚠️  Scaling issues: {len(scaling_errors)} variables had problems")
-        for error in scaling_errors[:3]:  # Show first 3 errors
-            print(f"   • {error}")
-    # else:
-    #     print("✅ All variables scaled successfully")
+    # FIX ISSUE 1: Models expect raw data and do their own scaling - don't double scale!
+    # The models were trained on raw data and have StandardScaler built into their training process.
+    # Adding another scaling step here would result in double scaling: Raw → Scale → Scale → Model
+    # Instead, we use raw data directly: Raw → Model (which handles scaling internally)
+    print("   Using raw data (models handle scaling internally)")
+    scaled_data = df_online.values  # Keep variable name for compatibility, but no scaling applied
     
     final_predictions = []
     final_actuals = []
@@ -419,7 +398,7 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
             print(f"⚠️  Dashboard configuration failed: {e}")
             dash_plotter = None
 
-    current_context = scaled_data[:context_length].copy()
+    current_context = scaled_data[:context_length].copy()  # Raw data context
     # print(f"🔄 Initial context shape: {current_context.shape}")
     
     # Track processing time
@@ -448,7 +427,7 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
             print(f"⚠️  Multi-step prediction failed ({e}), skipping this step")
             continue  # Skip this iteration if prediction fails
                     
-        # 2. Convert all predictions to original scale
+        # 2. Model outputs are already in original scale - no inverse transform needed
         step_predictions_original = []
         for pred in step_predictions:
             pred_original = []
@@ -457,12 +436,12 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
                 if 'status' in var.lower():
                     pred[i] = np.round(pred[i])
                 
-                scaler = scalers[var]
-                original_val = scaler.inverse_transform([[pred[i]]])[0, 0]
+                # No scaling conversion needed - model outputs original scale
+                original_val = pred[i]
                 pred_original.append(original_val)
             step_predictions_original.append(pred_original)
         
-        # 3. Get actual values for all predicted steps
+        # 3. Get actual values for all predicted steps (already in original scale)
         actual_values = []
         for step in range(prediction_horizon):
             if t + step < len(scaled_data):
@@ -472,8 +451,8 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
         for actual in actual_values:
             actual_original = []
             for i, var in enumerate(variables):
-                scaler = scalers[var]
-                original_val = scaler.inverse_transform([[actual[i]]])[0, 0]
+                # No scaling conversion needed - data is already in original scale
+                original_val = actual[i]
                 actual_original.append(original_val)
             actuals_original.append(actual_original)
         
@@ -552,10 +531,10 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
             print("DEBUG: dash_plotter is None, not calling dash plotter")
 
         # 8. Update context for next iteration (simplified - no online learning)
-        new_row = scaled_data[t, :].copy()
+        new_row = scaled_data[t, :].copy()  # Raw data row
         current_context = np.vstack((current_context[1:], new_row))
         
-        # Calculate and display prediction error for monitoring
+        # Calculate and display prediction error for monitoring (raw scale comparison)
         if len(step_predictions_original) > 0 and len(actuals_original) > 0:
             prediction_error = np.mean(np.abs(np.array(step_predictions_original[0]) - np.array(actuals_original[0])))
             if current_step % 20 == 0:  # Show error every 20 steps
