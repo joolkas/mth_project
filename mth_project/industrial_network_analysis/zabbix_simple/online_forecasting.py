@@ -240,8 +240,8 @@ class ZabbixForecastingLoop:
             # print the last 5 values and its timestamp
             print("Last 5 values of raw data:")
             for col in available_columns:
-                print(f"time: {raw_data.index[-5:].tolist()}")
-                print(f"{col}: {raw_data[col].tail().tolist()}")
+                print(f"time: {raw_data.index[-1].tolist()}")
+                print(f"{col}: {raw_data[col].iloc[-1].tolist()}")
             
             if len(available_columns) >= len(self.variables):
                 # Use first N columns matching model size
