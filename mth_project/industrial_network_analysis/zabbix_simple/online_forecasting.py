@@ -272,6 +272,14 @@ class ZabbixForecastingLoop:
             temp_file = f"temp_data/cycle_{cycle:04d}_{timestamp}.csv"
             df.to_csv(temp_file)
             
+            # print last value with timestamp
+            print("="*40)
+            if df is not None:
+                print("df last value:")
+                for col in df.columns:
+                    print(f"time: {df.index[-1]}")
+                    print(f"{col}: {df[col].iloc[-1]}")
+
             # Clear dashboard data to prevent accumulation of multiple streams
             if self.dash_plotter is not None:
                 self.dash_plotter.clear_data()
@@ -324,13 +332,6 @@ class ZabbixForecastingLoop:
                 
                 # Collect and prepare data
                 prepared_data = self.collect_and_prepare_data()
-                # print last value with timestamp
-                
-                if prepared_data is not None:
-                    print("Prepared data last value:")
-                    for col in prepared_data.columns:
-                        print(f"time: {prepared_data.index[-1]}")
-                        print(f"{col}: {prepared_data[col].iloc[-1]}")
                 
                 if prepared_data is None:
                     print(f"Cycle #{cycle}: Skipping due to data issues")
