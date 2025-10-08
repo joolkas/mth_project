@@ -9,7 +9,6 @@ import time
 from datetime import datetime, timedelta
 from collections import deque
 
-
 class DashRealTimePlotter:
     def __init__(self, max_points=60, update_interval=60000):
         """
@@ -46,7 +45,7 @@ class DashRealTimePlotter:
         
         self._setup_layout()
         self._setup_callbacks()
-        
+
     def _setup_layout(self):
         """Setup organized Dash app layout with classification, sections, and port status"""
         self.app.layout = html.Div([
