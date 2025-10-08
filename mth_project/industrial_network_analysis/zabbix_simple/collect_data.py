@@ -101,7 +101,7 @@ class ZabbixDataCollector:
                             filtered_items.append(item)
                         break
             
-            print(f"Found {len(filtered_items)} matching items")
+            # print(f"Found {len(filtered_items)} matching items")
             return filtered_items
             
         except Exception as e:

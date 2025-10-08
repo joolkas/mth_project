@@ -145,7 +145,6 @@ class ZabbixForecastingLoop:
                     print("❌ No monitoring items found")
                     print("   Check host groups and search criteria in config.json")
                     return False
-                print(f"✅ Found {len(self.monitoring_items)} monitoring items")
             except Exception as e:
                 print(f"❌ Item discovery failed: {e}")
                 return False
@@ -214,7 +213,6 @@ class ZabbixForecastingLoop:
                 local_ip = "localhost"
             
             print(f"🌐 Dashboard accessible from Windows VM at: http://{local_ip}:{dashboard_port}")
-            print(f"📊 Dashboard should now be running and accessible!")
             
         except Exception as e:
             print(f"⚠️ Dashboard initialization failed: {e}")
@@ -406,9 +404,7 @@ def main():
     
     # Initialize dashboard (optional)
     forecaster.initialize_dashboard()
-    if forecaster.dash_plotter:
-        print(f"🌐 Dashboard: http://localhost:{forecaster.config['monitoring']['dashboard_port']}")
-    
+
     print("Starting monitoring loop...")
     print("Press 'Q' + Enter to stop gracefully")
     print("=" * 40)

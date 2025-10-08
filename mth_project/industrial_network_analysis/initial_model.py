@@ -787,10 +787,10 @@ def get_online_data(initial_model_path):
         with open(os.path.join(initial_model_path, "variables.txt"), 'r') as f:
             variables = [line.strip() for line in f.readlines() if line.strip()]
             
-        print(f"\n Online data loaded from original formats at: {initial_model_path}")
-        print(f"  - DataFrames loaded from CSV files")
-        print(f"  - Scalers loaded from pickle file") 
-        print(f"  - Variables loaded from text file")
+        # print(f"\n Online data loaded from original formats at: {initial_model_path}")
+        # print(f"  - DataFrames loaded from CSV files")
+        # print(f"  - Scalers loaded from pickle file") 
+        # print(f"  - Variables loaded from text file")
         
     else:
         raise FileNotFoundError(f"No data files found at: {initial_model_path}")
