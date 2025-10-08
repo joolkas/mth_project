@@ -251,11 +251,12 @@ class ZabbixForecastingLoop:
                         selected_data[self.variables[i]] = raw_data[col]
                 selected_data = selected_data.fillna(0)
             
-            # Apply differencing (like training)
-            prepared_data = selected_data.diff().dropna()
+            # FIX: Don't apply differencing here - let the forecasting function handle it
+            # The multistep_rolling_buffer_learning_prediction_with_dash expects raw data
+            # and will handle differencing and scaling internally
             
-            # Get recent data for prediction
-            recent_data = prepared_data.tail(self.context_length * 2)
+            # Get recent data for prediction (raw data)
+            recent_data = selected_data.tail(self.context_length * 2)
             
             return recent_data
             
@@ -332,6 +333,7 @@ class ZabbixForecastingLoop:
                     
                     if success:
                         print(f"✅ Cycle #{cycle} completed")
+                        print("-" * 40)
                     else:
                         print(f"⚠️ Cycle #{cycle} had issues")
 
