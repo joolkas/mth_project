@@ -373,26 +373,29 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
     # print("🔧 Preparing multi-step model...")
     model = initial_model  # Use model as-is for stability
     
-    # Scale the online data using the same scalers from training  
-    # CORRECTION: Models were trained on SCALED data, so we need to scale online data too
-    print("   Scaling online data with training scalers")
-    scaled_data = np.zeros_like(df_online.values)
+    # MAJOR FIX: Apply differencing FIRST, then scaling (same as training)
+    # Models were trained on: scaled(differenced(data))
+    print("   Applying differencing to online data (same as training)")
+    df_online_differenced = df_online.diff().dropna()
+    
+    print("   Scaling differenced online data with training scalers")
+    scaled_data = np.zeros_like(df_online_differenced.values)
     
     scaling_errors = []
     for i, var in enumerate(variables):
         if var in scalers:
             scaler = scalers[var]
             try:
-                scaled_data[:, i] = scaler.transform(df_online[var].values.reshape(-1, 1)).flatten()
+                scaled_data[:, i] = scaler.transform(df_online_differenced[var].values.reshape(-1, 1)).flatten()
             except Exception as e:
                 scaling_errors.append(f"{var}: {e}")
                 # Fallback: use standardization
-                data_values = df_online[var].values
+                data_values = df_online_differenced[var].values
                 scaled_data[:, i] = (data_values - data_values.mean()) / (data_values.std() + 1e-8)
         else:
             scaling_errors.append(f"{var}: scaler not found")
             # Fallback: use standardization
-            data_values = df_online[var].values
+            data_values = df_online_differenced[var].values
             scaled_data[:, i] = (data_values - data_values.mean()) / (data_values.std() + 1e-8)
     
     if scaling_errors:
@@ -407,6 +410,10 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
     predictions_actuals = []
     actuals_actuals = []
     total_steps = len(scaled_data) - context_length - prediction_horizon + 1
+    
+    print(f"   After differencing: {len(df_online)} → {len(df_online_differenced)} samples")
+    print(f"   After scaling: {scaled_data.shape}")
+    print(f"   Processing {total_steps} prediction steps")
 
     # print(f"📈 Will process {total_steps} prediction steps")
     
@@ -419,6 +426,7 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
             dash_plotter = None
 
     current_context = scaled_data[:context_length].copy()
+
     # print(f"🔄 Initial context shape: {current_context.shape}")
     
     # Track processing time
@@ -481,23 +489,21 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
         if len(step_predictions_original) > 0 and len(actuals_original) > 0:
             final_predictions.append(step_predictions_original[0])  # only t+1
             final_actuals.append(actuals_original[0])
-            # FIXED: Use correct timestamp for t+1 prediction
-            if t + 1 < len(df_online):
-                final_timestamps.append(df_online.index[t + 1])
+            # FIXED: Use correct timestamp for t+1 prediction (from differenced data)
+            if t + 1 < len(df_online_differenced):
+                final_timestamps.append(df_online_differenced.index[t + 1])
             else:
-                final_timestamps.append(df_online.index[t])
+                final_timestamps.append(df_online_differenced.index[t])
 
-        # 5. Inverse differencing for plotting (FIXED: Use t-1 as base for differencing)
-        # Use the last known actual value (t-1) as base for inverse differencing
-        last_actual_index = t - 1  # FIXED: Use t-1 as base, not t
-        if last_actual_index >= 0 and last_actual_index < len(df_online):
-            last_actual_values = df_online.iloc[last_actual_index][variables].values
+        # 5. Inverse differencing for plotting 
+        # MAJOR FIX: Use original df_online (non-differenced) as base for inverse differencing
+        # The differenced index t corresponds to original index t+1 (since diff() drops first row)
+        original_base_index = t  # This maps to the original data before differencing
+        if original_base_index < len(df_online):
+            last_actual_values = df_online.iloc[original_base_index][variables].values
         else:
-            # Fallback: use values at t if t-1 not available
-            if t < len(df_online):
-                last_actual_values = df_online.iloc[t][variables].values
-            else:
-                last_actual_values = df_online[variables].mean().values
+            # Fallback
+            last_actual_values = df_online.iloc[-1][variables].values
 
         step_predictions_actual = inverse_difference(
             step_predictions_original, 
@@ -508,8 +514,6 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
             actuals_original, 
             last_actual_values
         )
-        # print real value after model:
-        print(f"actual value after model, shape: {np.array(actuals_actual).shape}, \n ")
 
         # 6. Classification (Disabled for production stability)
         classification_result = None
@@ -528,8 +532,8 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
         # 7. Send data to Dash plotter (all buffer predictions)
         if dash_plotter is not None:
             if len(step_predictions_actual) > 0:
-                # FIXED: Use correct timestamp - this should be the current time t for dashboard context
-                current_timestamp = df_online.index[t]
+                # Use correct timestamp from differenced data for dashboard context
+                current_timestamp = df_online_differenced.index[t]
                 
                 # Pass the ACTUAL prediction for t+1 (already computed!)
                 saved_prediction_t1 = step_predictions_actual[0] if len(step_predictions_actual) > 0 else None
