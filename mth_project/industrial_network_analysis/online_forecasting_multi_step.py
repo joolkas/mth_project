@@ -410,7 +410,6 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
     predictions_actuals = []
     actuals_actuals = []
     total_steps = len(scaled_data) - context_length - prediction_horizon + 1
-    
     print(f"   After differencing: {len(df_online)} → {len(df_online_differenced)} samples")
     print(f"   After scaling: {scaled_data.shape}")
     print(f"   Processing {total_steps} prediction steps")
