@@ -483,11 +483,17 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
             final_timestamps.append(df_online.index[t])
 
         # 5. Inverse differencing for plotting
-        last_actual_index = t - context_length
-        if last_actual_index >= 0 and last_actual_index < len(df_removed_nans_forecasting):
-            last_actual_values = df_removed_nans_forecasting.iloc[last_actual_index][variables].values
+        # last_actual_index = t - context_length
+        # if last_actual_index >= 0 and last_actual_index < len(df_removed_nans_forecasting):
+        #     last_actual_values = df_removed_nans_forecasting.iloc[last_actual_index][variables].values
+        # else:
+        #     last_actual_values = df_removed_nans_forecasting[variables].mean().values
+
+        last_actual_index = t
+        if last_actual_index >= 0 and last_actual_index < len(df_online):
+            last_actual_values = df_online.iloc[last_actual_index][variables].values
         else:
-            last_actual_values = df_removed_nans_forecasting[variables].mean().values
+            last_actual_values = df_online[variables].mean().values
 
         step_predictions_actual = inverse_difference(
             step_predictions_original, 
