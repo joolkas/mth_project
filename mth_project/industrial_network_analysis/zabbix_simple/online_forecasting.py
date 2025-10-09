@@ -270,9 +270,45 @@ class ZabbixForecastingLoop:
             # Save temporary data
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             temp_file = f"temp_data/cycle_{cycle:04d}_{timestamp}.csv"
+            # DEBUG: Check DataFrame timestamp details before saving
+            print("="*40)
+            print("DEBUGGING TIMESTAMP ISSUE:")
+            if df is not None:
+                last_timestamp = df.index[-1]
+                print(f"DataFrame last timestamp: {last_timestamp}")
+                print(f"Timestamp type: {type(last_timestamp)}")
+                print(f"Timestamp timezone: {getattr(last_timestamp, 'tz', 'No timezone info')}")
+                print(f"Raw timestamp value: {last_timestamp}")
+                
+                # Check if timestamp is timezone-aware
+                if hasattr(last_timestamp, 'tz') and last_timestamp.tz is not None:
+                    print(f"Timezone-aware timestamp: {last_timestamp}")
+                    print(f"UTC timestamp: {last_timestamp.tz_convert('UTC')}")
+                    print(f"Naive timestamp: {last_timestamp.tz_localize(None)}")
+                else:
+                    print("Timezone-naive timestamp")
+            
+            # Save CSV
             df.to_csv(temp_file)
             
-            # print last value with timestamp
+            # DEBUG: Read back the CSV and check what was actually saved
+            try:
+                import pandas as pd
+                saved_df = pd.read_csv(temp_file, index_col=0, parse_dates=True)
+                if not saved_df.empty:
+                    saved_last_timestamp = saved_df.index[-1]
+                    print(f"CSV saved timestamp: {saved_last_timestamp}")
+                    print(f"CSV timestamp type: {type(saved_last_timestamp)}")
+                    
+                    # Compare the timestamps
+                    if df is not None:
+                        original_ts = df.index[-1]
+                        time_diff = saved_last_timestamp - original_ts.tz_localize(None) if hasattr(original_ts, 'tz') and original_ts.tz else saved_last_timestamp - original_ts
+                        print(f"Time difference (CSV - Original): {time_diff}")
+                        print(f"Time difference in minutes: {time_diff.total_seconds() / 60}")
+            except Exception as debug_e:
+                print(f"Debug CSV read failed: {debug_e}")
+            
             print("="*40)
             if df is not None:
                 print("df last value:")
