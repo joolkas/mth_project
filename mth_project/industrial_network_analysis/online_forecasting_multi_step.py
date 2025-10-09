@@ -461,11 +461,12 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
                 pred_original.append(original_val)
             step_predictions_original.append(pred_original)
         
-        # 3. Get actual values for all predicted steps
+        # 3. Get actual values for all predicted steps (FIXED: t+1 to t+6, not t to t+5)
         actual_values = []
         for step in range(prediction_horizon):
-            if t + step < len(scaled_data):
-                actual_values.append(scaled_data[t + step, :])
+            actual_index = t + 1 + step  # FIXED: Start from t+1, not t
+            if actual_index < len(scaled_data):
+                actual_values.append(scaled_data[actual_index, :])
         
         actuals_original = []
         for actual in actual_values:
@@ -480,20 +481,23 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
         if len(step_predictions_original) > 0 and len(actuals_original) > 0:
             final_predictions.append(step_predictions_original[0])  # only t+1
             final_actuals.append(actuals_original[0])
-            final_timestamps.append(df_online.index[t])
+            # FIXED: Use correct timestamp for t+1 prediction
+            if t + 1 < len(df_online):
+                final_timestamps.append(df_online.index[t + 1])
+            else:
+                final_timestamps.append(df_online.index[t])
 
-        # 5. Inverse differencing for plotting
-        # last_actual_index = t - context_length
-        # if last_actual_index >= 0 and last_actual_index < len(df_removed_nans_forecasting):
-        #     last_actual_values = df_removed_nans_forecasting.iloc[last_actual_index][variables].values
-        # else:
-        #     last_actual_values = df_removed_nans_forecasting[variables].mean().values
-
-        last_actual_index = t
+        # 5. Inverse differencing for plotting (FIXED: Use t-1 as base for differencing)
+        # Use the last known actual value (t-1) as base for inverse differencing
+        last_actual_index = t - 1  # FIXED: Use t-1 as base, not t
         if last_actual_index >= 0 and last_actual_index < len(df_online):
             last_actual_values = df_online.iloc[last_actual_index][variables].values
         else:
-            last_actual_values = df_online[variables].mean().values
+            # Fallback: use values at t if t-1 not available
+            if t < len(df_online):
+                last_actual_values = df_online.iloc[t][variables].values
+            else:
+                last_actual_values = df_online[variables].mean().values
 
         step_predictions_actual = inverse_difference(
             step_predictions_original, 
@@ -505,7 +509,7 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
             last_actual_values
         )
         # print real value after model:
-        print(f"actual value after model, shape: {np.array(actuals_actual).shape}, \n values: {actuals_actual}")
+        print(f"actual value after model, shape: {np.array(actuals_actual).shape}, \n ")
 
         # 6. Classification (Disabled for production stability)
         classification_result = None
@@ -524,6 +528,7 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
         # 7. Send data to Dash plotter (all buffer predictions)
         if dash_plotter is not None:
             if len(step_predictions_actual) > 0:
+                # FIXED: Use correct timestamp - this should be the current time t for dashboard context
                 current_timestamp = df_online.index[t]
                 
                 # Pass the ACTUAL prediction for t+1 (already computed!)
