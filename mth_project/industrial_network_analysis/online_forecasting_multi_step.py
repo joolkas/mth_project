@@ -498,7 +498,9 @@ def multistep_rolling_buffer_learning_prediction_with_dash(initial_model,
             actuals_original, 
             last_actual_values
         )
- 
+        # print real value after model:
+        print(f"actual value after model, shape: {np.array(actuals_actual).shape}, \n values: {actuals_actual}")
+
         # 6. Classification (Disabled for production stability)
         classification_result = None
         result = None
