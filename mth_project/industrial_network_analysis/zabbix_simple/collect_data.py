@@ -91,24 +91,13 @@ class ZabbixDataCollector:
                 item_key_lower = item['key_'].lower()       
                 # Check if any search criteria matches
                 for criteria in self.search_criteria:
-                    print(f"DEBUG DATA COLLECTION: Checking criteria '{criteria}'")
                     if (criteria.lower() in item_name_lower or 
-                        criteria.lower() in item_key_lower):
-                        print(f"  ✅ CRITERIA MATCHED: '{criteria}' found in item")
-                        print(f"  📋 Item hostid: {item['hostid']}")
-                        print(f"  🏠 Available host IDs: {list(host_lookup.keys())}")
-                        
+                        criteria.lower() in item_key_lower):                        
                         if item['hostid'] in host_lookup:
                             print(f"  ✅ HOST FOUND: Adding item to filtered list")
                             item['host_name'] = host_lookup[item['hostid']]['host']
                             item['display_name'] = f"{item['host_name']}_{item['name']}"
                             filtered_items.append(item)
-                        else:
-                            print(f"  ❌ HOST NOT FOUND: Item hostid {item['hostid']} not in host_lookup")
-                        break
-                    else:
-                        print(f"  ❌ No match for criteria '{criteria}'")
-            
             return filtered_items
             
         except Exception as e:
@@ -156,7 +145,22 @@ class ZabbixDataCollector:
             )
             
             print(f"   📊 Received {len(history)} raw data records from Zabbix")
-            
+            item_history_count = {}
+            ### DEBUGING ###
+            for record in history:
+                item_id = record['itemid']
+                if item_id not in item_history_count:
+                    item_history_count[item_id] = 0
+                item_history_count[item_id] += 1
+
+            print(f"   🔍 History count per item:")
+            for item in items:
+                count = item_history_count.get(item['itemid'], 0)
+                print(f"     {item['display_name']}: {count} records")
+                if count == 0:
+                    print(f"       ❌ NO DATA for item ID {item['itemid']}")
+            ### END DEBUGGING ###
+
             # Process data with detailed debugging
             item_lookup = {item['itemid']: item for item in items}
             processed_count = 0
