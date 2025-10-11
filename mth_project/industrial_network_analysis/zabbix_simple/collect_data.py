@@ -93,7 +93,7 @@ class ZabbixDataCollector:
                 print(f"DEBUG FOR DATA COLLECTION: {item_name_lower}, {item_key_lower}")
                 # Check if any search criteria matches
                 for criteria in self.search_criteria:
-                    print(f"DEBUG DATA COLELCTION: {criteria}")
+                    print(f"DEBUG DATA COLLECTION: {criteria}")
                     if (criteria.lower() in item_name_lower or 
                         criteria.lower() in item_key_lower):
                         if item['hostid'] in host_lookup:
