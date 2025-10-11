@@ -297,24 +297,21 @@ class DashRealTimePlotter:
                 # SHIFT EVERYTHING 6 TIMESTEPS TO THE FUTURE
                 timestamps = list(self.timestamps)
                 
-                # 1. Blue line (actual values) - shift 6 timesteps forward, end at time t
+                # 1. Blue line (actual values) - use actual timestamps (no shift)
                 if var in self.actual_values and len(self.actual_values[var]) > 0:
                     actual_data = list(self.actual_values[var])
                     data_length = min(len(actual_data), len(timestamps))
                     
                     if data_length > 0:
-                        # Shift timestamps 6 minutes into the future
-                        shifted_timestamps = []
-                        for ts in timestamps[-data_length:]:
-                            shifted_ts = ts + timedelta(minutes=6)  # Move 6 minutes forward
-                            shifted_timestamps.append(shifted_ts)
+                        # Use actual timestamps without shifting for real-time display
+                        actual_timestamps = timestamps[-data_length:]
                         
                         recent_actual_data = actual_data[-data_length:]
                         
-                        if len(shifted_timestamps) > 0 and len(recent_actual_data) > 0:
+                        if len(actual_timestamps) > 0 and len(recent_actual_data) > 0:
                             fig.add_trace(
                                 go.Scatter(
-                                    x=shifted_timestamps,
+                                    x=actual_timestamps,
                                     y=recent_actual_data,
                                     mode='lines+markers',
                                     name='Actual Values',

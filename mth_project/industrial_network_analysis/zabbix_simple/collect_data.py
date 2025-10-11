@@ -73,11 +73,11 @@ class ZabbixDataCollector:
                 print("No hosts found")
                 return []
             
-            # Get monitored numeric items
+            # Get monitored numeric items with extended info for debugging
             host_ids = [host['hostid'] for host in all_hosts]
             items = self.zabbix_api.item.get(
                 hostids=host_ids,
-                output=['itemid', 'name', 'key_', 'hostid'],
+                output=['itemid', 'name', 'key_', 'hostid', 'value_type', 'units', 'preprocessing'],
                 monitored=True,
                 filter={'value_type': [0, 3]}  # Numeric values only
             )
@@ -125,10 +125,16 @@ class ZabbixDataCollector:
             all_data = []
             item_ids = [item['itemid'] for item in items]
             
-            # Show what items we're requesting
+            # Show what items we're requesting with detailed info
             print(f"   Item details:")
             for i, item in enumerate(items[:5]):  # Show first 5 items
+                units = item.get('units', 'N/A')
+                value_type = item.get('value_type', 'N/A')
                 print(f"     {i+1}. {item['display_name']} (ID: {item['itemid']})")
+                print(f"        Key: {item['key_']}, Type: {value_type}, Units: {units}")
+                # Check if it's a rate/delta item that might cause zeros
+                if 'bits' in item['name'].lower():
+                    print(f"        ⚠️  Network rate item - may show zeros during low traffic")
             if len(items) > 5:
                 print(f"     ... and {len(items)-5} more items")
             
@@ -181,12 +187,27 @@ class ZabbixDataCollector:
             
             print(f"   ✅ Processed {processed_count} records, {error_count} errors")
             
-            # Show sample values for debugging
+            # Show sample values for debugging - ENHANCED
             print(f"   🔍 Sample values collected:")
             for var_name, examples in list(value_examples.items())[:3]:  # Show first 3 variables
                 print(f"     {var_name}:")
                 for ts, val in examples:
                     print(f"       {ts}: {val}")
+                    
+            # Additional debugging for zero values
+            print(f"   🔍 ZERO VALUE ANALYSIS:")
+            for var_name, examples in value_examples.items():
+                zero_count = sum(1 for _, val in examples if val == 0.0)
+                if zero_count > 0:
+                    print(f"     ⚠️  {var_name}: {zero_count}/{len(examples)} samples are zero!")
+                    
+            # Show raw value distribution for network interfaces
+            print(f"   🔍 RAW VALUE DISTRIBUTION (before any processing):")
+            network_vars = [v for v in value_examples.keys() if 'bits' in v.lower() or 'interface' in v.lower()]
+            for var_name in network_vars[:2]:  # Show first 2 network variables
+                if var_name in value_examples:
+                    values = [val for _, val in value_examples[var_name]]
+                    print(f"     {var_name}: min={min(values):.1f}, max={max(values):.1f}, mean={sum(values)/len(values):.1f}")
             
             if not all_data:
                 print("   ❌ No valid data collected after processing")
@@ -240,10 +261,26 @@ class ZabbixDataCollector:
             nan_after = df_pivot.isna().sum().sum()
             print(f"   🧹 Filled {nan_before - nan_after} missing values")
             
-            # Resample to 1-minute intervals
+            # Resample to 1-minute intervals with network-aware handling
             print(f"   ⏰ Resampling to 1-minute intervals...")
             df_resampled = df_pivot.resample('1T').last()  # Use last value in each minute
-            df_resampled = df_resampled.fillna(method='ffill', limit=5)  # Conservative forward fill
+            
+            # Handle network interface items differently - zeros might be legitimate
+            print(f"   🌐 Analyzing network interface data...")
+            network_columns = [col for col in df_resampled.columns if 'bits' in col.lower() or 'interface' in col.lower()]
+            
+            for col in network_columns:
+                zero_count = (df_resampled[col] == 0).sum()
+                total_count = len(df_resampled[col])
+                zero_percentage = (zero_count / total_count) * 100 if total_count > 0 else 0
+                print(f"     {col}: {zero_count}/{total_count} zeros ({zero_percentage:.1f}%)")
+                
+                # If more than 50% are zeros, it might be a data issue
+                if zero_percentage > 50:
+                    print(f"     ⚠️  High zero percentage for {col} - might be data collection issue")
+            
+            # Conservative forward fill - but don't fill zeros for network rate items  
+            df_resampled = df_resampled.fillna(method='ffill', limit=3)  # Slightly more aggressive
             
             # Final cleanup
             df_resampled = df_resampled.fillna(0)
