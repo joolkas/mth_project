@@ -261,26 +261,59 @@ class ZabbixDataCollector:
             nan_after = df_pivot.isna().sum().sum()
             print(f"   🧹 Filled {nan_before - nan_after} missing values")
             
-            # Resample to 1-minute intervals with network-aware handling
-            print(f"   ⏰ Resampling to 1-minute intervals...")
-            df_resampled = df_pivot.resample('1T').last()  # Use last value in each minute
+            # Smart resampling to handle irregular data properly
+            print(f"   ⏰ Smart resampling from irregular to 1-minute intervals...")
             
-            # Handle network interface items differently - zeros might be legitimate
-            print(f"   🌐 Analyzing network interface data...")
+            # Show original data frequency
+            if len(df_pivot) > 1:
+                time_diff = df_pivot.index[1] - df_pivot.index[0]
+                print(f"     Original data frequency: ~{time_diff}")
+            
+            # Use forward-fill DURING resampling to preserve values across gaps
+            df_resampled = df_pivot.resample('1T').ffill()  # Forward fill during resampling
+            
+            # Handle remaining NaN values after resampling
+            print(f"   🔧 Handling missing values after resampling...")
+            
+            # For each column, check how much data we actually have
+            for col in df_resampled.columns:
+                nan_count_before = df_resampled[col].isna().sum()
+                if nan_count_before > 0:
+                    print(f"     {col}: {nan_count_before} missing values after resampling")
+            
+            # Now fill remaining gaps more intelligently
+            df_resampled = df_resampled.fillna(method='ffill', limit=10)  # More generous forward fill
+            df_resampled = df_resampled.fillna(method='bfill', limit=5)   # Backward fill for start
+            
+            # Handle network interface items - any remaining NaN should be 0 (legitimate no traffic)
             network_columns = [col for col in df_resampled.columns if 'bits' in col.lower() or 'interface' in col.lower()]
-            
             for col in network_columns:
+                df_resampled[col] = df_resampled[col].fillna(0)  # Network rates can legitimately be 0
+                
+            # For non-network columns, use last known value or median
+            non_network_columns = [col for col in df_resampled.columns if col not in network_columns]
+            for col in non_network_columns:
+                if df_resampled[col].isna().any():
+                    # Use median of available values for missing data
+                    median_value = df_resampled[col].median()
+                    df_resampled[col] = df_resampled[col].fillna(median_value)
+            
+            # Final analysis
+            print(f"   🌐 Final data quality check:")
+            for col in network_columns[:2]:  # Show first 2 network columns
                 zero_count = (df_resampled[col] == 0).sum()
                 total_count = len(df_resampled[col])
                 zero_percentage = (zero_count / total_count) * 100 if total_count > 0 else 0
                 print(f"     {col}: {zero_count}/{total_count} zeros ({zero_percentage:.1f}%)")
                 
-                # If more than 50% are zeros, it might be a data issue
-                if zero_percentage > 50:
-                    print(f"     ⚠️  High zero percentage for {col} - might be data collection issue")
-            
-            # Conservative forward fill - but don't fill zeros for network rate items  
-            df_resampled = df_resampled.fillna(method='ffill', limit=3)  # Slightly more aggressive
+                # Show value range
+                non_zero_values = df_resampled[col][df_resampled[col] != 0]
+                if len(non_zero_values) > 0:
+                    print(f"       Non-zero range: {non_zero_values.min():.0f} - {non_zero_values.max():.0f}")
+                else:
+                    print(f"       ⚠️  All values are zero!")
+                    
+            print(f"   ✅ Smart resampling completed")
             
             # Final cleanup
             df_resampled = df_resampled.fillna(0)
