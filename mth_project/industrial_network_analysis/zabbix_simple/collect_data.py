@@ -261,59 +261,78 @@ class ZabbixDataCollector:
             nan_after = df_pivot.isna().sum().sum()
             print(f"   🧹 Filled {nan_before - nan_after} missing values")
             
-            # Smart resampling to handle irregular data properly
-            print(f"   ⏰ Smart resampling from irregular to 1-minute intervals...")
+            # Smart resampling with "last known good value" mechanism
+            print(f"   ⏰ Smart resampling with last-known-good-value logic...")
             
             # Show original data frequency
             if len(df_pivot) > 1:
                 time_diff = df_pivot.index[1] - df_pivot.index[0]
                 print(f"     Original data frequency: ~{time_diff}")
             
-            # Use forward-fill DURING resampling to preserve values across gaps
-            df_resampled = df_pivot.resample('1T').ffill()  # Forward fill during resampling
+            # Create 1-minute index for the full time range
+            full_time_range = pd.date_range(start=df_pivot.index[0], end=df_pivot.index[-1], freq='1T')
+            df_resampled = pd.DataFrame(index=full_time_range, columns=df_pivot.columns)
             
-            # Handle remaining NaN values after resampling
-            print(f"   🔧 Handling missing values after resampling...")
-            
-            # For each column, check how much data we actually have
-            for col in df_resampled.columns:
-                nan_count_before = df_resampled[col].isna().sum()
-                if nan_count_before > 0:
-                    print(f"     {col}: {nan_count_before} missing values after resampling")
-            
-            # Now fill remaining gaps more intelligently
-            df_resampled = df_resampled.fillna(method='ffill', limit=10)  # More generous forward fill
-            df_resampled = df_resampled.fillna(method='bfill', limit=5)   # Backward fill for start
-            
-            # Handle network interface items - any remaining NaN should be 0 (legitimate no traffic)
-            network_columns = [col for col in df_resampled.columns if 'bits' in col.lower() or 'interface' in col.lower()]
-            for col in network_columns:
-                df_resampled[col] = df_resampled[col].fillna(0)  # Network rates can legitimately be 0
+            # For each column, implement last-known-good-value logic
+            print(f"   🔄 Applying last-known-good-value logic for each variable...")
+            for col in df_pivot.columns:
+                original_data = df_pivot[col].dropna()  # Remove NaN values
+                print(f"     Processing {col}: {len(original_data)} real data points")
                 
-            # For non-network columns, use last known value or median
-            non_network_columns = [col for col in df_resampled.columns if col not in network_columns]
-            for col in non_network_columns:
-                if df_resampled[col].isna().any():
-                    # Use median of available values for missing data
+                if len(original_data) == 0:
+                    continue
+                    
+                # Fill with last-known-good values
+                for timestamp in df_resampled.index:
+                    # Find the most recent real value before or at this timestamp
+                    available_data = original_data[original_data.index <= timestamp]
+                    
+                    if len(available_data) > 0:
+                        # Use the last known good value
+                        last_good_value = available_data.iloc[-1]
+                        df_resampled.loc[timestamp, col] = last_good_value
+                    else:
+                        # No data available yet, use first available value
+                        df_resampled.loc[timestamp, col] = original_data.iloc[0]
+            
+            # Verify and clean up any remaining issues
+            print(f"   🔧 Final cleanup and validation...")
+            
+            # Check for any remaining NaN values
+            for col in df_resampled.columns:
+                nan_count = df_resampled[col].isna().sum()
+                if nan_count > 0:
+                    print(f"     ⚠️  {col}: {nan_count} still missing - using column median")
                     median_value = df_resampled[col].median()
+                    if pd.isna(median_value):
+                        median_value = 0  # Fallback if all values are NaN
                     df_resampled[col] = df_resampled[col].fillna(median_value)
             
-            # Final analysis
-            print(f"   🌐 Final data quality check:")
+            # Ensure all values are finite
+            df_resampled = df_resampled.replace([np.inf, -np.inf], np.nan)
+            df_resampled = df_resampled.fillna(method='ffill').fillna(method='bfill').fillna(0)
+            
+            # Final analysis with last-known-good validation
+            print(f"   🌐 Final data quality check with last-known-good values:")
+            network_columns = [col for col in df_resampled.columns if 'bits' in col.lower() or 'interface' in col.lower()]
+            
             for col in network_columns[:2]:  # Show first 2 network columns
-                zero_count = (df_resampled[col] == 0).sum()
-                total_count = len(df_resampled[col])
-                zero_percentage = (zero_count / total_count) * 100 if total_count > 0 else 0
-                print(f"     {col}: {zero_count}/{total_count} zeros ({zero_percentage:.1f}%)")
-                
-                # Show value range
-                non_zero_values = df_resampled[col][df_resampled[col] != 0]
-                if len(non_zero_values) > 0:
-                    print(f"       Non-zero range: {non_zero_values.min():.0f} - {non_zero_values.max():.0f}")
-                else:
-                    print(f"       ⚠️  All values are zero!")
+                # Check for artificial zeros vs real zeros
+                original_data = df_pivot[col].dropna()
+                if len(original_data) > 0:
+                    print(f"     {col}:")
+                    print(f"       Original data points: {len(original_data)}")
+                    print(f"       Resampled to: {len(df_resampled[col])} points")
                     
-            print(f"   ✅ Smart resampling completed")
+                    # Show value stability - should have fewer unique values now
+                    unique_resampled = df_resampled[col].nunique()
+                    unique_original = original_data.nunique()
+                    print(f"       Value stability: {unique_original} unique → {unique_resampled} unique")
+                    
+                    # Show recent values to verify last-known-good logic
+                    print(f"       Last 3 values: {df_resampled[col].tail(3).tolist()}")
+                    
+            print(f"   ✅ Last-known-good-value resampling completed")
             
             # Final cleanup
             df_resampled = df_resampled.fillna(0)
