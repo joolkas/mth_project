@@ -89,19 +89,26 @@ class ZabbixDataCollector:
             for item in items:
                 item_name_lower = item['name'].lower()
                 item_key_lower = item['key_'].lower()       
-                print(f"DEBUG FOR DATA COLLECTION: {item_name_lower}, {item_key_lower}")
                 # Check if any search criteria matches
                 for criteria in self.search_criteria:
-                    print(f"DEBUG DATA COLLECTION: {criteria}")
+                    print(f"DEBUG DATA COLLECTION: Checking criteria '{criteria}'")
                     if (criteria.lower() in item_name_lower or 
                         criteria.lower() in item_key_lower):
+                        print(f"  ✅ CRITERIA MATCHED: '{criteria}' found in item")
+                        print(f"  📋 Item hostid: {item['hostid']}")
+                        print(f"  🏠 Available host IDs: {list(host_lookup.keys())}")
+                        
                         if item['hostid'] in host_lookup:
+                            print(f"  ✅ HOST FOUND: Adding item to filtered list")
                             item['host_name'] = host_lookup[item['hostid']]['host']
                             item['display_name'] = f"{item['host_name']}_{item['name']}"
                             filtered_items.append(item)
+                        else:
+                            print(f"  ❌ HOST NOT FOUND: Item hostid {item['hostid']} not in host_lookup")
                         break
+                    else:
+                        print(f"  ❌ No match for criteria '{criteria}'")
             
-            # print(f"Found {len(filtered_items)} matching items")
             return filtered_items
             
         except Exception as e:
