@@ -24,8 +24,8 @@ try:
     from initial_model import get_initial_model, get_online_data
     from collect_data import ZabbixDataCollector
     from dash_plotter import DashRealTimePlotter
-    from smart_data_handler import SmartDataBuffer
-    print("Imported existing modules including SmartDataBuffer")
+    from data_quality_handler import DataQualityHandler
+    print("Imported existing modules including DataQualityHandler")
 except ImportError as e:
     print(f"Import error: {e}")
     print("Please ensure parent modules are available")
@@ -348,7 +348,7 @@ class ZabbixMultiStepForecastingLoop:
         self.collector = ZabbixDataCollector(config_file)
         self.monitoring_items = []
         self.dash_plotter = None
-        self.smart_buffer = None  # Smart data handler for missing values
+        self.quality_handler = None  # Data quality handler for Good/Bad flagging
         
         # Data storage
         os.makedirs('temp_data', exist_ok=True)
@@ -439,18 +439,19 @@ class ZabbixMultiStepForecastingLoop:
                 print(f"❌ Item discovery failed: {e}")
                 return False
 
-            # Step 7: Initialize Smart Data Buffer
-            print("Step 7: Initializing Smart Data Buffer for missing data handling...")
+            # Step 7: Initialize Data Quality Handler  
+            print("Step 7: Initializing Data Quality Handler for Good/Bad flagging...")
             try:
                 # Configure cache age based on update interval (2x update interval)
                 cache_age_minutes = max(10, self.update_interval * 2)  # At least 10 minutes
-                self.smart_buffer = SmartDataBuffer(
+                self.quality_handler = DataQualityHandler(
                     variables=self.variables,
                     max_cache_age_minutes=cache_age_minutes
                 )
-                print(f"✅ Smart Data Buffer initialized with {cache_age_minutes}min cache age")
+                print(f"✅ Data Quality Handler initialized with {cache_age_minutes}min cache age")
+                print("   Features: Good/Bad sample flagging + last-value interpolation")
             except Exception as e:
-                print(f"❌ Smart Data Buffer initialization failed: {e}")
+                print(f"❌ Data Quality Handler initialization failed: {e}")
                 return False
 
             print("Multi-step forecasting system initialization completed!")
@@ -459,7 +460,7 @@ class ZabbixMultiStepForecastingLoop:
             print(f"   Prediction horizon: {self.prediction_horizon}")
             print(f"   Variables: {len(self.variables)}")
             print(f"   Monitoring items: {len(self.monitoring_items)}")
-            print(f"   Smart data handling: ✅ Enabled (no more zero-filling!)")
+            print(f"   Quality-based data handling: ✅ Enabled (Good/Bad flagging + interpolation)")
 
             return True
             
@@ -519,15 +520,15 @@ class ZabbixMultiStepForecastingLoop:
             self.dash_plotter = None
     
     def collect_and_prepare_data(self) -> Optional[pd.DataFrame]:
-        """Collect current data from Zabbix and prepare for prediction using Smart Data Buffer"""
+        """Collect current data from Zabbix and prepare for prediction using Data Quality Handler"""
         try:
-            # Collect recent data from Zabbix (reduced time window for more responsive updates)
-            print("📡 Collecting fresh data from Zabbix...")
-            raw_data = self.collector.collect_recent_data(self.monitoring_items, hours_back=1)
+            # Step 1: Collect RAW data from Zabbix 
+            print("📡 Collecting RAW data from Zabbix...")
+            raw_data = self._collect_raw_zabbix_data(hours_back=1)
 
             # Match columns to model variables
             if raw_data is not None and not raw_data.empty:
-                print(f"📊 Fresh Zabbix data collected: {raw_data.shape}")
+                print(f"📊 Raw Zabbix data collected: {raw_data.shape}")
                 print(f"📅 Data time range: {raw_data.index[0]} to {raw_data.index[-1]}")
                 
                 available_columns = raw_data.columns.tolist()
@@ -543,79 +544,174 @@ class ZabbixMultiStepForecastingLoop:
                         if i < len(self.variables):
                             selected_data[self.variables[i]] = raw_data[col]
                 
-                # Remove infinite values
+                # Remove infinite values but keep zeros for quality assessment
                 selected_data = selected_data.replace([np.inf, -np.inf], np.nan)
                 
-                # Show sample of raw data
+                # Show sample of raw data BEFORE quality processing
                 if len(selected_data) > 0:
-                    print("🔍 Sample fresh data (last 3 rows):")
+                    print("🔍 Sample RAW data (last 3 rows - before quality processing):")
                     for i in range(max(0, len(selected_data)-3), len(selected_data)):
                         timestamp = selected_data.index[i]
                         print(f"   {timestamp}: ", end="")
                         for col in selected_data.columns[:3]:  # Show first 3 columns
                             value = selected_data[col].iloc[i]
                             if pd.isna(value):
-                                print(f"{col}=NaN ", end="")
+                                print(f"{col}=Missing ", end="")
                             else:
                                 print(f"{col}={value:.3f} ", end="")
                         print()
+                            
             else:
-                print("⚠️  No fresh data from Zabbix - will use Smart Buffer cache")
+                print("⚠️  No fresh data from Zabbix - will use cached values only")
                 selected_data = pd.DataFrame()
 
-            # Use Smart Data Buffer to handle missing data intelligently
-            print("🧠 Processing data with Smart Data Buffer (no zero-filling)...")
+            # Step 2: Apply Data Quality Handler with Good/Bad flagging
+            print("🏷️  Processing data with Quality Handler (Good/Bad flagging + interpolation)...")
             
             # Request sufficient data points for model context + small buffer
             target_length = self.context_length + 10
             
-            # Get smart-filled data that uses last-known-good values instead of zeros
-            smart_data = self.smart_buffer.get_smart_filled_data(
-                df=selected_data,
+            # Process data with quality flags
+            processed_data, quality_flags = self.quality_handler.process_data_with_quality_flags(
+                raw_data=selected_data,
                 target_length=target_length,
-                target_frequency='1T'  # 1-minute intervals
+                target_frequency='1min'  # 1-minute intervals
             )
             
-            # Show Smart Buffer status
-            cache_status = self.smart_buffer.get_cache_status()
-            print(f"📊 Smart Buffer Status:")
-            print(f"   Cached variables: {cache_status['cached_variables']}/{cache_status['total_variables']}")
-            print(f"   Total missing data filled: {cache_status['missing_data_total']}")
+            # Show Quality Handler status
+            quality_summary = self.quality_handler.get_quality_summary()
+            print(f"📊 Data Quality Summary:")
+            print(f"   Total requests: {quality_summary['total_requests']}")
+            print(f"   Variables with cache: {quality_summary['cached_variables']}/{len(self.variables)}")
             
-            # Show recent smart-filled values
-            if len(smart_data) > 0:
-                print("🧠 Smart-filled data (last 3 rows - no artificial zeros):")
-                for i in range(max(0, len(smart_data)-3), len(smart_data)):
-                    timestamp = smart_data.index[i]
+            # Show processed data with quality flags
+            if len(processed_data) > 0:
+                print("🏷️  Quality-processed data (last 3 rows with Good/Bad flags):")
+                for i in range(max(0, len(processed_data)-3), len(processed_data)):
+                    timestamp = processed_data.index[i]
                     print(f"   {timestamp}: ", end="")
-                    for col in smart_data.columns[:3]:  # Show first 3 columns
-                        print(f"{col}={smart_data[col].iloc[i]:.3f} ", end="")
+                    for col in processed_data.columns[:3]:  # Show first 3 columns
+                        value = processed_data[col].iloc[i]
+                        quality = quality_flags[col].iloc[i]
+                        print(f"{col}={value:.3f}({quality}) ", end="")
                     print()
                 
-                # Verify no artificial zeros for network variables
-                network_cols = [col for col in smart_data.columns if 'bits' in col.lower() or 'network' in col.lower()]
+                # Quality statistics for network variables
+                network_cols = [col for col in processed_data.columns if 'bits' in col.lower() or 'network' in col.lower()]
                 for col in network_cols[:2]:  # Check first 2 network columns
-                    recent_values = smart_data[col].tail(5)
-                    zero_count = (recent_values == 0).sum()
-                    if zero_count > 0:
-                        print(f"   📊 {col}: {zero_count}/5 recent values are zero (may be legitimate)")
-                    else:
-                        print(f"   ✅ {col}: No zeros in recent values (good!)")
+                    if col in quality_summary['variable_stats']:
+                        var_stats = quality_summary['variable_stats'][col]
+                        good_pct = var_stats['good_percentage']
+                        print(f"   📊 {col}: {good_pct:.1f}% Good data, {var_stats['interpolated_count']} interpolated")
+                        
+                        # Show recent quality pattern
+                        recent_flags = quality_flags[col].tail(5).tolist()
+                        print(f"      Recent quality: {recent_flags}")
             
             # Final validation
-            if len(smart_data) < self.context_length:
-                print(f"⚠️  Still insufficient data after smart filling: need {self.context_length}, have {len(smart_data)}")
+            if len(processed_data) < self.context_length:
+                print(f"⚠️  Insufficient data after quality processing: need {self.context_length}, have {len(processed_data)}")
                 return None
             
-            print(f"✅ Smart data preparation completed: {smart_data.shape}")
-            return smart_data
+            print(f"✅ Quality-based data preparation completed: {processed_data.shape}")
+            print("   Data now ready for prediction model (no more artificial zeros!)")
+            return processed_data
             
         except Exception as e:
-            print(f"❌ Smart data preparation failed: {e}")
+            print(f"❌ Quality-based data preparation failed: {e}")
             import traceback
             print(f"Traceback: {traceback.format_exc()}")
             return None
     
+    def _collect_raw_zabbix_data(self, hours_back: int = 1) -> Optional[pd.DataFrame]:
+        """
+        Collect raw data from Zabbix without built-in gap filling
+        This bypasses the collect_recent_data method that includes gap filling
+        """
+        try:
+            time_to = int(time.time())
+            time_from = int(time_to - (hours_back * 3600))
+            
+            print(f"🌐 Collecting RAW Zabbix data (bypassing gap filling)...")
+            print(f"   Time range: {datetime.fromtimestamp(time_from)} to {datetime.fromtimestamp(time_to)}")
+            
+            # Get raw history data directly from Zabbix API
+            item_ids = [item['itemid'] for item in self.monitoring_items]
+            all_data = []
+            
+            # Separate by value type as in the original collector
+            float_items = [item for item in self.monitoring_items if item.get('value_type') == '0']
+            uint_items = [item for item in self.monitoring_items if item.get('value_type') == '3']
+            
+            history = []
+            
+            # Get history data for both types
+            if float_items:
+                float_item_ids = [item['itemid'] for item in float_items]
+                float_history = self.collector.zabbix_api.history.get(
+                    itemids=float_item_ids,
+                    time_from=time_from,
+                    time_till=time_to,
+                    output='extend',
+                    sortfield='clock',
+                    history=0  # Float history
+                )
+                history.extend(float_history)
+            
+            if uint_items:
+                uint_item_ids = [item['itemid'] for item in uint_items]
+                uint_history = self.collector.zabbix_api.history.get(
+                    itemids=uint_item_ids,
+                    time_from=time_from,
+                    time_till=time_to,
+                    output='extend',
+                    sortfield='clock',
+                    history=3  # Integer history
+                )
+                history.extend(uint_history)
+            
+            # Process raw data without gap filling
+            item_lookup = {item['itemid']: item for item in self.monitoring_items}
+            
+            for record in history:
+                if record['itemid'] in item_lookup:
+                    try:
+                        timestamp = pd.to_datetime(int(record['clock']), unit='s')
+                        value = float(record['value'])
+                        variable_name = item_lookup[record['itemid']]['display_name']
+                        
+                        all_data.append({
+                            'timestamp': timestamp,
+                            'variable': variable_name,
+                            'value': value
+                        })
+                    except (ValueError, TypeError):
+                        continue
+            
+            if not all_data:
+                print("   ❌ No raw data collected")
+                return None
+            
+            # Create simple pivot table without resampling or gap filling
+            df = pd.DataFrame(all_data)
+            df_pivot = df.pivot_table(
+                index='timestamp',
+                columns='variable',
+                values='value',
+                aggfunc='last'
+            )
+            
+            print(f"   📊 Raw data collected: {df_pivot.shape}")
+            print(f"   🔍 Raw data contains actual zeros from Zabbix (no artificial filling yet)")
+            
+            return df_pivot
+            
+        except Exception as e:
+            print(f"❌ Raw Zabbix data collection failed: {e}")
+            return None
+    
+
+
     def run_prediction_cycle(self, df: pd.DataFrame, cycle: int) -> bool:
         """Run single prediction cycle using real Zabbix data"""
         try:
@@ -624,26 +720,27 @@ class ZabbixMultiStepForecastingLoop:
             temp_file = f"temp_data/multistep_cycle_{cycle:04d}_{timestamp}.csv"
             df.to_csv(temp_file)
             
-            print("🧠 Smart-processed Zabbix data going to multi-step model:")
+            print("🏷️  Quality-processed Zabbix data going to multi-step model:")
             print(f"Data shape: {df.shape}")
             
-            # Show data quality improvement
-            zero_counts = {}
+            # Show current data values
+            print(f"📈 Current data values (timestamp: {df.index[-1]}):")
             for col in df.columns:
-                recent_values = df[col].tail(10)  # Last 10 values
-                zero_count = (recent_values == 0).sum()
-                zero_counts[col] = zero_count
-                print(f"Time: {df.index[-1]}, {col}: {df[col].iloc[-1]:.3f} (zeros in last 10: {zero_count})")
+                current_value = df[col].iloc[-1]
+                print(f"   {col}: {current_value:.3f}")
             
-            # Summary of zero reduction
-            total_zeros = sum(zero_counts.values())
-            network_vars = [col for col in df.columns if 'bits' in col.lower() or 'network' in col.lower()]
-            network_zeros = sum(zero_counts.get(col, 0) for col in network_vars)
+            # Show data quality statistics
+            quality_summary = self.quality_handler.get_quality_summary()
+            print(f"📊 Data Quality Summary for Cycle {cycle}:")
             
-            print(f"📊 Data quality: {total_zeros} total zeros in recent data")
-            if network_vars:
-                print(f"   Network variables: {network_zeros} zeros (may be legitimate low traffic)")
-            print(f"   Smart Buffer prevented artificial zero-filling! ✅")
+            total_good = sum(stats['good_count'] for stats in quality_summary['variable_stats'].values())
+            total_interpolated = sum(stats['interpolated_count'] for stats in quality_summary['variable_stats'].values())
+            total_samples = total_good + total_interpolated
+            
+            if total_samples > 0:
+                good_percentage = (total_good / total_samples) * 100
+                print(f"   Overall: {good_percentage:.1f}% Good data, {total_interpolated} interpolated samples")
+                print(f"   Quality Handler successfully handled missing/bad values! ✅")
 
             # Don't clear dashboard data - we want to maintain history of 60 points
             # if self.dash_plotter is not None:
