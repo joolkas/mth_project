@@ -161,15 +161,27 @@ class ZabbixDataCollector:
                 aggfunc='mean'
             )
             
-            # Clean and resample data
+            # Clean and resample data with improved handling
             df_pivot = df_pivot.sort_index()
-            df_pivot = df_pivot.fillna(method='ffill', limit=5)
-            df_pivot = df_pivot.fillna(method='bfill', limit=5)
+            
+            # Remove any infinite values that might cause issues
+            df_pivot = df_pivot.replace([np.inf, -np.inf], np.nan)
+            
+            # Fill missing values more conservatively
+            df_pivot = df_pivot.fillna(method='ffill', limit=2)  # Reduced limit
+            df_pivot = df_pivot.fillna(method='bfill', limit=2)  # Reduced limit
             df_pivot = df_pivot.fillna(0)
             
-            # Resample to 1-minute intervals
-            df_resampled = df_pivot.resample('1T').mean()
-            df_resampled = df_resampled.fillna(method='ffill')
+            # Resample to 1-minute intervals with improved aggregation
+            # Use 'last' instead of 'mean' to avoid smoothing that causes oscillations
+            df_resampled = df_pivot.resample('1T').last()  # Use last value in each minute
+            df_resampled = df_resampled.fillna(method='ffill', limit=5)  # Conservative forward fill
+            
+            # Final cleanup
+            df_resampled = df_resampled.fillna(0)
+            
+            # Ensure all values are finite
+            df_resampled = df_resampled.replace([np.inf, -np.inf], 0)
 
             print(f"Historical data collected: {df_resampled.shape}")
             return df_resampled

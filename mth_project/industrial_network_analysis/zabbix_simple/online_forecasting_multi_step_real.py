@@ -242,12 +242,12 @@ def multistep_rolling_buffer_learning_prediction_with_dash_real(initial_model,
     # 7. Send real-time data to Dash plotter
     if dash_plotter is not None:
         if len(step_predictions_actual) > 0:
-            # Use CURRENT timestamp when the prediction is made, not historical data timestamp
-            from datetime import datetime
-            current_timestamp = datetime.now()
+            # Use the timestamp of the LAST ACTUAL DATA point, not current time
+            # This ensures the dashboard shows actual data at the correct time
+            current_timestamp = df_online.index[-1]  # Last actual data timestamp
             
             # Use the most recent actual values (last known real values) as "actuals"
-            # In real-time, we use the last actual values we know from the data
+            # Create actuals array that matches the dashboard expectation
             recent_actuals = []
             for step in range(prediction_horizon):
                 # Use the last actual values from the original data
@@ -511,13 +511,24 @@ class ZabbixMultiStepForecastingLoop:
                 print("No data collected from Zabbix")
                 return None
             
+            print(f"📊 Raw Zabbix data collected: {raw_data.shape}")
+            print(f"📅 Data time range: {raw_data.index[0]} to {raw_data.index[-1]}")
+            
+            # Debug: Show some raw data values
+            if len(raw_data) > 0:
+                print("🔍 Sample raw data (last 3 rows):")
+                for col in raw_data.columns[:3]:  # Show first 3 columns
+                    last_values = raw_data[col].tail(3).values
+                    print(f"   {col}: {last_values}")
+            
             # Ensure sufficient data for context
             if len(raw_data) < self.context_length:
                 print(f"Insufficient data: need {self.context_length}, have {len(raw_data)}")
                 return None
             
-            # Match columns to model variables
+            # Match columns to model variables with improved data handling
             available_columns = raw_data.columns.tolist()
+            print(f"🏷️  Available columns: {len(available_columns)}, Model variables: {len(self.variables)}")
             
             if len(available_columns) >= len(self.variables):
                 selected_data = raw_data[available_columns[:len(self.variables)]].copy()
@@ -527,10 +538,38 @@ class ZabbixMultiStepForecastingLoop:
                 for i, col in enumerate(available_columns):
                     if i < len(self.variables):
                         selected_data[self.variables[i]] = raw_data[col]
+                        
+                # Fill missing columns with zeros instead of NaN
                 selected_data = selected_data.fillna(0)
+                print(f"⚠️  Padded missing columns with zeros")
+            
+            # Clean the data to prevent oscillations
+            print("🧹 Cleaning data to prevent oscillations...")
+            
+            # Remove any infinite values
+            selected_data = selected_data.replace([np.inf, -np.inf], np.nan)
+            
+            # Forward fill small gaps (up to 3 missing values)
+            selected_data = selected_data.fillna(method='ffill', limit=3)
+            
+            # Backward fill remaining gaps
+            selected_data = selected_data.fillna(method='bfill', limit=3)
+            
+            # Replace any remaining NaN with 0
+            selected_data = selected_data.fillna(0)
+            
+            # Ensure data types are float
+            for col in selected_data.columns:
+                selected_data[col] = pd.to_numeric(selected_data[col], errors='coerce').fillna(0)
             
             # Get sufficient recent data for context
             recent_data = selected_data.tail(self.context_length * 2)
+            
+            print(f"✅ Prepared data: {recent_data.shape}")
+            print("🔍 Final prepared data (last 3 rows):")
+            for col in recent_data.columns[:3]:  # Show first 3 columns
+                last_values = recent_data[col].tail(3).values
+                print(f"   {col}: {last_values}")
             
             return recent_data
             
