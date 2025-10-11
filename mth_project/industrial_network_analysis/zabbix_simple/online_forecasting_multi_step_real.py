@@ -627,10 +627,14 @@ class ZabbixMultiStepForecastingLoop:
             
             # Log real-time results
             if not predictions_df.empty:
+                # Note: In real-time operation, actuals_df contains placeholder values (last known actuals)
+                # so MAE and percentage error are not meaningful accuracy measures
                 mae = np.mean(np.abs(predictions_df.values - actuals_df.values)) if not actuals_df.empty else 0
-                percentage_error = (mae / (np.mean(np.abs(actuals_df.values)) + 1e-6)) * 100 if not actuals_df.empty else 0
+                
+                # Display prediction summary without misleading accuracy metrics
                 print(f"Multi-step Cycle {cycle}: Generated {len(predictions_df)} predictions")
-                print(f"   MAE: {mae:.6f}, Percentage Error: {percentage_error:.2f}%")
+                print(f"   Prediction range: {np.min(predictions_df.values):.3f} to {np.max(predictions_df.values):.3f}")
+                print(f"   Note: Real-time mode - accuracy metrics require future actual values")
             else:
                 print(f"Multi-step Cycle {cycle}: No predictions generated")
 

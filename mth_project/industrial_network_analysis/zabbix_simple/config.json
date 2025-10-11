@@ -5,7 +5,7 @@
     "password": "zabbix"
   },
   "data_collection": {
-    "search_criteria": ["CPU utilization", "Used memory", "bits"],
+    "search_criteria": ["CPU.util", "Used memory", "bits"],
     "host_groups": ["Virtual machines"],
     "update_interval": 60,
     "history_hours": 24
