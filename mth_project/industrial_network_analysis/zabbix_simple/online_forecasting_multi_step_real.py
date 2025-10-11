@@ -242,22 +242,33 @@ def multistep_rolling_buffer_learning_prediction_with_dash_real(initial_model,
     # 7. Send real-time data to Dash plotter
     if dash_plotter is not None:
         if len(step_predictions_actual) > 0:
-            current_timestamp = df_online_differenced.index[-1]
+            # Use CURRENT timestamp when the prediction is made, not historical data timestamp
+            from datetime import datetime
+            current_timestamp = datetime.now()
+            
+            # Use the most recent actual values (last known real values) as "actuals"
+            # In real-time, we use the last actual values we know from the data
+            recent_actuals = []
+            for step in range(prediction_horizon):
+                # Use the last actual values from the original data
+                recent_actuals.append(df_online.iloc[-1][variables].values.tolist())
+            
             saved_prediction_t1 = step_predictions_actual[0] if len(step_predictions_actual) > 0 else None
             future_prediction_t1 = step_predictions_actual[0] if len(step_predictions_actual) > 0 else None
             
             try:
                 dash_plotter.add_buffer_predictions(
                     predictions=step_predictions_actual, 
-                    actuals=actuals_actual, 
-                    current_step=0,  # Single step
-                    current_datetime=current_timestamp,
+                    actuals=recent_actuals,  # Use most recent known actual values
+                    current_step=0,  # Single step for real-time
+                    current_datetime=current_timestamp,  # Current time when prediction is made
                     variable_names=variables,
                     saved_prediction=saved_prediction_t1,
                     future_prediction=future_prediction_t1,
                     port_statuses=port_statuses if len(port_statuses) > 0 else None,
                     classification_result=None  # Disabled for stability
                 )
+                print(f"✅ Dashboard updated with real-time data at {current_timestamp}")
             except Exception as e:
                 print(f"Dashboard update failed: {e}")
 
@@ -540,9 +551,9 @@ class ZabbixMultiStepForecastingLoop:
             for col in df.columns:
                 print(f"Time: {df.index[-1]}, {col}: {df[col].iloc[-1]}")
 
-            # Clear dashboard data to prevent accumulation
-            if self.dash_plotter is not None:
-                self.dash_plotter.clear_data()
+            # Don't clear dashboard data - we want to maintain history of 60 points
+            # if self.dash_plotter is not None:
+            #     self.dash_plotter.clear_data()
             
             # Run multi-step forecasting with real Zabbix data
             predictions_df, actuals_df, predictions_actuals_df, actuals_actuals_df = multistep_rolling_buffer_learning_prediction_with_dash_real(
