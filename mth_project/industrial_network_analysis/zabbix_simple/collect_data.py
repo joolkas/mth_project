@@ -141,7 +141,8 @@ class ZabbixDataCollector:
                 time_from=time_from,
                 time_till=time_to,
                 output='extend',
-                sortfield='clock'
+                sortfield='clock',
+                history=0
             )
             
             print(f"   📊 Received {len(history)} raw data records from Zabbix")
