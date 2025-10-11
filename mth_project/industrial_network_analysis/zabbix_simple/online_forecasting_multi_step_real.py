@@ -24,7 +24,8 @@ try:
     from initial_model import get_initial_model, get_online_data
     from collect_data import ZabbixDataCollector
     from dash_plotter import DashRealTimePlotter
-    print("Imported existing modules")
+    from smart_data_handler import SmartDataBuffer
+    print("Imported existing modules including SmartDataBuffer")
 except ImportError as e:
     print(f"Import error: {e}")
     print("Please ensure parent modules are available")
@@ -347,6 +348,7 @@ class ZabbixMultiStepForecastingLoop:
         self.collector = ZabbixDataCollector(config_file)
         self.monitoring_items = []
         self.dash_plotter = None
+        self.smart_buffer = None  # Smart data handler for missing values
         
         # Data storage
         os.makedirs('temp_data', exist_ok=True)
@@ -437,12 +439,27 @@ class ZabbixMultiStepForecastingLoop:
                 print(f"❌ Item discovery failed: {e}")
                 return False
 
+            # Step 7: Initialize Smart Data Buffer
+            print("Step 7: Initializing Smart Data Buffer for missing data handling...")
+            try:
+                # Configure cache age based on update interval (2x update interval)
+                cache_age_minutes = max(10, self.update_interval * 2)  # At least 10 minutes
+                self.smart_buffer = SmartDataBuffer(
+                    variables=self.variables,
+                    max_cache_age_minutes=cache_age_minutes
+                )
+                print(f"✅ Smart Data Buffer initialized with {cache_age_minutes}min cache age")
+            except Exception as e:
+                print(f"❌ Smart Data Buffer initialization failed: {e}")
+                return False
+
             print("Multi-step forecasting system initialization completed!")
             print(f"   Model mode: {model_mode}")
             print(f"   Context length: {context_length}")
             print(f"   Prediction horizon: {self.prediction_horizon}")
             print(f"   Variables: {len(self.variables)}")
             print(f"   Monitoring items: {len(self.monitoring_items)}")
+            print(f"   Smart data handling: ✅ Enabled (no more zero-filling!)")
 
             return True
             
@@ -502,97 +519,101 @@ class ZabbixMultiStepForecastingLoop:
             self.dash_plotter = None
     
     def collect_and_prepare_data(self) -> Optional[pd.DataFrame]:
-        """Collect current data from Zabbix more frequently and prepare for prediction"""
+        """Collect current data from Zabbix and prepare for prediction using Smart Data Buffer"""
         try:
-            # Collect sufficient data from Zabbix (2 hours for proper context)
-            # This ensures we have enough historical data for model context
-            raw_data = self.collector.collect_recent_data(self.monitoring_items, hours_back=2)
+            # Collect recent data from Zabbix (reduced time window for more responsive updates)
+            print("📡 Collecting fresh data from Zabbix...")
+            raw_data = self.collector.collect_recent_data(self.monitoring_items, hours_back=1)
 
-            if raw_data is None or raw_data.empty:
-                print("No data collected from Zabbix")
-                return None
-            
-            print(f"📊 Fresh Zabbix data collected: {raw_data.shape}")
-            print(f"📅 Data time range: {raw_data.index[0]} to {raw_data.index[-1]}")
-            
-            # Debug: Show some raw data values with timestamps
-            if len(raw_data) > 0:
-                print("🔍 Sample fresh data (last 5 rows with timestamps):")
-                for i in range(max(0, len(raw_data)-5), len(raw_data)):
-                    timestamp = raw_data.index[i]
-                    print(f"   {timestamp}: ", end="")
-                    for col in raw_data.columns[:3]:  # Show first 3 columns
-                        print(f"{col}={raw_data[col].iloc[i]:.3f} ", end="")
-                    print()
-            
-            # Ensure sufficient data for context
-            if len(raw_data) < self.context_length:
-                print(f"Insufficient data: need {self.context_length}, have {len(raw_data)}")
-                return None
-            
-            # Match columns to model variables with improved data handling
-            available_columns = raw_data.columns.tolist()
-            print(f"🏷️  Available columns: {len(available_columns)}, Model variables: {len(self.variables)}")
-            
-            if len(available_columns) >= len(self.variables):
-                selected_data = raw_data[available_columns[:len(self.variables)]].copy()
-                selected_data.columns = self.variables
+            # Match columns to model variables
+            if raw_data is not None and not raw_data.empty:
+                print(f"📊 Fresh Zabbix data collected: {raw_data.shape}")
+                print(f"📅 Data time range: {raw_data.index[0]} to {raw_data.index[-1]}")
+                
+                available_columns = raw_data.columns.tolist()
+                print(f"🏷️  Available columns: {len(available_columns)}, Model variables: {len(self.variables)}")
+                
+                # Map available columns to model variables
+                if len(available_columns) >= len(self.variables):
+                    selected_data = raw_data[available_columns[:len(self.variables)]].copy()
+                    selected_data.columns = self.variables
+                else:
+                    selected_data = pd.DataFrame(index=raw_data.index, columns=self.variables)
+                    for i, col in enumerate(available_columns):
+                        if i < len(self.variables):
+                            selected_data[self.variables[i]] = raw_data[col]
+                
+                # Remove infinite values
+                selected_data = selected_data.replace([np.inf, -np.inf], np.nan)
+                
+                # Show sample of raw data
+                if len(selected_data) > 0:
+                    print("🔍 Sample fresh data (last 3 rows):")
+                    for i in range(max(0, len(selected_data)-3), len(selected_data)):
+                        timestamp = selected_data.index[i]
+                        print(f"   {timestamp}: ", end="")
+                        for col in selected_data.columns[:3]:  # Show first 3 columns
+                            value = selected_data[col].iloc[i]
+                            if pd.isna(value):
+                                print(f"{col}=NaN ", end="")
+                            else:
+                                print(f"{col}={value:.3f} ", end="")
+                        print()
             else:
-                selected_data = pd.DataFrame(index=raw_data.index, columns=self.variables)
-                for i, col in enumerate(available_columns):
-                    if i < len(self.variables):
-                        selected_data[self.variables[i]] = raw_data[col]
-                        
-                # Fill missing columns with zeros instead of NaN
-                selected_data = selected_data.fillna(0)
-                print(f"⚠️  Padded missing columns with zeros")
+                print("⚠️  No fresh data from Zabbix - will use Smart Buffer cache")
+                selected_data = pd.DataFrame()
+
+            # Use Smart Data Buffer to handle missing data intelligently
+            print("🧠 Processing data with Smart Data Buffer (no zero-filling)...")
             
-            # Enhanced data cleaning to prevent oscillations
-            print("🧹 Enhanced data cleaning - preserving network interface values...")
+            # Request sufficient data points for model context + small buffer
+            target_length = self.context_length + 10
             
-            # 1. Remove any infinite values
-            selected_data = selected_data.replace([np.inf, -np.inf], np.nan)
+            # Get smart-filled data that uses last-known-good values instead of zeros
+            smart_data = self.smart_buffer.get_smart_filled_data(
+                df=selected_data,
+                target_length=target_length,
+                target_frequency='1T'  # 1-minute intervals
+            )
             
-            # 2. Apply selective smoothing - preserve network interface data
-            for col in selected_data.columns:
-                if len(selected_data) >= 3:
-                    # Only smooth non-network columns (CPU, memory, etc.)
-                    # Preserve actual network traffic measurements (bits received/sent)
-                    if 'bits' in col.lower() or 'bytes' in col.lower():
-                        print(f"   Preserving network data: {col}")
-                        # Keep original values for network interface data
-                        continue
+            # Show Smart Buffer status
+            cache_status = self.smart_buffer.get_cache_status()
+            print(f"📊 Smart Buffer Status:")
+            print(f"   Cached variables: {cache_status['cached_variables']}/{cache_status['total_variables']}")
+            print(f"   Total missing data filled: {cache_status['missing_data_total']}")
+            
+            # Show recent smart-filled values
+            if len(smart_data) > 0:
+                print("🧠 Smart-filled data (last 3 rows - no artificial zeros):")
+                for i in range(max(0, len(smart_data)-3), len(smart_data)):
+                    timestamp = smart_data.index[i]
+                    print(f"   {timestamp}: ", end="")
+                    for col in smart_data.columns[:3]:  # Show first 3 columns
+                        print(f"{col}={smart_data[col].iloc[i]:.3f} ", end="")
+                    print()
+                
+                # Verify no artificial zeros for network variables
+                network_cols = [col for col in smart_data.columns if 'bits' in col.lower() or 'network' in col.lower()]
+                for col in network_cols[:2]:  # Check first 2 network columns
+                    recent_values = smart_data[col].tail(5)
+                    zero_count = (recent_values == 0).sum()
+                    if zero_count > 0:
+                        print(f"   📊 {col}: {zero_count}/5 recent values are zero (may be legitimate)")
                     else:
-                        print(f"   Smoothing system metric: {col}")
-                        # Apply 3-point moving average only to system metrics
-                        smoothed_values = selected_data[col].rolling(window=3, center=True, min_periods=1).mean()
-                        selected_data[col] = smoothed_values
+                        print(f"   ✅ {col}: No zeros in recent values (good!)")
             
-            # 3. Conservative gap filling
-            selected_data = selected_data.fillna(method='ffill', limit=2)
-            selected_data = selected_data.fillna(method='bfill', limit=2)
-            selected_data = selected_data.fillna(0)
+            # Final validation
+            if len(smart_data) < self.context_length:
+                print(f"⚠️  Still insufficient data after smart filling: need {self.context_length}, have {len(smart_data)}")
+                return None
             
-            # 4. Ensure data types are consistent float
-            for col in selected_data.columns:
-                selected_data[col] = pd.to_numeric(selected_data[col], errors='coerce').fillna(0).astype(float)
-            
-            # Get only the most recent data needed for context (not double)
-            recent_data = selected_data.tail(self.context_length + 10)  # Small buffer
-            
-            print(f"✅ Cleaned data ready: {recent_data.shape}")
-            print("🔍 Final cleaned data (last 3 rows):")
-            for i in range(max(0, len(recent_data)-3), len(recent_data)):
-                timestamp = recent_data.index[i]
-                print(f"   {timestamp}: ", end="")
-                for col in recent_data.columns[:3]:  # Show first 3 columns
-                    print(f"{col}={recent_data[col].iloc[i]:.3f} ", end="")
-                print()
-            
-            return recent_data
+            print(f"✅ Smart data preparation completed: {smart_data.shape}")
+            return smart_data
             
         except Exception as e:
-            print(f"Data preparation failed: {e}")
+            print(f"❌ Smart data preparation failed: {e}")
+            import traceback
+            print(f"Traceback: {traceback.format_exc()}")
             return None
     
     def run_prediction_cycle(self, df: pd.DataFrame, cycle: int) -> bool:
@@ -603,10 +624,26 @@ class ZabbixMultiStepForecastingLoop:
             temp_file = f"temp_data/multistep_cycle_{cycle:04d}_{timestamp}.csv"
             df.to_csv(temp_file)
             
-            print("Real Zabbix data going to multi-step model:")
+            print("🧠 Smart-processed Zabbix data going to multi-step model:")
             print(f"Data shape: {df.shape}")
+            
+            # Show data quality improvement
+            zero_counts = {}
             for col in df.columns:
-                print(f"Time: {df.index[-1]}, {col}: {df[col].iloc[-1]}")
+                recent_values = df[col].tail(10)  # Last 10 values
+                zero_count = (recent_values == 0).sum()
+                zero_counts[col] = zero_count
+                print(f"Time: {df.index[-1]}, {col}: {df[col].iloc[-1]:.3f} (zeros in last 10: {zero_count})")
+            
+            # Summary of zero reduction
+            total_zeros = sum(zero_counts.values())
+            network_vars = [col for col in df.columns if 'bits' in col.lower() or 'network' in col.lower()]
+            network_zeros = sum(zero_counts.get(col, 0) for col in network_vars)
+            
+            print(f"📊 Data quality: {total_zeros} total zeros in recent data")
+            if network_vars:
+                print(f"   Network variables: {network_zeros} zeros (may be legitimate low traffic)")
+            print(f"   Smart Buffer prevented artificial zero-filling! ✅")
 
             # Don't clear dashboard data - we want to maintain history of 60 points
             # if self.dash_plotter is not None:
