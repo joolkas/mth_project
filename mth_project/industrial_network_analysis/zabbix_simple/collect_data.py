@@ -90,11 +90,11 @@ class ZabbixDataCollector:
                 item_name_lower = item['name'].lower()
                 item_key_lower = item['key_'].lower()
                 
+                print(f"DEBUG FOR DATA COLLECTION: {item_name_lower}, {item_key_lower}")
                 # Check if any search criteria matches
                 for criteria in self.search_criteria:
                     if (criteria.lower() in item_name_lower or 
                         criteria.lower() in item_key_lower):
-                        
                         if item['hostid'] in host_lookup:
                             item['host_name'] = host_lookup[item['hostid']]['host']
                             item['display_name'] = f"{item['host_name']}_{item['name']}"

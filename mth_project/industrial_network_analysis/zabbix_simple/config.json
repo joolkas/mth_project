@@ -7,7 +7,6 @@
   "data_collection": {
     "search_criteria": [
       "system.cpu.util",
-      "system.cpu.util", 
       "CPU utilization",
       "Processor time",
       "Used memory", 
