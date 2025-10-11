@@ -13,7 +13,7 @@
       "bits"
     ],
     "host_groups": ["Virtual machines"],
-    "update_interval": 60,
+    "update_interval": 30,
     "history_hours": 24
   },
   "model": {
