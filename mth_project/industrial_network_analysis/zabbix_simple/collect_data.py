@@ -115,7 +115,7 @@ class ZabbixDataCollector:
             
         try:
             time_to = int(time.time())
-            time_from = time_to - (hours_back * 3600)
+            time_from = int(time_to - (hours_back * 3600))  # Ensure integer timestamp
 
             print(f"Collecting {hours_back} hours of historical data...")
 
