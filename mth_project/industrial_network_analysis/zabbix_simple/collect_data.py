@@ -88,8 +88,7 @@ class ZabbixDataCollector:
             
             for item in items:
                 item_name_lower = item['name'].lower()
-                item_key_lower = item['key_'].lower()
-                
+                item_key_lower = item['key_'].lower()       
                 print(f"DEBUG FOR DATA COLLECTION: {item_name_lower}, {item_key_lower}")
                 # Check if any search criteria matches
                 for criteria in self.search_criteria:
