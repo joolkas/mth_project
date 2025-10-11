@@ -676,7 +676,8 @@ class ZabbixMultiStepForecastingLoop:
             for record in history:
                 if record['itemid'] in item_lookup:
                     try:
-                        timestamp = pd.to_datetime(int(record['clock']), unit='s')
+                        # Apply same UTC offset as in collect_data.py for consistency
+                        timestamp = pd.to_datetime(int(record['clock']) + (self.collector.server_utc_offset * 3600), unit='s')
                         value = float(record['value'])
                         variable_name = item_lookup[record['itemid']]['display_name']
                         
