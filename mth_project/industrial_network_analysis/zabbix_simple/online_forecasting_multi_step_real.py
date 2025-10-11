@@ -504,9 +504,9 @@ class ZabbixMultiStepForecastingLoop:
     def collect_and_prepare_data(self) -> Optional[pd.DataFrame]:
         """Collect current data from Zabbix more frequently and prepare for prediction"""
         try:
-            # Collect fresh data from Zabbix more frequently (30 minutes instead of 2 hours)
-            # This ensures we get the most recent data without old cached values
-            raw_data = self.collector.collect_recent_data(self.monitoring_items, hours_back=0.5)
+            # Collect sufficient data from Zabbix (2 hours for proper context)
+            # This ensures we have enough historical data for model context
+            raw_data = self.collector.collect_recent_data(self.monitoring_items, hours_back=2)
 
             if raw_data is None or raw_data.empty:
                 print("No data collected from Zabbix")

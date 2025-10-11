@@ -109,7 +109,7 @@ class ZabbixDataCollector:
             return []
     
     def collect_historical_data(self, items: List[Dict], hours_back: int = None) -> Optional[pd.DataFrame]:
-        """Collect historical data for training"""
+        """Collect historical data with comprehensive debugging"""
         if hours_back is None:
             hours_back = self.history_hours
             
@@ -117,12 +117,23 @@ class ZabbixDataCollector:
             time_to = int(time.time())
             time_from = int(time_to - (hours_back * 3600))  # Ensure integer timestamp
 
-            print(f"Collecting {hours_back} hours of historical data...")
+            print(f"🔍 DEBUGGING DATA COLLECTION:")
+            print(f"   Collecting {hours_back} hours of historical data...")
+            print(f"   Time range: {datetime.fromtimestamp(time_from)} to {datetime.fromtimestamp(time_to)}")
+            print(f"   Items to collect: {len(items)}")
 
             all_data = []
             item_ids = [item['itemid'] for item in items]
             
+            # Show what items we're requesting
+            print(f"   Item details:")
+            for i, item in enumerate(items[:5]):  # Show first 5 items
+                print(f"     {i+1}. {item['display_name']} (ID: {item['itemid']})")
+            if len(items) > 5:
+                print(f"     ... and {len(items)-5} more items")
+            
             # Get history data
+            print(f"   🌐 Requesting history from Zabbix API...")
             history = self.zabbix_api.history.get(
                 itemids=item_ids,
                 time_from=time_from,
@@ -131,8 +142,13 @@ class ZabbixDataCollector:
                 sortfield='clock'
             )
             
-            # Process data
+            print(f"   📊 Received {len(history)} raw data records from Zabbix")
+            
+            # Process data with detailed debugging
             item_lookup = {item['itemid']: item for item in items}
+            processed_count = 0
+            error_count = 0
+            value_examples = {}
             
             for record in history:
                 if record['itemid'] in item_lookup:
@@ -140,50 +156,109 @@ class ZabbixDataCollector:
                         # Convert Zabbix timestamp (UTC) to server local time
                         # Apply server UTC offset from config
                         timestamp = pd.to_datetime(int(record['clock']) + (self.server_utc_offset * 3600), unit='s')
+                        value = float(record['value'])
+                        variable_name = item_lookup[record['itemid']]['display_name']
+                        
                         all_data.append({
                             'timestamp': timestamp,
-                            'variable': item_lookup[record['itemid']]['display_name'],
-                            'value': float(record['value'])
+                            'variable': variable_name,
+                            'value': value
                         })
-                    except (ValueError, TypeError):
+                        
+                        processed_count += 1
+                        
+                        # Collect value examples for debugging
+                        if variable_name not in value_examples:
+                            value_examples[variable_name] = []
+                        if len(value_examples[variable_name]) < 5:
+                            value_examples[variable_name].append((timestamp, value))
+                            
+                    except (ValueError, TypeError) as e:
+                        error_count += 1
+                        if error_count <= 5:  # Show first 5 errors
+                            print(f"     ⚠️  Error processing record: {record}, Error: {e}")
                         continue
             
+            print(f"   ✅ Processed {processed_count} records, {error_count} errors")
+            
+            # Show sample values for debugging
+            print(f"   🔍 Sample values collected:")
+            for var_name, examples in list(value_examples.items())[:3]:  # Show first 3 variables
+                print(f"     {var_name}:")
+                for ts, val in examples:
+                    print(f"       {ts}: {val}")
+            
             if not all_data:
-                print("No historical data collected")
+                print("   ❌ No valid data collected after processing")
+                return None
+            
+            if not all_data:
+                print("   ❌ No valid data collected after processing")
                 return None
             
             # Create time series DataFrame
+            print(f"   📋 Creating DataFrame from {len(all_data)} records...")
             df = pd.DataFrame(all_data)
+            print(f"   📋 Raw DataFrame shape: {df.shape}")
+            
+            # Show data distribution
+            print(f"   📊 Data distribution by variable:")
+            for var in df['variable'].unique()[:5]:  # Show first 5 variables
+                count = len(df[df['variable'] == var])
+                print(f"     {var}: {count} records")
+            
             df_pivot = df.pivot_table(
                 index='timestamp',
                 columns='variable', 
                 values='value',
-                aggfunc='mean'
+                aggfunc='last'  # Use 'last' to avoid averaging issues
             )
+            
+            print(f"   📊 Pivot table shape: {df_pivot.shape}")
+            print(f"   📅 Time range: {df_pivot.index[0]} to {df_pivot.index[-1]}")
+            
+            # Show sample pivoted data before cleaning
+            print(f"   🔍 Sample pivoted data (before cleaning):")
+            if len(df_pivot) > 0:
+                sample_idx = min(5, len(df_pivot))
+                for col in df_pivot.columns[:3]:  # Show first 3 columns
+                    print(f"     {col}: {df_pivot[col].head(sample_idx).tolist()}")
             
             # Clean and resample data with improved handling
             df_pivot = df_pivot.sort_index()
             
             # Remove any infinite values that might cause issues
+            inf_count = np.isinf(df_pivot.values).sum()
+            print(f"   🧹 Removing {inf_count} infinite values")
             df_pivot = df_pivot.replace([np.inf, -np.inf], np.nan)
             
             # Fill missing values more conservatively
+            nan_before = df_pivot.isna().sum().sum()
             df_pivot = df_pivot.fillna(method='ffill', limit=2)  # Reduced limit
             df_pivot = df_pivot.fillna(method='bfill', limit=2)  # Reduced limit
             df_pivot = df_pivot.fillna(0)
+            nan_after = df_pivot.isna().sum().sum()
+            print(f"   🧹 Filled {nan_before - nan_after} missing values")
             
-            # Resample to 1-minute intervals with improved aggregation
-            # Use 'last' instead of 'mean' to avoid smoothing that causes oscillations
+            # Resample to 1-minute intervals
+            print(f"   ⏰ Resampling to 1-minute intervals...")
             df_resampled = df_pivot.resample('1T').last()  # Use last value in each minute
             df_resampled = df_resampled.fillna(method='ffill', limit=5)  # Conservative forward fill
             
             # Final cleanup
             df_resampled = df_resampled.fillna(0)
-            
-            # Ensure all values are finite
             df_resampled = df_resampled.replace([np.inf, -np.inf], 0)
+            
+            print(f"   ✅ Final resampled data shape: {df_resampled.shape}")
+            
+            # Show sample final data
+            print(f"   🔍 Sample final data (last 3 rows):")
+            if len(df_resampled) > 0:
+                for col in df_resampled.columns[:3]:  # Show first 3 columns
+                    last_values = df_resampled[col].tail(3).tolist()
+                    print(f"     {col}: {last_values}")
 
-            print(f"Historical data collected: {df_resampled.shape}")
+            print(f"✅ Historical data collection completed: {df_resampled.shape}")
             return df_resampled
             
         except Exception as e:
