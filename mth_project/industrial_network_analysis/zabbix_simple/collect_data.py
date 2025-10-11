@@ -134,16 +134,47 @@ class ZabbixDataCollector:
             if len(items) > 5:
                 print(f"     ... and {len(items)-5} more items")
             
-            # Get history data
+            # Get history data - separate calls for different value types
             print(f"   🌐 Requesting history from Zabbix API...")
-            history = self.zabbix_api.history.get(
-                itemids=item_ids,
-                time_from=time_from,
-                time_till=time_to,
-                output='extend',
-                sortfield='clock',
-                history=0
-            )
+            
+            # Separate items by value type
+            float_items = [item for item in items if item.get('value_type') == '0']
+            uint_items = [item for item in items if item.get('value_type') == '3']
+            
+            print(f"     Float items (Type 0): {len(float_items)} items")
+            print(f"     Integer items (Type 3): {len(uint_items)} items")
+            
+            history = []
+            
+            # Get float history (CPU utilization, percentages)
+            if float_items:
+                float_item_ids = [item['itemid'] for item in float_items]
+                print(f"     Requesting float history for {len(float_item_ids)} items...")
+                float_history = self.zabbix_api.history.get(
+                    itemids=float_item_ids,
+                    time_from=time_from,
+                    time_till=time_to,
+                    output='extend',
+                    sortfield='clock',
+                    history=0  # Float history table
+                )
+                history.extend(float_history)
+                print(f"     Received {len(float_history)} float records")
+            
+            # Get integer history (memory, network bits)
+            if uint_items:
+                uint_item_ids = [item['itemid'] for item in uint_items]
+                print(f"     Requesting integer history for {len(uint_item_ids)} items...")
+                uint_history = self.zabbix_api.history.get(
+                    itemids=uint_item_ids,
+                    time_from=time_from,
+                    time_till=time_to,
+                    output='extend',
+                    sortfield='clock',
+                    history=3  # Integer history table
+                )
+                history.extend(uint_history)
+                print(f"     Received {len(uint_history)} integer records")
             
             print(f"   📊 Received {len(history)} raw data records from Zabbix")
             item_history_count = {}
