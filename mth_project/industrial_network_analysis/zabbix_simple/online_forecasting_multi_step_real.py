@@ -548,17 +548,25 @@ class ZabbixMultiStepForecastingLoop:
                 print(f"⚠️  Padded missing columns with zeros")
             
             # Enhanced data cleaning to prevent oscillations
-            print("🧹 Enhanced data cleaning to prevent oscillations...")
+            print("🧹 Enhanced data cleaning - preserving network interface values...")
             
             # 1. Remove any infinite values
             selected_data = selected_data.replace([np.inf, -np.inf], np.nan)
             
-            # 2. Apply simple moving average to smooth out spikes (instead of scipy)
+            # 2. Apply selective smoothing - preserve network interface data
             for col in selected_data.columns:
                 if len(selected_data) >= 3:
-                    # Apply 3-point moving average to remove spikes
-                    smoothed_values = selected_data[col].rolling(window=3, center=True, min_periods=1).mean()
-                    selected_data[col] = smoothed_values
+                    # Only smooth non-network columns (CPU, memory, etc.)
+                    # Preserve actual network traffic measurements (bits received/sent)
+                    if 'bits' in col.lower() or 'bytes' in col.lower():
+                        print(f"   Preserving network data: {col}")
+                        # Keep original values for network interface data
+                        continue
+                    else:
+                        print(f"   Smoothing system metric: {col}")
+                        # Apply 3-point moving average only to system metrics
+                        smoothed_values = selected_data[col].rolling(window=3, center=True, min_periods=1).mean()
+                        selected_data[col] = smoothed_values
             
             # 3. Conservative gap filling
             selected_data = selected_data.fillna(method='ffill', limit=2)
