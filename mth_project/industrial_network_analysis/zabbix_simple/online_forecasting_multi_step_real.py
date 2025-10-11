@@ -128,159 +128,147 @@ def multistep_rolling_buffer_learning_prediction_with_dash_real(initial_model,
         for error in scaling_errors[:3]:
             print(f"   • {error}")
     
-    final_predictions = []
-    final_actuals = []
-    final_timestamps = []
-    predictions_actuals = []
-    actuals_actuals = []
-    
-    total_steps = len(scaled_data) - context_length - prediction_horizon + 1
+    # Real-time operation: Make ONE prediction using the most recent data
     print(f"   After differencing: {len(df_online)} → {len(df_online_differenced)} samples")
     print(f"   After scaling: {scaled_data.shape}")
-    print(f"   Processing {total_steps} prediction steps")
+    print(f"   Real-time mode: Making single prediction from most recent data")
+
+    # Check if we have enough data for prediction
+    if len(scaled_data) < context_length:
+        print(f"⚠️  Insufficient data for prediction: need {context_length}, have {len(scaled_data)}")
+        # Return empty DataFrames
+        empty_df = pd.DataFrame(columns=variables)
+        return empty_df, empty_df, empty_df, empty_df
 
     if dash_plotter is not None:
         try:
-            dash_plotter.set_total_steps(total_steps)
+            dash_plotter.set_total_steps(1)  # Only one prediction step
         except Exception as e:
             print(f"⚠️  Dashboard configuration failed: {e}")
             dash_plotter = None
 
-    current_context = scaled_data[:context_length].copy()
+    # Use the most recent context_length samples for prediction
+    current_context = scaled_data[-context_length:].copy()
     start_time = time.time()
 
     # Disable classification for production stability
     print("🔧 Classification disabled for production stability")
     classification_enabled = False
 
-    # Main prediction loop - adapted for real-time operation
-    for t in range(context_length, len(scaled_data) - prediction_horizon + 1):
-        current_step = t - context_length
-        
-        # Show progress every 10 steps for real-time monitoring
-        if current_step % 10 == 0:
-            progress_pct = (current_step / total_steps) * 100
-            print(f"📊 Real-time progress: {current_step}/{total_steps} steps ({progress_pct:.1f}%)")
-        
-        # Check for graceful shutdown
-        if stop_flag.is_set():
-            print("🛑 Graceful shutdown requested during prediction loop")
-            break
+    # Single real-time prediction
+    print("🎯 Making real-time multi-step prediction...")
+    
+    # Check for graceful shutdown
+    if stop_flag.is_set():
+        print("🛑 Graceful shutdown requested")
+        empty_df = pd.DataFrame(columns=variables)
+        return empty_df, empty_df, empty_df, empty_df
 
-        # 1. Make multi-step predictions using direct method
-        try:
-            step_predictions = predict_multistep_direct(model, current_context, variables=variables, prediction_horizon=prediction_horizon)    
-        except Exception as e:
-            print(f"⚠️  Multi-step prediction failed ({e}), skipping this step")
-            continue
-                    
-        # 2. Convert all predictions to original scale
-        step_predictions_original = []
-        for pred in step_predictions:
-            pred_original = []
-            for i, var in enumerate(variables):
-                # Filter status columns
-                if 'status' in var.lower():
-                    pred[i] = np.round(pred[i])
+    # 1. Make multi-step predictions using direct method
+    try:
+        step_predictions = predict_multistep_direct(model, current_context, variables=variables, prediction_horizon=prediction_horizon)    
+    except Exception as e:
+        print(f"⚠️  Multi-step prediction failed ({e})")
+        empty_df = pd.DataFrame(columns=variables)
+        return empty_df, empty_df, empty_df, empty_df
                 
-                scaler = scalers[var]
-                original_val = scaler.inverse_transform([[pred[i]]])[0, 0]
-                pred_original.append(original_val)
-            step_predictions_original.append(pred_original)
-        
-        # 3. Get actual values for all predicted steps (for real-time validation)
-        actual_values = []
-        for step in range(prediction_horizon):
-            actual_index = t + 1 + step
-            if actual_index < len(scaled_data):
-                actual_values.append(scaled_data[actual_index, :])
-        
-        actuals_original = []
-        for actual in actual_values:
-            actual_original = []
-            for i, var in enumerate(variables):
-                scaler = scalers[var]
-                original_val = scaler.inverse_transform([[actual[i]]])[0, 0]
-                actual_original.append(original_val)
-            actuals_original.append(actual_original)
-        
-        # 4. Buffer strategy: Keep only the FIRST prediction (t+1) for evaluation
-        if len(step_predictions_original) > 0 and len(actuals_original) > 0:
-            final_predictions.append(step_predictions_original[0])
-            final_actuals.append(actuals_original[0])
-            if t + 1 < len(df_online_differenced):
-                final_timestamps.append(df_online_differenced.index[t + 1])
-            else:
-                final_timestamps.append(df_online_differenced.index[t])
+    # 2. Convert all predictions to original scale
+    step_predictions_original = []
+    for pred in step_predictions:
+        pred_original = []
+        for i, var in enumerate(variables):
+            # Filter status columns
+            if 'status' in var.lower():
+                pred[i] = np.round(pred[i])
+            
+            scaler = scalers[var]
+            original_val = scaler.inverse_transform([[pred[i]]])[0, 0]
+            pred_original.append(original_val)
+        step_predictions_original.append(pred_original)
+    
+    # 3. For real-time operation, we don't have future actual values
+    # Instead, create placeholder actuals for the prediction structure
+    # In real-time, these would be filled as actual data arrives
+    actuals_original = []
+    for step in range(prediction_horizon):
+        # Use last known values as placeholder actuals
+        actual_original = []
+        for i, var in enumerate(variables):
+            # Get the last actual value from the original data
+            last_actual_scaled = scaled_data[-1, i]
+            scaler = scalers[var]
+            last_actual_original = scaler.inverse_transform([[last_actual_scaled]])[0, 0]
+            actual_original.append(last_actual_original)
+        actuals_original.append(actual_original)
+    
+    # 4. Store predictions for output (only first prediction for immediate evaluation)
+    final_predictions = []
+    final_actuals = []
+    final_timestamps = []
+    predictions_actuals = []
+    actuals_actuals = []
+    
+    if len(step_predictions_original) > 0:
+        final_predictions.append(step_predictions_original[0])  # t+1 prediction
+        final_actuals.append(actuals_original[0])  # placeholder actual
+        # Use the last timestamp + 1 minute for the prediction timestamp
+        final_timestamps.append(df_online_differenced.index[-1])
 
-        # 5. Inverse differencing for real-time dashboard display
-        original_base_index = t
-        if original_base_index < len(df_online):
-            last_actual_values = df_online.iloc[original_base_index][variables].values
-        else:
-            last_actual_values = df_online.iloc[-1][variables].values
+    # 5. Inverse differencing for real-time dashboard display
+    # Use the last actual value from original data as base
+    last_actual_values = df_online.iloc[-1][variables].values
 
-        step_predictions_actual = inverse_difference(
-            step_predictions_original, 
-            last_actual_values
-        )
+    step_predictions_actual = inverse_difference(
+        step_predictions_original, 
+        last_actual_values
+    )
 
-        actuals_actual = inverse_difference(
-            actuals_original, 
-            last_actual_values
-        )
+    actuals_actual = inverse_difference(
+        actuals_original, 
+        last_actual_values
+    )
 
-        # 6. Real-time port status monitoring (simplified for production)
-        port_statuses_check = df_removed_nans_classification.iloc[t]
-        port_statuses = {}
-        for name, status in port_statuses_check.items():
-            if status not in [None, np.nan]:
-                port_statuses[name] = status
-        
-        if len(step_predictions_actual) > 0 and len(actuals_actual) > 0:
-            predictions_actuals.append(step_predictions_actual[0])
-            actuals_actuals.append(actuals_actual[0])
+    # 6. Real-time port status monitoring (simplified for production)
+    port_statuses_check = df_removed_nans_classification.iloc[-1]  # Use most recent
+    port_statuses = {}
+    for name, status in port_statuses_check.items():
+        if status not in [None, np.nan]:
+            port_statuses[name] = status
+    
+    if len(step_predictions_actual) > 0 and len(actuals_actual) > 0:
+        predictions_actuals.append(step_predictions_actual[0])
+        actuals_actuals.append(actuals_actual[0])
 
-        # 7. Send real-time data to Dash plotter
-        if dash_plotter is not None:
-            if len(step_predictions_actual) > 0:
-                current_timestamp = df_online_differenced.index[t]
-                saved_prediction_t1 = step_predictions_actual[0] if len(step_predictions_actual) > 0 else None
-                future_prediction_t1 = step_predictions_actual[0] if len(step_predictions_actual) > 0 else None
-                
-                try:
-                    dash_plotter.add_buffer_predictions(
-                        predictions=step_predictions_actual, 
-                        actuals=actuals_actual, 
-                        current_step=current_step,
-                        current_datetime=current_timestamp,
-                        variable_names=variables,
-                        saved_prediction=saved_prediction_t1,
-                        future_prediction=future_prediction_t1,
-                        port_statuses=port_statuses if len(port_statuses) > 0 else None,
-                        classification_result=None  # Disabled for stability
-                    )
-                except Exception as e:
-                    print(f"Dashboard update failed: {e}")
+    # 7. Send real-time data to Dash plotter
+    if dash_plotter is not None:
+        if len(step_predictions_actual) > 0:
+            current_timestamp = df_online_differenced.index[-1]
+            saved_prediction_t1 = step_predictions_actual[0] if len(step_predictions_actual) > 0 else None
+            future_prediction_t1 = step_predictions_actual[0] if len(step_predictions_actual) > 0 else None
+            
+            try:
+                dash_plotter.add_buffer_predictions(
+                    predictions=step_predictions_actual, 
+                    actuals=actuals_actual, 
+                    current_step=0,  # Single step
+                    current_datetime=current_timestamp,
+                    variable_names=variables,
+                    saved_prediction=saved_prediction_t1,
+                    future_prediction=future_prediction_t1,
+                    port_statuses=port_statuses if len(port_statuses) > 0 else None,
+                    classification_result=None  # Disabled for stability
+                )
+            except Exception as e:
+                print(f"Dashboard update failed: {e}")
 
-        # 8. Update context for next iteration (real-time rolling window)
-        new_row = scaled_data[t, :].copy()
-        current_context = np.vstack((current_context[1:], new_row))
-        
-        # Real-time error monitoring
-        if len(step_predictions_original) > 0 and len(actuals_original) > 0:
-            prediction_error = np.mean(np.abs(np.array(step_predictions_original[0]) - np.array(actuals_original[0])))
-            if current_step % 20 == 0:
-                print(f"   📉 Step {current_step} real-time prediction error (MAE): {prediction_error:.6f}")
-
-    # End of main prediction loop
+    # Real-time prediction completed
     print("=" * 60)
-    print("✅ Real-time multi-step rolling prediction completed!")
-    print(f"📈 Processed {current_step + 1} steps from real Zabbix data")
-    print(f"🎯 Generated {len(final_predictions)} predictions")
+    print("✅ Real-time multi-step prediction completed!")
+    print(f"📈 Made single real-time prediction from Zabbix data")
+    print(f"🎯 Generated {len(final_predictions)} predictions for immediate use")
     processing_time = time.time() - start_time
-    print(f"⏱️  Total processing time: {processing_time:.2f} seconds")
-    print(f"⚡ Average time per step: {processing_time/max(1, current_step+1):.3f} seconds")
+    print(f"⏱️  Total processing time: {processing_time:.3f} seconds")
+    print(f"⚡ Efficient real-time operation: {processing_time:.3f} seconds per prediction")
     
     # Create results DataFrames
     try:
