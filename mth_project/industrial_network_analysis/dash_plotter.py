@@ -325,16 +325,16 @@ class DashRealTimePlotter:
                                 row=row, col=col
                             )
                 
-                # 2. Red dashed line (predictions) - shift 6 timesteps forward, end at t+1
+                # 2. Red dashed line (predictions) - start immediately after last actual data (t+1)
                 if var in self.saved_predictions and len(self.saved_predictions[var]) > 0:
                     pred_data = list(self.saved_predictions[var])
                     data_length = min(len(pred_data), len(timestamps))
                     
                     if data_length > 0 and timestamps:
-                        # Shift prediction timestamps 6 minutes forward + 1 more for t+1
+                        # For real-time: predictions start immediately after last actual data (t+1)
                         shifted_pred_timestamps = []
                         for ts in timestamps[-data_length:]:
-                            shifted_ts = ts + timedelta(minutes=7)  # Move 6 + 1 = 7 minutes forward (end at t+1)
+                            shifted_ts = ts + timedelta(minutes=1)  # Move 1 minute forward (t+1)
                             shifted_pred_timestamps.append(shifted_ts)
                         
                         historical_pred_data = pred_data[-data_length:]
@@ -353,7 +353,7 @@ class DashRealTimePlotter:
                                 row=row, col=col
                             )
                 
-                # 3. Green dotted line (future predictions) - shift 6 timesteps forward, end at t+6
+                # 3. Green dotted line (future predictions) - start immediately after actual data
                 if var in self.temporal_predictions and len(self.temporal_predictions[var]) > 0:
                     temporal_data = list(self.temporal_predictions[var])
                     
@@ -364,13 +364,13 @@ class DashRealTimePlotter:
                         latest_temporal = temporal_data[-1] if temporal_data else []
                         
                         if isinstance(latest_temporal, list) and len(latest_temporal) > 0:
-                            # Shift future timestamps 6 steps forward, spanning from t+1 to t+6
+                            # For real-time: future predictions start immediately after actual data
                             future_timestamps = []
                             future_predictions = []
                             
-                            # Start from t+1 (current + 7 min) and go to t+6 (current + 12 min)
+                            # Start from t+1 (current + 1 min) and go to t+6 (current + 6 min)
                             for step in range(0, min(6, len(latest_temporal))):
-                                future_time = current_time + timedelta(minutes=step + 7)  # t+1, t+2, ..., t+6 (shifted 6 forward)
+                                future_time = current_time + timedelta(minutes=step + 1)  # t+1, t+2, ..., t+6
                                 future_timestamps.append(future_time)
                                 future_predictions.append(latest_temporal[step])
                             

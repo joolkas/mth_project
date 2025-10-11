@@ -502,24 +502,28 @@ class ZabbixMultiStepForecastingLoop:
             self.dash_plotter = None
     
     def collect_and_prepare_data(self) -> Optional[pd.DataFrame]:
-        """Collect current data from Zabbix and prepare for prediction"""
+        """Collect current data from Zabbix more frequently and prepare for prediction"""
         try:
-            # Collect recent data from Zabbix
-            raw_data = self.collector.collect_recent_data(self.monitoring_items, hours_back=2)
+            # Collect fresh data from Zabbix more frequently (30 minutes instead of 2 hours)
+            # This ensures we get the most recent data without old cached values
+            raw_data = self.collector.collect_recent_data(self.monitoring_items, hours_back=0.5)
 
             if raw_data is None or raw_data.empty:
                 print("No data collected from Zabbix")
                 return None
             
-            print(f"📊 Raw Zabbix data collected: {raw_data.shape}")
+            print(f"📊 Fresh Zabbix data collected: {raw_data.shape}")
             print(f"📅 Data time range: {raw_data.index[0]} to {raw_data.index[-1]}")
             
-            # Debug: Show some raw data values
+            # Debug: Show some raw data values with timestamps
             if len(raw_data) > 0:
-                print("🔍 Sample raw data (last 3 rows):")
-                for col in raw_data.columns[:3]:  # Show first 3 columns
-                    last_values = raw_data[col].tail(3).values
-                    print(f"   {col}: {last_values}")
+                print("🔍 Sample fresh data (last 5 rows with timestamps):")
+                for i in range(max(0, len(raw_data)-5), len(raw_data)):
+                    timestamp = raw_data.index[i]
+                    print(f"   {timestamp}: ", end="")
+                    for col in raw_data.columns[:3]:  # Show first 3 columns
+                        print(f"{col}={raw_data[col].iloc[i]:.3f} ", end="")
+                    print()
             
             # Ensure sufficient data for context
             if len(raw_data) < self.context_length:
@@ -543,33 +547,39 @@ class ZabbixMultiStepForecastingLoop:
                 selected_data = selected_data.fillna(0)
                 print(f"⚠️  Padded missing columns with zeros")
             
-            # Clean the data to prevent oscillations
-            print("🧹 Cleaning data to prevent oscillations...")
+            # Enhanced data cleaning to prevent oscillations
+            print("🧹 Enhanced data cleaning to prevent oscillations...")
             
-            # Remove any infinite values
+            # 1. Remove any infinite values
             selected_data = selected_data.replace([np.inf, -np.inf], np.nan)
             
-            # Forward fill small gaps (up to 3 missing values)
-            selected_data = selected_data.fillna(method='ffill', limit=3)
+            # 2. Apply simple moving average to smooth out spikes (instead of scipy)
+            for col in selected_data.columns:
+                if len(selected_data) >= 3:
+                    # Apply 3-point moving average to remove spikes
+                    smoothed_values = selected_data[col].rolling(window=3, center=True, min_periods=1).mean()
+                    selected_data[col] = smoothed_values
             
-            # Backward fill remaining gaps
-            selected_data = selected_data.fillna(method='bfill', limit=3)
-            
-            # Replace any remaining NaN with 0
+            # 3. Conservative gap filling
+            selected_data = selected_data.fillna(method='ffill', limit=2)
+            selected_data = selected_data.fillna(method='bfill', limit=2)
             selected_data = selected_data.fillna(0)
             
-            # Ensure data types are float
+            # 4. Ensure data types are consistent float
             for col in selected_data.columns:
-                selected_data[col] = pd.to_numeric(selected_data[col], errors='coerce').fillna(0)
+                selected_data[col] = pd.to_numeric(selected_data[col], errors='coerce').fillna(0).astype(float)
             
-            # Get sufficient recent data for context
-            recent_data = selected_data.tail(self.context_length * 2)
+            # Get only the most recent data needed for context (not double)
+            recent_data = selected_data.tail(self.context_length + 10)  # Small buffer
             
-            print(f"✅ Prepared data: {recent_data.shape}")
-            print("🔍 Final prepared data (last 3 rows):")
-            for col in recent_data.columns[:3]:  # Show first 3 columns
-                last_values = recent_data[col].tail(3).values
-                print(f"   {col}: {last_values}")
+            print(f"✅ Cleaned data ready: {recent_data.shape}")
+            print("🔍 Final cleaned data (last 3 rows):")
+            for i in range(max(0, len(recent_data)-3), len(recent_data)):
+                timestamp = recent_data.index[i]
+                print(f"   {timestamp}: ", end="")
+                for col in recent_data.columns[:3]:  # Show first 3 columns
+                    print(f"{col}={recent_data[col].iloc[i]:.3f} ", end="")
+                print()
             
             return recent_data
             
