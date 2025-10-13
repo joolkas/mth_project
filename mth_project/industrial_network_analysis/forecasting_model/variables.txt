@@ -1,6 +1,4 @@
 ICMP response time
-SW#1: Temperature
-#2: CPU utilization
 Processor: Used memory
 Interface Gi1/1(Valmet DNA FIREWALL connection): Bits received
 Interface Gi1/1(Valmet DNA FIREWALL connection): Bits sent

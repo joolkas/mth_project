@@ -1,0 +1,23 @@
+Initial Multi-Step Model Training Description:
+Initial Model - Epochs: 80,
+     Batch Size: 32,
+ Validation Split: 0.2,
+ Context Length: 60,
+     Learning Rate: 0.001,
+ First Layer Units: 256,
+ Second Layer Units: 128,
+     Third Layer Units: 64,
+ Dense Units: 256,
+ Activation: relu,
+ Dropout Rate: 0.2
+     Initial Training Samples: 1440,
+ Final Training Loss (MSE): 0.864853
+ Final Training MAE: 0.689825
+ Variable: ICMP response time - MSE: 0.000000, MAE: 0.000395, RMSE: 0.000542, Percentage Error: 39.848668
+ Variable: Processor: Used memory - MSE: 328319780.785220, MAE: 13760.820822, RMSE: 18119.596596, Percentage Error: 0.008326
+ Variable: Interface Gi1/1(Valmet DNA FIREWALL connection): Bits received - MSE: 263219508.155612, MAE: 13013.897376, RMSE: 16224.041055, Percentage Error: 5.545441
+ Variable: Interface Gi1/1(Valmet DNA FIREWALL connection): Bits sent - MSE: 247102676488.967072, MAE: 371547.906405, RMSE: 497094.233007, Percentage Error: 111.022359
+ Variable: Interface Gi1/3(Valmet PRP LAN_A-connection): Bits received - MSE: 245819890531.378784, MAE: 370377.102673, RMSE: 495802.269591, Percentage Error: 177.423965
+ Variable: Interface Gi1/3(Valmet PRP LAN_A-connection): Bits sent - MSE: 259999744.308683, MAE: 12928.609301, RMSE: 16124.507568, Percentage Error: 5.548360
+ Variable: Interface Gi1/4(Valmet PRP LAN_B-connection): Bits received - MSE: 2499.888390, MAE: 39.359482, RMSE: 49.998884, Percentage Error: 31.130836
+ Variable: Interface Gi1/4(Valmet PRP LAN_B-connection): Bits sent - MSE: 1389252.071709, MAE: 957.676555, RMSE: 1178.665377, Percentage Error: 2.390180
