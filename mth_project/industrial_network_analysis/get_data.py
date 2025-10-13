@@ -19,7 +19,7 @@ def warning_handler_func(message, category, filename, lineno, file=None, line=No
 warnings.showwarning = warning_handler_func
 
 def get_path_and_device_name():
-    device_name="SW-SUPV-243"
+    device_name="A1-RBX-242"
     data_path="C:\\ThesisWork\\offical_approach\\mth_project\\mth_project\\industrial_network_analysis\\Data082025\\"
     return device_name, data_path
 

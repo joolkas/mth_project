@@ -24,14 +24,14 @@ model_mode = "multi_step"  # "one_step" or "multi_step"
 
 # model parameters
 epochs = 80
-batch_size = 64
+batch_size = 32
 validation_split = 0.2
 verbose = 1
 context_length = 60    # Input window length
 prediction_horizon = 6  # Number of future steps to predict directly
-first_layer_units = 128
-second_layer_units = 64
-third_layer_units = 32  # Additional layer for multi-step complexity
+first_layer_units = 256
+second_layer_units = 128
+third_layer_units = 64 # Additional layer for multi-step complexity
 dense_units = 256       # Larger dense layer for multi-step output
 activation = 'relu'
 dropout_rate = 0.3
@@ -43,7 +43,7 @@ reduce_lr_factor = 0.5       # Less aggressive learning rate reduction
 reduce_lr_patience = 5       # More patience for learning rate reduction
 
 # Split data for initial training and online forecasting
-initial_idx = 48 * 60 # first 48 hours for initial training
+initial_idx = 24 * 60 # first 48 hours for initial training
 split_ratio = 0.8  # 80% training, 20% testing
 
 # Use relative path from current file location
@@ -55,7 +55,7 @@ model_description = f"Initial Model - Epochs: {epochs},\n \
     Third Layer Units: {third_layer_units},\n Dense Units: {dense_units},\n Activation: {activation},\n Dropout Rate: {dropout_rate}\n \
     Initial Training Samples: {initial_idx},"
 
-results_file_name = "initial_model_results_006"
+results_file_name = "initial_model_results_005"
 
 def create_online_multistep_model_simple(context_length, num_features, prediction_horizon):
     """Simplified multi-step model creation for compatibility recovery"""
@@ -441,39 +441,19 @@ def test_model(model, df, X_test, y_test, scalers, df_removed_nans_forecasting,
 def calculate_metrics(df, actuals_original, predictions_original, all_actuals, all_predictions, 
                                prediction_horizon=prediction_horizon, mode="multi_step"):
     """
-    Calculate metrics for multi-step or one-step predictions including horizon-specific performance.
+    Calculate metrics for each feature separately, multi-step or one-step predictions including horizon-specific performance.
     """
     # Overall metrics (using first step)
-    mse = mean_squared_error(actuals_original, predictions_original)
-    mae = mean_absolute_error(actuals_original, predictions_original)
-    rmse = np.sqrt(mse)
-    percentage_error = np.mean(np.abs((actuals_original - predictions_original) / actuals_original)) * 100
+    mse = {}
+    mae = {}
+    rmse = {}
+    percentage_error = {}
 
-    model_type = "Multi-Step" if mode == "multi_step" else "One-Step"
-    print(f"\n{model_type} Model Performance (t+1 predictions):")
-    print(f"MSE: {mse:.6f}")
-    print(f"MAE: {mae:.6f}")
-    print(f"RMSE: {rmse:.6f}")
-    print(f"Percentage Error: {percentage_error:.6f}")
-
-    # Calculate metrics for each prediction horizon (only for multi-step)
-    horizon_metrics = []
-    if mode == "multi_step":
-        for horizon in range(prediction_horizon):
-            horizon_predictions = [pred[horizon] for pred in all_predictions]
-            horizon_actuals = [actual[horizon] for actual in all_actuals]
-            
-            horizon_mse = mean_squared_error(horizon_actuals, horizon_predictions)
-            horizon_mae = mean_absolute_error(horizon_actuals, horizon_predictions)
-            
-            horizon_metrics.append({
-                'horizon': horizon + 1,
-                'mse': horizon_mse,
-                'mae': horizon_mae,
-                'rmse': np.sqrt(horizon_mse)
-            })
-            
-            print(f"  t+{horizon+1} - MSE: {horizon_mse:.6f}, MAE: {horizon_mae:.6f}")
+    for var in df.columns:
+        mse[var] = mean_squared_error(actuals_original[var], predictions_original[var])
+        mae[var] = mean_absolute_error(actuals_original[var], predictions_original[var])
+        rmse[var] = np.sqrt(mse[var])
+        percentage_error[var] = np.mean(np.abs((actuals_original[var] - predictions_original[var]) / actuals_original[var])) * 100
 
     # Show sample results
     results_df = pd.DataFrame({
@@ -488,7 +468,7 @@ def calculate_metrics(df, actuals_original, predictions_original, all_actuals, a
     print(results_df.head(20))
     
     # Return horizon_metrics for multi-step, empty list for one-step
-    return results_df, mse, mae, rmse, percentage_error, horizon_metrics
+    return results_df, mse, mae, rmse, percentage_error
 
 def plot_results(actuals_df, predictions_df, title, history=None):
     
@@ -849,10 +829,12 @@ if __name__ == "__main__":
         # test model
             # Test the model
         df_actuals, df_predictions, all_actuals, all_predictions = test_model(model, df_initial, X_test, y_test, scalers_test, df_removed_nans_forecasting, original_indices_test, test_mode="multi_step", prediction_horizon=prediction_horizon)
-        results_df, mse, mae, rmse, percentage_error, horizon_metrics = calculate_metrics(df_initial, df_actuals, df_predictions, all_actuals, all_predictions, prediction_horizon, mode="multi_step")
+        results_df, mse, mae, rmse, percentage_error = calculate_metrics(df_initial, df_actuals, df_predictions, all_actuals, all_predictions, prediction_horizon, mode="multi_step")
         plot_results(df_actuals, df_predictions, title = "Multi-Step", history = history)
-        description = f"Initial Multi-Step Model Training Description:\n{model_description}\n Results:\n MSE: {mse:.6f}\n MAE: {mae:.6f}\n RMSE: {rmse:.6f}\n Percentage Error: {percentage_error:.6f}\n, Accuracy: {history.history['accuracy'][-1]:.6f}\n"
-
+        description = f"Initial Multi-Step Model Training Description:\n{model_description}\n Accuracy: {history.history['accuracy'][-1]:.6f}\n"
+        
+        for col in variables:
+            description += f" Variable: {col} - MSE: {mse[col]:.6f}, MAE: {mae[col]:.6f}, RMSE: {rmse[col]:.6f}, Percentage Error: {percentage_error[col]:.6f}\n"
 
     elif model_mode == "one_step":
         model = create_online_onestep_model(df_initial, context_length=context_length,
@@ -876,9 +858,11 @@ if __name__ == "__main__":
         
         # test model
         df_actuals, df_predictions, all_actuals, all_predictions = test_model(model, df_initial, X_test, y_test, scalers_test, df_removed_nans_forecasting, original_indices_test, test_mode="one_step", prediction_horizon=prediction_horizon)
-        results_df, mse, mae, rmse, percentage_error, horizon_metrics = calculate_metrics(df_initial, df_actuals, df_predictions, all_actuals, all_predictions, prediction_horizon, mode="one_step")
+        results_df, mse, mae, rmse, percentage_error = calculate_metrics(df_initial, df_actuals, df_predictions, all_actuals, all_predictions, prediction_horizon, mode="one_step")
         plot_results(df_actuals, df_predictions, title = "One-Step", history = history)
         description = f"Initial One-Step Model Training Description:\n{model_description}\n Results:\n MSE: {mse:.6f}\n MAE: {mae:.6f}\n RMSE: {rmse:.6f}\n Percentage Error: {percentage_error:.6f}\n, Accuracy: {history.history['accuracy'][-1]:.6f}\n"
+        
+
 
     # save the trained model in multiple formats for compatibility
     # 1. Save complete model (H5 format)
@@ -886,9 +870,9 @@ if __name__ == "__main__":
     print(f"✓ Initial model saved to: {os.path.join(initial_model_path, 'initial_model.h5')}")
     
     # 2. Save weights only (more compatible)
-    model.save_weights(os.path.join(initial_model_path, "model_weights.h5"))
-    print(f"✓ Model weights saved to: {os.path.join(initial_model_path, 'model_weights.h5')}")
-    
+    model.save_weights(os.path.join(initial_model_path, "model_weights.weights.h5"))
+    print(f"✓ Model weights saved to: {os.path.join(initial_model_path, 'model_weights.weights.h5')}")
+
     # 3. Save model architecture as JSON (version-independent)
     import json
     with open(os.path.join(initial_model_path, "model_architecture.json"), 'w') as f:

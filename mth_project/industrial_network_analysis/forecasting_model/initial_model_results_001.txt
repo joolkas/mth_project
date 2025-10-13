@@ -1,18 +1,39 @@
+SW-SUPV-243:
+
 Initial Multi-Step Model Training Description:
-Initial Model - Epochs: 5,
+Initial Model - Epochs: 80,
      Batch Size: 64,
  Validation Split: 0.2,
  Context Length: 60,
      Prediction Horizon: 6,
- First Layer Units: 256,
- Second Layer Units: 128,
-     Third Layer Units: 64,
- Dense Units: 512,
+ First Layer Units: 128,
+ Second Layer Units: 64,
+     Third Layer Units: 32,
+ Dense Units: 256,
  Activation: relu,
  Dropout Rate: 0.3
      Initial Training Samples: 2880,
- Results:
- MSE: 1449941.255279
- MAE: 286.270945
- RMSE: 1204.135065
- Percentage Error: 2.619145
+ Accuracy: 0.019542
+ Variable: ICMP response time - MSE: 0.000000, MAE: 0.000302, RMSE: 0.000416, Percentage Error: 29.267472
+ Variable: Switch 1 - HotSpot Temp Sensor: Temperature - MSE: 0.083963, MAE: 0.097652, RMSE: 0.289764, Percentage Error: 0.251808
+ Variable: Switch 1 - Inlet Temp Sensor: Temperature - MSE: 0.025791, MAE: 0.032666, RMSE: 0.160596, Percentage Error: 0.116526
+ Variable: Switch 1 - Outlet Temp Sensor: Temperature - MSE: 0.013793, MAE: 0.022723, RMSE: 0.117446, Percentage Error: 0.073339
+ Variable: Switch 2 - HotSpot Temp Sensor: Temperature - MSE: 0.094929, MAE: 0.107549, RMSE: 0.308106, Percentage Error: 0.272905
+ Variable: Switch 2 - Inlet Temp Sensor: Temperature - MSE: 0.011940, MAE: 0.018419, RMSE: 0.109269, Percentage Error: 0.063286
+ Variable: Switch 2 - Outlet Temp Sensor: Temperature - MSE: 0.007864, MAE: 0.015740, RMSE: 0.088680, Percentage Error: 0.050802
+ Variable: #11: CPU utilization - MSE: 0.126782, MAE: 0.283122, RMSE: 0.356065, Percentage Error: 2.743299
+ Variable: Processor: Used memory - MSE: 3518000.268467, MAE: 1357.677984, RMSE: 1875.633298, Percentage Error: 0.001276
+ Variable: Interface Gi1/0/3(Valmet DNA Supervisory access): Bits received - MSE: 78138.053555, MAE: 109.789763, RMSE: 279.531847, Percentage Error: 8.336097
+ Variable: Interface Gi1/0/3(Valmet DNA Supervisory access): Bits sent - MSE: 13108892.429690, MAE: 1707.771599, RMSE: 3620.620448, Percentage Error: 3.172544
+ Variable: Interface Gi1/1/1(Valmet SUPV switch connection): Bits received - MSE: 244596.940445, MAE: 198.221174, RMSE: 494.567428, Percentage Error: 0.476401
+ Variable: Interface Gi1/1/1(Valmet SUPV switch connection): Bits sent - MSE: 142.103784, MAE: 9.618992, RMSE: 11.920729, Percentage Error: 0.182324
+ Variable: Interface Gi1/1/4(Valmet SUPV switch connection): Bits received - MSE: 13331931.950537, MAE: 1716.517918, RMSE: 3651.291819, Percentage Error: 2.270733
+ Variable: Interface Gi1/1/4(Valmet SUPV switch connection): Bits sent - MSE: 169103.785397, MAE: 272.388781, RMSE: 411.222307, Percentage Error: 1.627440
+ Variable: Interface Gi2/0/5(Valmet DNA Supervisory access): Bits received - MSE: 13610.661737, MAE: 84.254542, RMSE: 116.664741, Percentage Error: 6.215111
+ Variable: Interface Gi2/0/5(Valmet DNA Supervisory access): Bits sent - MSE: 369597.699930, MAE: 310.575904, RMSE: 607.945474, Percentage Error: 0.748329
+ Variable: Interface Gi2/1/1(Valmet SUPV switch connection): Bits received - MSE: 9636.008738, MAE: 61.369851, RMSE: 98.163174, Percentage Error: 0.739126
+ Variable: Interface Gi2/1/1(Valmet SUPV switch connection): Bits sent - MSE: 297394.686524, MAE: 247.480887, RMSE: 545.339056, Percentage Error: 0.556887
+ Variable: Interface Gi2/1/2(Valmet SUPV switch connection): Bits received - MSE: 18599.385562, MAE: 109.643481, RMSE: 136.379564, Percentage Error: 1.972784
+ Variable: Interface Gi2/1/2(Valmet SUPV switch connection): Bits sent - MSE: 363264.713322, MAE: 361.275182, RMSE: 602.714454, Percentage Error: 0.703812
+ Variable: Interface Gi2/1/4(Valmet SUPV switch connection): Bits received - MSE: 266751.184858, MAE: 225.348907, RMSE: 516.479607, Percentage Error: 0.523420
+ Variable: Interface Gi2/1/4(Valmet SUPV switch connection): Bits sent - MSE: 6.285074, MAE: 2.210187, RMSE: 2.507005, Percentage Error: 0.865523

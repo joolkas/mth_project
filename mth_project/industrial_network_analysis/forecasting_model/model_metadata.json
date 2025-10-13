@@ -1,0 +1,20 @@
+{
+  "model_mode": "multi_step",
+  "context_length": 60,
+  "prediction_horizon": 6,
+  "num_features": 10,
+  "input_shape": [
+    60,
+    10
+  ],
+  "output_shape": 60,
+  "tensorflow_version": "3.11.3",
+  "architecture_params": {
+    "first_layer_units": 256,
+    "second_layer_units": 128,
+    "third_layer_units": 64,
+    "dense_units": 256,
+    "activation": "relu",
+    "dropout_rate": 0.3
+  }
+}

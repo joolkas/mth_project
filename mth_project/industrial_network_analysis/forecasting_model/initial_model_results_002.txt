@@ -1,18 +1,25 @@
-Initial One-Step Model Training Description:
-Initial Model - Epochs: 5,
-     Batch Size: 64,
+A1-RBX-242:
+Initial Multi-Step Model Training Description:
+Initial Model - Epochs: 80,
+     Batch Size: 32,
  Validation Split: 0.2,
  Context Length: 60,
      Prediction Horizon: 6,
- First Layer Units: 256,
- Second Layer Units: 128,
-     Third Layer Units: 64,
- Dense Units: 512,
+ First Layer Units: 128,
+ Second Layer Units: 64,
+     Third Layer Units: 32,
+ Dense Units: 256,
  Activation: relu,
  Dropout Rate: 0.3
      Initial Training Samples: 2880,
- Results:
- MSE: 1233074.858936
- MAE: 278.916015
- RMSE: 1110.439039
- Percentage Error: 2.581595
+ Accuracy: 0.084310
+ Variable: ICMP response time - MSE: 0.000000, MAE: 0.000355, RMSE: 0.000520, Percentage Error: 30.260842
+ Variable: SW#1: Temperature - MSE: 0.013797, MAE: 0.021184, RMSE: 0.117463, Percentage Error: 0.040600
+ Variable: #2: CPU utilization - MSE: 0.001053, MAE: 0.010122, RMSE: 0.032450, Percentage Error: 1.024292
+ Variable: Processor: Used memory - MSE: 2565307221.415966, MAE: 20212.573430, RMSE: 50648.861995, Percentage Error: 0.012156
+ Variable: Interface Gi1/1(Valmet DNA FIREWALL connection): Bits received - MSE: 1714596411250.392334, MAE: 495825.173614, RMSE: 1309425.985404, Percentage Error: 34.415639
+ Variable: Interface Gi1/1(Valmet DNA FIREWALL connection): Bits sent - MSE: 9402551877.586514, MAE: 53107.910153, RMSE: 96966.756559, Percentage Error: 2.084300
+ Variable: Interface Gi1/3(Valmet PRP LAN_A-connection): Bits received - MSE: 9401032025.158014, MAE: 53025.772432, RMSE: 96958.919266, Percentage Error: 2.049695
+ Variable: Interface Gi1/3(Valmet PRP LAN_A-connection): Bits sent - MSE: 1681063802138.128418, MAE: 488771.412563, RMSE: 1296558.445323, Percentage Error: 33.844135
+ Variable: Interface Gi1/4(Valmet PRP LAN_B-connection): Bits received - MSE: 5.817195, MAE: 1.875021, RMSE: 2.411886, Percentage Error: 2.933228
+ Variable: Interface Gi1/4(Valmet PRP LAN_B-connection): Bits sent - MSE: 7185929.147270, MAE: 1217.693369, RMSE: 2680.658342, Percentage Error: 0.571978
