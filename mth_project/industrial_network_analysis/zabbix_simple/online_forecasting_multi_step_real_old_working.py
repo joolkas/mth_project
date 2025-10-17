@@ -11,7 +11,7 @@ import time
 import logging
 import threading
 import signal
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional
 import pandas as pd
 import numpy as np
@@ -141,29 +141,6 @@ def multistep_rolling_buffer_learning_prediction_with_dash_real(initial_model,
         empty_df = pd.DataFrame(columns=variables)
         return empty_df, empty_df, empty_df, empty_df
 
-    # CRITICAL: Check data freshness for prediction quality
-    latest_data_time = df_online.index[-1]
-    current_time = datetime.now()
-    data_age_minutes = (current_time - latest_data_time).total_seconds() / 60
-    
-    print(f"📊 Data Freshness Check:")
-    print(f"   Latest data: {latest_data_time.strftime('%H:%M:%S')}")
-    print(f"   Current time: {current_time.strftime('%H:%M:%S')}")
-    print(f"   Data age: {data_age_minutes:.1f} minutes")
-    
-    # Validate data freshness for prediction quality
-    if data_age_minutes > 15:  # Relaxed from 10 to 15 minutes for continuous operation
-        print(f"❌ Data too stale ({data_age_minutes:.1f}min) - predictions would be unreliable")
-        print("   Recommendation: Check Zabbix data collection frequency")
-        empty_df = pd.DataFrame(columns=variables)
-        return empty_df, empty_df, empty_df, empty_df
-    elif data_age_minutes > 5:  # Relaxed threshold for warnings
-        print(f"⚠️  Data moderately stale ({data_age_minutes:.1f}min) - prediction quality may be reduced")
-        print(f"   Effective prediction horizon: t+{prediction_horizon} becomes t+{prediction_horizon + int(data_age_minutes)}")
-        print("   Using for continuous real-time operation")
-    else:  # Fresh data (< 5 minutes)
-        print(f"✅ Data is fresh ({data_age_minutes:.1f}min) - good prediction quality expected")
-
     if dash_plotter is not None:
         try:
             dash_plotter.set_total_steps(1)  # Only one prediction step
@@ -181,9 +158,6 @@ def multistep_rolling_buffer_learning_prediction_with_dash_real(initial_model,
 
     # Single real-time prediction
     print("🎯 Making real-time multi-step prediction...")
-    print(f"   Prediction context: last {context_length} minutes of data")
-    print(f"   Prediction horizon: {prediction_horizon} steps (t+1 to t+{prediction_horizon})")
-    print(f"   Effective forecast range: {data_age_minutes:.1f} + {prediction_horizon} = {data_age_minutes + prediction_horizon:.1f} minutes into future")
     
     # Check for graceful shutdown
     if stop_flag.is_set():
@@ -193,10 +167,7 @@ def multistep_rolling_buffer_learning_prediction_with_dash_real(initial_model,
 
     # 1. Make multi-step predictions using direct method
     try:
-        prediction_start = time.time()
-        step_predictions = predict_multistep_direct(model, current_context, variables=variables, prediction_horizon=prediction_horizon)
-        prediction_time = time.time() - prediction_start
-        print(f"✅ Multi-step prediction completed in {prediction_time:.3f}s")
+        step_predictions = predict_multistep_direct(model, current_context, variables=variables, prediction_horizon=prediction_horizon)    
     except Exception as e:
         print(f"⚠️  Multi-step prediction failed ({e})")
         empty_df = pd.DataFrame(columns=variables)
@@ -215,23 +186,6 @@ def multistep_rolling_buffer_learning_prediction_with_dash_real(initial_model,
             original_val = scaler.inverse_transform([[pred[i]]])[0, 0]
             pred_original.append(original_val)
         step_predictions_original.append(pred_original)
-    
-    # Validate prediction quality
-    print(f"📈 Prediction Quality Assessment:")
-    for i, step_pred in enumerate(step_predictions_original[:3]):  # Show first 3 steps
-        pred_range = f"[{np.min(step_pred):.2f} to {np.max(step_pred):.2f}]"
-        pred_mean = np.mean(step_pred)
-        print(f"   Step t+{i+1}: range {pred_range}, mean {pred_mean:.2f}")
-    
-    # Check for unrealistic predictions
-    all_predictions_flat = np.concatenate(step_predictions_original)
-    if np.any(np.isnan(all_predictions_flat)) or np.any(np.isinf(all_predictions_flat)):
-        print("❌ Predictions contain NaN or infinite values - model issue detected")
-        empty_df = pd.DataFrame(columns=variables)
-        return empty_df, empty_df, empty_df, empty_df
-    
-    if np.any(all_predictions_flat < -1e6) or np.any(all_predictions_flat > 1e6):
-        print("⚠️  Predictions contain extreme values - model may be unstable with stale data")
     
     # 3. For real-time operation, we don't have future actual values
     # Instead, create placeholder actuals for the prediction structure
@@ -289,9 +243,9 @@ def multistep_rolling_buffer_learning_prediction_with_dash_real(initial_model,
     # 7. Send real-time data to Dash plotter
     if dash_plotter is not None:
         if len(step_predictions_actual) > 0:
-            # Use CURRENT REAL TIME for dashboard updates (not frozen Zabbix timestamp)
-            # This ensures the dashboard updates every 30 seconds even if data is stale
-            current_timestamp = datetime.now()  # Current time when prediction is made
+            # Use the timestamp of the LAST ACTUAL DATA point, not current time
+            # This ensures the dashboard shows actual data at the correct time
+            current_timestamp = df_online.index[-1]  # Last actual data timestamp
             
             # Use the most recent actual values (last known real values) as "actuals"
             # Create actuals array that matches the dashboard expectation
@@ -304,10 +258,6 @@ def multistep_rolling_buffer_learning_prediction_with_dash_real(initial_model,
             future_prediction_t1 = step_predictions_actual[0] if len(step_predictions_actual) > 0 else None
             
             try:
-                # Show the time difference for debugging
-                data_timestamp = df_online.index[-1]
-                time_diff = (current_timestamp - data_timestamp).total_seconds() / 60
-                
                 dash_plotter.add_buffer_predictions(
                     predictions=step_predictions_actual, 
                     actuals=recent_actuals,  # Use most recent known actual values
@@ -319,7 +269,7 @@ def multistep_rolling_buffer_learning_prediction_with_dash_real(initial_model,
                     port_statuses=port_statuses if len(port_statuses) > 0 else None,
                     classification_result=None  # Disabled for stability
                 )
-                print(f"✅ Dashboard updated - Prediction time: {current_timestamp.strftime('%H:%M:%S')}, Data from: {data_timestamp.strftime('%H:%M:%S')} ({time_diff:.1f}min ago)")
+                print(f"✅ Dashboard updated with real-time data at {current_timestamp}")
             except Exception as e:
                 print(f"Dashboard update failed: {e}")
 
@@ -555,25 +505,17 @@ class ZabbixMultiStepForecastingLoop:
                 time.sleep(3)
             
             # Display connection info
+            import socket
+            hostname = socket.gethostname()
             try:
-                import socket
-                hostname = socket.gethostname()
-                try:
-                    local_ip = socket.gethostbyname(hostname)
-                except:
-                    local_ip = "localhost"
-                
-                print(f"🌐 Dashboard accessible at:")
-                print(f"   Local: http://localhost:{dashboard_port}")
-                print(f"   Network: http://{local_ip}:{dashboard_port}")
-            except Exception as e:
-                print(f"⚠️ Could not determine network address: {e}")
-                print(f"🌐 Dashboard should be accessible at: http://localhost:{dashboard_port}")
+                local_ip = socket.gethostbyname(hostname)
+            except:
+                local_ip = "localhost"
+            
+            print(f"🌐 Dashboard accessible at: http://{local_ip}:{dashboard_port}")
             
         except Exception as e:
             print(f"⚠️ Dashboard initialization failed: {e}")
-            import traceback
-            print(f"   Error details: {traceback.format_exc()}")
             print("   Continuing without dashboard...")
             self.dash_plotter = None
     
@@ -582,10 +524,7 @@ class ZabbixMultiStepForecastingLoop:
         try:
             # Step 1: Collect RAW data from Zabbix 
             print("📡 Collecting RAW data from Zabbix...")
-            
-            # CRITICAL FIX: Always collect fresh data by expanding time window slightly
-            # This prevents getting the exact same cached data every time
-            raw_data = self._collect_raw_zabbix_data(hours_back=2)  # Increased to ensure fresh data
+            raw_data = self._collect_raw_zabbix_data(hours_back=1)
 
             # Match columns to model variables
             if raw_data is not None and not raw_data.empty:
@@ -632,29 +571,12 @@ class ZabbixMultiStepForecastingLoop:
             # Request sufficient data points for model context + small buffer
             target_length = self.context_length + 10
             
-            # DEBUG: Show raw data before Quality Handler
-            if not selected_data.empty:
-                print(f"🔍 DEBUG - Raw data BEFORE Quality Handler:")
-                print(f"   Raw data time range: {selected_data.index[0]} to {selected_data.index[-1]}")
-                print(f"   Raw data shape: {selected_data.shape}")
-            else:
-                print(f"🔍 DEBUG - Raw data is EMPTY before Quality Handler")
-            
             # Process data with quality flags
             processed_data, quality_flags = self.quality_handler.process_data_with_quality_flags(
                 raw_data=selected_data,
                 target_length=target_length,
                 target_frequency='1min'  # 1-minute intervals
             )
-            
-            # DEBUG: Show processed data after Quality Handler
-            if not processed_data.empty:
-                print(f"🔍 DEBUG - Processed data AFTER Quality Handler:")
-                print(f"   Processed data time range: {processed_data.index[0]} to {processed_data.index[-1]}")
-                print(f"   Processed data shape: {processed_data.shape}")
-                print(f"   Latest processed timestamp: {processed_data.index[-1]}")
-            else:
-                print(f"🔍 DEBUG - Processed data is EMPTY after Quality Handler")
             
             # Show Quality Handler status
             quality_summary = self.quality_handler.get_quality_summary()
@@ -691,30 +613,8 @@ class ZabbixMultiStepForecastingLoop:
                 print(f"⚠️  Insufficient data after quality processing: need {self.context_length}, have {len(processed_data)}")
                 return None
             
-            # CRITICAL: Validate processed data freshness 
-            if not processed_data.empty:
-                latest_processed_time = processed_data.index[-1]
-                current_time = datetime.now()
-                processed_age_minutes = (current_time - latest_processed_time).total_seconds() / 60
-                
-                print(f"🔍 FINAL DATA VALIDATION:")
-                print(f"   Processed data latest timestamp: {latest_processed_time}")
-                print(f"   Current time: {current_time}")
-                print(f"   Processed data age: {processed_age_minutes:.1f} minutes")
-                
-                # Reject data that's too stale (indicating caching/interpolation issues)
-                if processed_age_minutes > 12:  # Relaxed from 8 to 12 minutes for continuous predictions
-                    print(f"❌ REJECTING processed data - too stale ({processed_age_minutes:.1f}min)")
-                    print("   This indicates Data Quality Handler is returning very old cached data")
-                    print("   Recommendation: Check Zabbix data update frequency")
-                    return None
-                elif processed_age_minutes > 5:  # Relaxed warning threshold
-                    print(f"⚠️  Processed data is moderately stale ({processed_age_minutes:.1f}min) - using for continuous predictions")
-                else:
-                    print(f"✅ Processed data freshness acceptable ({processed_age_minutes:.1f}min)")
-            
             print(f"✅ Quality-based data preparation completed: {processed_data.shape}")
-            print("   Data now ready for prediction model")
+            print("   Data now ready for prediction model (no more artificial zeros!)")
             return processed_data
             
         except Exception as e:
@@ -776,9 +676,8 @@ class ZabbixMultiStepForecastingLoop:
             for record in history:
                 if record['itemid'] in item_lookup:
                     try:
-                        # Convert Zabbix timestamp (UTC) to local timezone using fromtimestamp
-                        # This matches how time_to/time_from display times
-                        timestamp = pd.to_datetime(datetime.fromtimestamp(int(record['clock'])))
+                        # Apply same UTC offset as in collect_data.py for consistency
+                        timestamp = pd.to_datetime(int(record['clock']) + (self.collector.server_utc_offset * 3600), unit='s')
                         value = float(record['value'])
                         variable_name = item_lookup[record['itemid']]['display_name']
                         
@@ -806,66 +705,12 @@ class ZabbixMultiStepForecastingLoop:
             print(f"   📊 Raw data collected: {df_pivot.shape}")
             print(f"   🔍 Raw data contains actual zeros from Zabbix (no artificial filling yet)")
             
-            # DEBUG: Show actual Zabbix data timestamps
-            if not df_pivot.empty:
-                print(f"🔍 DEBUG - Raw Zabbix data timestamps:")
-                print(f"   Oldest: {df_pivot.index[0]}")
-                print(f"   Newest: {df_pivot.index[-1]}")
-                newest_age = (datetime.now() - df_pivot.index[-1]).total_seconds() / 60
-                print(f"   Age of newest Zabbix data: {newest_age:.1f} minutes")
-                
-                # Show last few timestamps to see update pattern
-                if len(df_pivot) >= 5:
-                    print(f"   Last 5 timestamps: {df_pivot.index[-5:].tolist()}")
-            
             return df_pivot
             
         except Exception as e:
             print(f"❌ Raw Zabbix data collection failed: {e}")
             return None
     
-    def _get_cached_data_for_prediction(self) -> Optional[pd.DataFrame]:
-        """
-        Get cached/interpolated data for prediction when fresh data is not available
-        This ensures predictions can run every 30 seconds even with stale Zabbix data
-        """
-        try:
-            print("🔄 Attempting to get cached data from Quality Handler...")
-            
-            # Request data with relaxed freshness requirements
-            target_length = self.context_length + 10
-            
-            # Use empty raw_data to force Quality Handler to use its cache
-            processed_data, quality_flags = self.quality_handler.process_data_with_quality_flags(
-                raw_data=pd.DataFrame(),  # Empty - forces use of cached data
-                target_length=target_length,
-                target_frequency='1min'
-            )
-            
-            if not processed_data.empty:
-                latest_processed_time = processed_data.index[-1]
-                current_time = datetime.now()
-                processed_age_minutes = (current_time - latest_processed_time).total_seconds() / 60
-                
-                print(f"📊 Cached Data Retrieved:")
-                print(f"   Cached data latest timestamp: {latest_processed_time}")
-                print(f"   Cached data age: {processed_age_minutes:.1f} minutes")
-                print(f"   Cached data shape: {processed_data.shape}")
-                
-                # Accept cached data up to 15 minutes old for continuous predictions
-                if processed_age_minutes <= 15:
-                    print(f"✅ Using cached data for prediction ({processed_age_minutes:.1f}min old)")
-                    return processed_data
-                else:
-                    print(f"❌ Cached data too old ({processed_age_minutes:.1f}min) - skipping prediction")
-                    return None
-            else:
-                print("❌ No cached data available from Quality Handler")
-                return None
-                
-        except Exception as e:
-            print(f"❌ Failed to retrieve cached data: {e}")
-            return None
 
 
     def run_prediction_cycle(self, df: pd.DataFrame, cycle: int) -> bool:
@@ -901,15 +746,6 @@ class ZabbixMultiStepForecastingLoop:
             # Don't clear dashboard data - we want to maintain history of 60 points
             # if self.dash_plotter is not None:
             #     self.dash_plotter.clear_data()
-            
-            # DEBUG: Check data timestamps being passed to prediction
-            print(f"🔍 DEBUG - Data passed to prediction function:")
-            print(f"   Data shape: {df.shape}")
-            print(f"   Data time range: {df.index[0]} to {df.index[-1]}")
-            print(f"   Latest data timestamp: {df.index[-1]}")
-            print(f"   Current time: {datetime.now().strftime('%H:%M:%S')}")
-            data_age_now = (datetime.now() - df.index[-1]).total_seconds() / 60
-            print(f"   Data age when passed to prediction: {data_age_now:.1f} minutes")
             
             # Run multi-step forecasting with real Zabbix data
             predictions_df, actuals_df, predictions_actuals_df, actuals_actuals_df = multistep_rolling_buffer_learning_prediction_with_dash_real(
@@ -960,22 +796,15 @@ class ZabbixMultiStepForecastingLoop:
                 cycle += 1
                 cycle_start = time.time()
                 
-                print(f"🔄 Multi-step Cycle #{cycle} started at {datetime.now().strftime('%H:%M:%S')}")
+                print(f"🔄 Multi-step Cycle #{cycle} started")
                 
                 # Collect and prepare real data from Zabbix
                 prepared_data = self.collect_and_prepare_data()
                 
                 if prepared_data is None:
-                    print(f"Multi-step Cycle #{cycle}: No fresh data available")
-                    print("   Will use cached/interpolated data for predictions if available")
-                    
-                    # CRITICAL FIX: Try to get ANY available data for prediction
-                    # This ensures predictions run every 30 seconds even with stale data
-                    print("   🔄 Attempting to get cached data for continuous predictions...")
-                    prepared_data = self._get_cached_data_for_prediction()
-                
-                if prepared_data is not None:
-                    # Run multi-step prediction with real data (fresh or cached)
+                    print(f"Multi-step Cycle #{cycle}: Skipping due to data issues")
+                else:
+                    # Run multi-step prediction with real data
                     success = self.run_prediction_cycle(prepared_data, cycle)
                     
                     if success:
@@ -983,15 +812,10 @@ class ZabbixMultiStepForecastingLoop:
                         print("-" * 40)
                     else:
                         print(f"⚠️ Multi-step Cycle #{cycle} had issues")
-                else:
-                    print(f"❌ Multi-step Cycle #{cycle}: No data available for predictions")
-                    print("   Dashboard will show 'No Data' for this cycle")
 
-                # Wait for next cycle (real-time operation every 30 seconds)
+                # Wait for next cycle (real-time operation every minute)
                 cycle_time = time.time() - cycle_start
                 sleep_time = max(0, self.update_interval - cycle_time)
-                
-                print(f"⏱️  Cycle #{cycle} took {cycle_time:.1f}s, sleeping {sleep_time:.1f}s (next cycle at {(datetime.now() + timedelta(seconds=sleep_time)).strftime('%H:%M:%S')})")
                 
                 # Interruptible sleep
                 end_time = time.time() + sleep_time
@@ -1034,10 +858,6 @@ def main():
                 print(f"   Model variables: {len(forecaster.variables)}")
                 print(f"   Context length: {forecaster.context_length}")
                 print(f"   Prediction horizon: {forecaster.prediction_horizon}")
-                
-                # Run data interval diagnosis
-                forecaster.diagnose_data_intervals()
-                
             else:
                 print("=" * 50)
                 print("❌ Multi-step system initialization failed")
