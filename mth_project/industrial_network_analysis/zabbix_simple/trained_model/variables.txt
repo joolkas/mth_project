@@ -1,3 +1,0 @@
-Zabbix server_Available memory
-Zabbix server_Interface ens192: Bits received
-Zabbix server_Interface ens192: Bits sent
