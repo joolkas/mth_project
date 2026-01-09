@@ -1,6 +1,23 @@
 # mth_project
 Repository for the master thesis project, about the intrusion detection in industrial network.
 
+## Quick Start
+
+### Installation
+```bash
+pip install -r requirements.txt
+```
+
+### Utilities
+This project includes several utility tools to help with development:
+
+- **Code Analysis**: See `CODE_ANALYSIS.md` for a comprehensive code review
+- **Configuration Management**: Use `config_manager.py` for portable path handling
+- **Data Validation**: Use `data_validator.py` to check data quality
+- **Project Utilities**: Run `python project_utils.py --diagnostics` to check your setup
+
+For detailed documentation on utilities, see `UTILITIES_README.md` and `SUMMARY.md`.
+
 
 Check points:
 1. Data Collection: Gather sensor values, control signals, and/or network statistics (e.g., bytes/sec, TCP flags) over time.
