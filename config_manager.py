@@ -9,6 +9,10 @@ more portable across different systems.
 import os
 from pathlib import Path
 import json
+import logging
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 
 class Config:
@@ -63,9 +67,11 @@ class Config:
             with open(config_file, 'r') as f:
                 config_data = json.load(f)
         except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON in config file {config_file}: {e}")
             print(f"Error: Invalid JSON in config file {config_file}: {e}")
             return
         except Exception as e:
+            logger.error(f"Error loading config file {config_file}: {e}")
             print(f"Error loading config file {config_file}: {e}")
             return
         
