@@ -28,12 +28,19 @@ class Dataset:
                     df_network_traffic.loc[:,'direction'] = df_network_traffic['name'].apply(lambda x: 'sent' if 'bits sent' in x.lower() else 'received')
                     
                     ports = {}
-                    for port in df_network_traffic['name'].unique().lower():
-                        port_number = port.split('gi1/')[1].split('(')[0].strip()
-                        port_name = port.split('_gi1/')[1].split('(')[1].split(')')[0].strip() if 'gi1/' in port.lower() else 'unknown'
-                        
-                        if port_number not in ports:
-                            ports[port_number] = port_name
+                    for port in df_network_traffic['name'].unique():
+                        port_lower = port.lower()
+                        if 'gi1/' not in port_lower:
+                            continue
+                        try:
+                            port_number = port_lower.split('gi1/')[1].split('(')[0].strip()
+                            port_name = port_lower.split('_gi1/')[1].split('(')[1].split(')')[0].strip() if '_gi1/' in port_lower else 'unknown'
+                            
+                            if port_number not in ports:
+                                ports[port_number] = port_name
+                        except (IndexError, AttributeError) as e:
+                            print(f"Warning: Could not parse port from {port}: {e}")
+                            continue
                     
                     df_network_traffic.loc[:,'port'] = df_network_traffic['name'].apply(lambda x: x.lower().split('gi1/')[1].split('(')[0].strip() if 'gi1/' in x.lower() else 'unknown')
                 
