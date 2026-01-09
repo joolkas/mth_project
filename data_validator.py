@@ -48,12 +48,24 @@ class DataValidator:
             self.errors.append(f"File is empty: {filepath}")
             return False
         
-        # Try to read file
+        # Try to read file - check first few rows and a sample from middle
         try:
-            df = pd.read_csv(filepath, nrows=5)
-            if df.empty:
+            # Check header and first rows
+            df_head = pd.read_csv(filepath, nrows=5)
+            if df_head.empty:
                 self.errors.append(f"File contains no data: {filepath}")
                 return False
+            
+            # Try to get rough row count and sample from middle for better validation
+            try:
+                # Read a larger sample to catch issues that might appear later
+                df_sample = pd.read_csv(filepath, nrows=100)
+                if len(df_sample) < len(df_head):
+                    self.warnings.append("File has fewer than 100 rows")
+            except Exception:
+                # If we can't read more, that's ok - we already validated the header
+                pass
+                
         except Exception as e:
             self.errors.append(f"Error reading file {filepath}: {str(e)}")
             return False

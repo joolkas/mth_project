@@ -59,8 +59,15 @@ class Config:
         Args:
             config_file (str): Path to JSON configuration file
         """
-        with open(config_file, 'r') as f:
-            config_data = json.load(f)
+        try:
+            with open(config_file, 'r') as f:
+                config_data = json.load(f)
+        except json.JSONDecodeError as e:
+            print(f"Error: Invalid JSON in config file {config_file}: {e}")
+            return
+        except Exception as e:
+            print(f"Error loading config file {config_file}: {e}")
+            return
         
         # Update paths if specified in config
         for key, value in config_data.items():

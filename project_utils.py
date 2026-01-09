@@ -20,22 +20,40 @@ def check_environment():
     print("Checking environment...")
     print("-" * 50)
     
-    required_packages = [
-        'pandas',
-        'numpy',
-        'sklearn',
-        'tensorflow',
-        'matplotlib',
-        'plotly',
-        'dash',
-    ]
+    required_packages = {
+        'pandas': '1.5.0',
+        'numpy': '1.23.0',
+        'sklearn': '1.2.0',
+        'tensorflow': '2.10.0',
+        'matplotlib': '3.6.0',
+        'plotly': '5.11.0',
+        'dash': '2.7.0',
+    }
     
     missing_packages = []
+    version_issues = []
     
-    for package in required_packages:
+    for package, min_version in required_packages.items():
         try:
-            __import__(package)
-            print(f"✓ {package}")
+            mod = __import__(package)
+            print(f"✓ {package}", end='')
+            
+            # Try to get version
+            if hasattr(mod, '__version__'):
+                version = mod.__version__
+                print(f" (version {version})")
+                
+                # Simple version comparison (works for most cases)
+                try:
+                    from packaging import version as pkg_version
+                    if pkg_version.parse(version) < pkg_version.parse(min_version):
+                        version_issues.append(f"{package}: {version} < {min_version} (minimum)")
+                except ImportError:
+                    # packaging not available, skip version check
+                    pass
+            else:
+                print()
+                
         except ImportError:
             print(f"✗ {package} - NOT INSTALLED")
             missing_packages.append(package)
@@ -45,10 +63,18 @@ def check_environment():
     if missing_packages:
         print(f"\nMissing packages: {', '.join(missing_packages)}")
         print("Install them with: pip install -r requirements.txt")
-        return False
-    else:
+    
+    if version_issues:
+        print(f"\nVersion warnings:")
+        for issue in version_issues:
+            print(f"  - {issue}")
+        print("Consider upgrading: pip install -r requirements.txt --upgrade")
+    
+    if not missing_packages and not version_issues:
         print("\n✓ All required packages are installed!")
         return True
+    
+    return len(missing_packages) == 0
 
 
 def show_project_structure():
