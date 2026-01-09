@@ -49,8 +49,8 @@ def check_environment():
                     if pkg_version.parse(version) < pkg_version.parse(min_version):
                         version_issues.append(f"{package}: {version} < {min_version} (minimum)")
                 except ImportError:
-                    # packaging not available, skip version check
-                    pass
+                    # packaging not available, skip version check with warning
+                    print(f"  (Warning: Could not check version - 'packaging' module not available)")
             else:
                 print()
                 

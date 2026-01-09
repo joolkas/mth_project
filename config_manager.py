@@ -67,12 +67,14 @@ class Config:
             with open(config_file, 'r') as f:
                 config_data = json.load(f)
         except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON in config file {config_file}: {e}")
-            print(f"Error: Invalid JSON in config file {config_file}: {e}")
+            error_msg = f"Invalid JSON in config file {config_file}: {e}"
+            logger.error(error_msg)
+            print(f"Error: {error_msg}")
             return
         except Exception as e:
-            logger.error(f"Error loading config file {config_file}: {e}")
-            print(f"Error loading config file {config_file}: {e}")
+            error_msg = f"Failed to load config file {config_file}: {e}"
+            logger.error(error_msg)
+            print(f"Error: {error_msg}")
             return
         
         # Update paths if specified in config

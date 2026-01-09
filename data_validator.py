@@ -26,12 +26,13 @@ class DataValidator:
         self.errors = []
         self.warnings = []
     
-    def validate_csv_file(self, filepath: str) -> bool:
+    def validate_csv_file(self, filepath: str, sample_size: int = 100) -> bool:
         """
         Validate a CSV file exists and is readable.
         
         Args:
             filepath: Path to CSV file
+            sample_size: Number of rows to sample for validation (default: 100)
             
         Returns:
             bool: True if valid, False otherwise
@@ -59,9 +60,9 @@ class DataValidator:
             # Try to get rough row count and sample from middle for better validation
             try:
                 # Read a larger sample to catch issues that might appear later
-                df_sample = pd.read_csv(filepath, nrows=100)
+                df_sample = pd.read_csv(filepath, nrows=sample_size)
                 if len(df_sample) < len(df_head):
-                    self.warnings.append("File has fewer than 100 rows")
+                    self.warnings.append(f"File has fewer than {sample_size} rows")
             except Exception:
                 # If we can't read more, that's ok - we already validated the header
                 pass
