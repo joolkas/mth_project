@@ -1,8 +1,0 @@
-ICMP response time
-Processor: Used memory
-Interface Gi1/1(Valmet DNA FIREWALL connection): Bits received
-Interface Gi1/1(Valmet DNA FIREWALL connection): Bits sent
-Interface Gi1/3(Valmet PRP LAN_A-connection): Bits received
-Interface Gi1/3(Valmet PRP LAN_A-connection): Bits sent
-Interface Gi1/4(Valmet PRP LAN_B-connection): Bits received
-Interface Gi1/4(Valmet PRP LAN_B-connection): Bits sent
